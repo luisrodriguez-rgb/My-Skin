@@ -1,5 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import {
+  initRoamingSystem,
+  togglePinMode,
+  getFacingDirection,
+  getIsPinned,
+  setRoamingAlertState,
+  syncPositionAfterUserDrag,
+  setIsDragging,
+} from "./roaming";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
 export type PetStateName = "IDLE" | "WALK" | "ALERT_SEMESTRE" | "VICTORY_GITHUB";
@@ -90,12 +99,14 @@ export function setPetState(
   lastFrameTimestamp = performance.now();
 
   if (notification) {
+    setRoamingAlertState(true);
     activeNotification = {
       title: notification.title,
       subtitle: notification.subtitle,
       urgent: notification.urgent ?? false,
     };
   } else if (newState === "IDLE") {
+    setRoamingAlertState(false);
     activeNotification = null;
   }
 }
@@ -122,6 +133,13 @@ function drawCurrentStateToCanvas() {
   const destX = Math.floor((CANVAS_WIDTH - destWidth) / 2);
   const destY = anchorY;
 
+  // Inversión horizontal sobre el eje central si el personaje camina hacia la izquierda
+  ctx.save();
+  if (getFacingDirection() === -1) {
+    ctx.translate(CANVAS_WIDTH, 0);
+    ctx.scale(-1, 1);
+  }
+
   // Dibujar el frame exacto del personaje
   ctx.drawImage(
     spriteImage,
@@ -134,6 +152,9 @@ function drawCurrentStateToCanvas() {
     destWidth,
     destHeight
   );
+
+  // Restaurar el contexto ANTES del globo para que el texto no quede invertido
+  ctx.restore();
 
   // Si hay una notificación activa (ej. Entrega del semestre o Push en GitHub), dibujamos el globo
   if (activeNotification) {
@@ -266,6 +287,7 @@ canvas.addEventListener("mousedown", async (e) => {
 
   // Si hizo clic en la parte superior (donde está el globo de alerta), descartamos la alerta
   if (activeNotification && clickY < 140) {
+    setRoamingAlertState(false);
     setPetState("IDLE");
     drawCurrentStateToCanvas();
     return;
@@ -273,9 +295,13 @@ canvas.addEventListener("mousedown", async (e) => {
 
   // Si hizo clic sobre el cuerpo del personaje, permite arrastrarlo por el escritorio
   try {
+    setIsDragging(true);
     await getCurrentWindow().startDragging();
+    await syncPositionAfterUserDrag();
   } catch (err) {
     console.debug("startDragging disponible únicamente dentro de Tauri:", err);
+  } finally {
+    setIsDragging(false);
   }
 });
 
@@ -290,7 +316,9 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 // --- INICIALIZACIÓN ---
-loadSkin("spartan");
+loadSkin("spartan").then(() => {
+  initRoamingSystem();
+});
 requestAnimationFrame(animationLoop);
 setInterval(checkCursorHitTest, 50);
 
@@ -313,6 +341,8 @@ setInterval(checkCursorHitTest, 50);
 
 (window as any).setPetState = setPetState;
 (window as any).loadSkin = loadSkin;
+(window as any).togglePinMode = togglePinMode;
+(window as any).getIsPinned = getIsPinned;
 
 // --- PANEL DE CONTROL: PIXEL MINIMAL UI ---
 const debugPanel = document.getElementById("debug-panel");
@@ -357,16 +387,28 @@ function syncCardInfo() {
   updateThumbnail();
 }
 
-// Clic derecho sobre el personaje o atajo 'D' alterna el controlador
+// Atajo de teclado 'D' para alternar visibilidad del controlador
 window.addEventListener("keydown", (e) => {
   if (e.key === "d" || e.key === "D") {
     debugPanel?.classList.toggle("hidden");
   }
 });
 
+// Clic derecho: sobre el personaje alterna modo Fijo/Patrulla; sobre el fondo alterna el controlador
 canvas.addEventListener("contextmenu", (e) => {
   e.preventDefault();
-  debugPanel?.classList.toggle("hidden");
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+
+  if (isPixelSolid(clickX, clickY)) {
+    const pinned = togglePinMode();
+    if (statusFsmText) {
+      statusFsmText.textContent = pinned ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
+    }
+  } else {
+    debugPanel?.classList.toggle("hidden");
+  }
 });
 
 btnCloseDebug?.addEventListener("click", () => {
@@ -400,4 +442,5 @@ btnGithub?.addEventListener("click", () => {
   (window as any).testVictory();
   if (statusFsmText) statusFsmText.textContent = "Estado: VICTORY_GITHUB";
 });
+
 
