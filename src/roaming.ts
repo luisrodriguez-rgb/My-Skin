@@ -6,7 +6,8 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 const appWindow = isTauri ? getCurrentWindow() : null;
 
 // --- ESTADO DE MOVIMIENTO Y LOCOMOCION ---
-let isPinned = false;            // true = Fijo en pantalla | false = Modo patrulla libre
+// Por defecto en MODO FIJO: El usuario decide donde colocarlo y no se mueve solo
+let isPinned = true;             // true = Fijo en pantalla | false = Modo patrulla libre
 let isDragging = false;          // Pausa el movimiento automatico durante arrastre manual
 let hasActiveAlert = false;      // Detiene la caminata mientras hay una alerta desplegada
 let facingDirection: 1 | -1 = 1; // 1 = Derecha, -1 = Izquierda
@@ -21,6 +22,7 @@ let maxX = 1200;
 const WALK_SPEED = 2.5; // Pixeles por tick
 let isWalkingNow = false;
 let waitTimer = 0;
+let keyboardWalkTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * 1. Inicializa limites del monitor para mantener la ventana dentro de los margenes visibles
@@ -40,24 +42,26 @@ export async function initRoamingSystem() {
     winY = currentPos.y;
 
     if (monitor) {
-      // Limites horizontales seguros dentro de la pantalla
       minX = 20;
       maxX = monitor.size.width - winSize.width - 20;
 
-      // Por defecto se posiciona en el borde inferior (justo encima del Dock)
-      winY = monitor.size.height - winSize.height - 70;
-      await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+      // Si la ventana inicio en (0,0), posicionarla en la esquina inferior derecha
+      if (winX <= 20 && winY <= 20) {
+        winX = monitor.size.width - winSize.width - 60;
+        winY = monitor.size.height - winSize.height - 90;
+        await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+      }
     }
 
-    pickNextDestination();
-    setInterval(updateMovementStep, 30); // ~33 ticks por segundo para movimiento fluido
+    // Bucle para modo libre (solo activo si el usuario desactiva el anclado)
+    setInterval(updateMovementStep, 30);
   } catch (err) {
     console.debug("[Roaming] Error al inicializar monitor:", err);
   }
 }
 
 /**
- * 2. Selecciona aleatoriamente el siguiente punto de destino
+ * 2. Selecciona aleatoriamente el siguiente punto de destino (solo en modo patrulla)
  */
 function pickNextDestination() {
   targetX = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
@@ -65,7 +69,7 @@ function pickNextDestination() {
 }
 
 /**
- * 3. Bucle de locomocion: actualiza la posicion de la ventana o mantiene estado IDLE
+ * 3. Bucle de locomocion: actualiza la posicion solo si isPinned = false
  */
 async function updateMovementStep() {
   if (!appWindow || isPinned || isDragging || hasActiveAlert) {
@@ -87,10 +91,10 @@ async function updateMovementStep() {
   const dist = targetX - winX;
 
   if (Math.abs(dist) <= WALK_SPEED) {
-    // Llegada a destino: reposo en IDLE entre 3 y 7 segundos
+    // Llegada a destino: reposo en IDLE entre 4 y 8 segundos
     winX = targetX;
     isWalkingNow = false;
-    waitTimer = Math.floor(Math.random() * 130) + 100;
+    waitTimer = Math.floor(Math.random() * 150) + 120;
     setPetState("IDLE");
   } else {
     // Paso en direccion horizontal
@@ -104,7 +108,35 @@ async function updateMovementStep() {
 }
 
 /**
- * 4. Alternar entre Modo Fijo (Anclado) y Modo Libre (Patrulla)
+ * 4. Mover la ventana pixel a pixel mediante flechas del teclado
+ */
+export async function moveWindowBy(dx: number, dy: number) {
+  if (!appWindow) return;
+
+  try {
+    const pos = await appWindow.outerPosition();
+    winX = pos.x + dx;
+    winY = pos.y + dy;
+
+    if (dx !== 0) {
+      facingDirection = dx > 0 ? 1 : -1;
+    }
+
+    // Activar breve animacion de caminata mientras se presiona el teclado
+    setPetState("WALK");
+    if (keyboardWalkTimer) clearTimeout(keyboardWalkTimer);
+    keyboardWalkTimer = setTimeout(() => {
+      setPetState("IDLE");
+    }, 280);
+
+    await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+  } catch (err) {
+    console.debug("[Roaming] Error al mover ventana con teclado:", err);
+  }
+}
+
+/**
+ * 5. Alternar entre Modo Fijo (Anclado) y Modo Libre (Patrulla)
  */
 export function togglePinMode(): boolean {
   isPinned = !isPinned;
@@ -120,7 +152,8 @@ export function togglePinMode(): boolean {
       if (!hasActiveAlert) setPetState("IDLE");
     }, 2000);
   } else {
-    waitTimer = 20;
+    waitTimer = 30;
+    pickNextDestination();
     setPetState("IDLE", {
       title: "MODO LIBRE ACTIVADO",
       subtitle: "Patrullando el escritorio",
@@ -135,7 +168,7 @@ export function togglePinMode(): boolean {
 }
 
 /**
- * 5. Notificar presencia de alerta activa para frenar la caminata
+ * 6. Notificar presencia de alerta activa para frenar la caminata
  */
 export function setRoamingAlertState(hasAlert: boolean) {
   hasActiveAlert = hasAlert;
@@ -145,7 +178,7 @@ export function setRoamingAlertState(hasAlert: boolean) {
 }
 
 /**
- * 6. Sincronizar coordenadas tras arrastre manual del usuario
+ * 7. Sincronizar coordenadas tras arrastre manual del usuario
  */
 export async function syncPositionAfterUserDrag() {
   if (!appWindow) return;
