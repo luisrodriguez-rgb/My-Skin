@@ -71,53 +71,39 @@ Este documento presenta una auditoria critica exhaustiva de la discrepancia entr
 ## 4. Hoja de Ruta Estratégica (Roadmap)
 
 ### Fase 1: Desacoplamiento Arquitectonico y Experiencia de Entrada (v0.2.0)
-*Objetivo: Lograr estabilidad absoluta en el manejo de ventanas y pulir la interaccion del usuario.*
+*Estado: Implementado y Calibrado en el Core.*
 
-1. **Arquitectura Multi-Ventana en Tauri:**
-   - Mantener la ventana principal exclusivamente para el sprite transparente (tamano estatico 240x240 px).
-   - Crear una segunda ventana nativa para el panel de ajustes o convertir el controlador en un icono interactivo en la barra de menus de macOS (Menu Bar / System Tray) utilizando `tauri-plugin-tray`.
-2. **Optimizacion del Motor de Eventos:**
-   - Implementar un filtro de proximidad rectangular antes de solicitar lectura de canal alfa a nivel de SO.
-3. **Ampliacion de Estados de Animacion (FSM):**
-   - Incorporar estados de reposo extendido: `STUDY` (el personaje lee o se sienta cuando hay actividad sostenida de teclado), `SLEEP` (inactividad prolongada del usuario) y `ALERT` (atencion a eventos criticos).
-4. **Soporte de Efectos de Sonido Opcionales (Audio FX):**
-   - Efectos sutiles en 8-bits sintetizados via Web Audio API (pasos, campana discreta de alerta, celebracion).
+1. [x] **Catalogo de 10 Personajes de Lanzamiento:** Generacion procedural con canal alfa puro y 6 filas de animacion (Ola 1, Ola 2, Ola 3).
+2. [x] **Sintetizador de Efectos de Sonido 8-bits:** Modulo `audio.ts` con Web Audio API (pasos, alerta, victoria, foco y descanso con interruptor en UI).
+3. [x] **Ampliacion de Estados de Animacion (FSM):** Incorporacion de `FOCUS` (modo concentracion) y `SLEEP` (siesta) junto a `IDLE`, `WALK`, `ALERT` y `WIN`.
+4. [ ] **Arquitectura Multi-Ventana en Tauri (v0.4.0):**
+   - Desacoplar ventana de sprite transparente y ventana de ajustes/System Tray.
 
 ---
 
-### Fase 2: Integracion con Plataforma Universitaria y GitHub (v0.3.0)
-*Objetivo: Dotar al companero de utilidad practica conectandolo a las fuentes de datos del estudiante.*
+### Fase 3: Inteligencia Contextual y Personalidad (v0.3.0)
+*Estado: Motor de Concentracion y Dialogos Desplegados.*
+
+1. [x] **Temporizador Pomodoro Integrado:** Ciclos de 25 minutos de foco ininterrumpido (anclaje automatico) y 5 minutos de descanso activo.
+2. [x] **Deteccion de Inactividad (Modo Siesta):** Transicion automatica a estado `SLEEP` tras 2 minutos sin interaccion del usuario, con despertar reactivo al contacto.
+3. [x] **Dialogos de Notificacion Personalizados:** Formateo de alertas de semestre y victorias de GitHub segun el lore y actitud de cada personaje (`dialogues` en `manifest.json`).
+
+---
+
+### Fase 2: Integracion con Plataforma Universitaria y GitHub (Proxima Fase)
+*Objetivo: Dotar al companero de utilidad practica conectandolo a las fuentes de datos reales.*
 
 1. **Cliente de Sincronizacion Universitaria:**
    - Conexion via WebSocket o SSE hacia el backend de gestion del semestre.
-   - Procesamiento de eventos en tiempo real:
-     - Recordatorio de inicio de clase (15 minutos antes).
-     - Proximidad de entrega de proyectos o parciales (24h, 6h, 1h).
-     - Registro de notas y retroalimentacion.
+   - Recordatorios de parciales, tareas y horarios de clase.
 2. **Monitor Ligero de GitHub:**
-   - Polling inteligente a la API GraphQL de GitHub con intervalo dinamico (configurable entre 2 y 10 minutos).
-   - Eventos soportados:
-     - Pull Request aprobada o mezclada (desencadena estado `WIN`).
-     - Fallo en pipeline de CI/CD (desencadena estado de preocupacion / alerta).
-     - Recordatorio de racha de commits diarios.
+   - Polling a GitHub GraphQL API para monitoreo de PRs y workflows de GitHub Actions.
 3. **Persistencia Local de Preferencias:**
-   - Guardado de configuracion (skin activa, modo fijo/libre, volumen de audio, tokens de API) mediante `tauri-plugin-store`.
+   - Almacenamiento seguro de credenciales con `tauri-plugin-store`.
 
 ---
 
-### Fase 3: Inteligencia Contextual y Personalidad (v0.4.0)
-*Objetivo: Dotar al companero de dinamismo organico y mensajes personalizados segun el contexto.*
-
-1. **Adaptacion al Contexto de Trabajo:**
-   - Deteccion de modo concentracion (cuando el usuario tiene el IDE o procesador de texto en pantalla completa).
-   - Auto-anclaje silencioso durante sesiones de estudio prolongadas (tecnica Pomodoro: 25 minutos quieto, 5 minutos de caminata y estiramiento sugerido).
-2. **Generador de Dialogos Breves:**
-   - Formateo de los mensajes de las alertas segun el campo `personalityPrompt` del skin activo.
-   - Respuestas generadas localmente o mediante llamada ultrarrapida a API de modelos compactos para variar las frases de felicitacion y animo.
-
----
-
-### Fase 4: Distribucion, Empaquetado y Ecosistema (v1.0.0)
+### Fase 4: Distribucion, Empaquetado y Ecosistema (Fase Final)
 *Objetivo: Convertir el proyecto en una aplicacion instalable, actualizable y abierta a la comunidad.*
 
 1. **Pipeline de Integracion y Despliegue Continuo (CI/CD):**

@@ -90,53 +90,49 @@ Para solucionar este cuello de botella sin degradar la bateria:
 
 Cada personaje reside en una subcarpeta dentro de `public/skins/` y contiene dos archivos: `manifest.json` y `spritesheet.png`.
 
-```
-public/skins/
-|-- spartan/
-|   |-- manifest.json
-|   `-- spritesheet.png
-`-- spiderman/
-    |-- manifest.json
-    `-- spritesheet.png
-```
+El proyecto cuenta con el catalogo oficial de **10 personajes de lanzamiento**, estructurado en 3 Olas tematicas:
+
+* **Ola 1: Fundacionales (Core y Navegacion)**
+  1. `spartan`: **Leonidas (El Espartano de 300)** - Disciplina marcial, lanza y escudo dorado.
+  2. `spiderman`: **Spider-Hero (El Trepamuros)** - Sentido aracnido y acrobacias urbanas.
+  3. `dev-avatar`: **Mi Avatar Pixelado (Tu Mismo)** - Sudadera, audifonos cian, taza de cafe y portatil.
+  4. `ghost-dev`: **El Dev Fantasma (Especial Codigo)** - Sabana espectral y mini-laptop con codigo Matrix.
+
+* **Ola 2: Entretenimiento y Memes (Virales)**
+  5. `football-10`: **El Futbolista 10 (La Pulga)** - Camiseta albiceleste, regates y festejo al cielo.
+  6. `capybara`: **Capibara Chill (El Favorito de Internet)** - Naranja en la cabeza y jacuzzi de madera.
+  7. `cyber-ninja`: **Cyber Ninja (Accion y Sigilo)** - Katana laser cian, bufanda neon y bombas de humo.
+
+* **Ola 3: Nostalgia y Fantasia (Cultura Pop)**
+  8. `fantasy-wizard`: **Mago de Fantasia (El Hechicero)** - Tunica violeta, grimorio y baculo con cristal.
+  9. `game-slime`: **Slime de Videojuego (La Mascota)** - Gota gelatinosa rebotadora y division en 3 slimes.
+  10. `astro-lost`: **Astronauta Perdido (Explorador)** - Traje blanco, visor reflectante y gravedad cero.
 
 ### Formato de `manifest.json`
 
 ```json
 {
-  "id": "spartan-300",
-  "name": "Leonidas (300)",
+  "id": "spartan",
+  "name": "Leonidas (El Espartano de 300)",
   "frameWidth": 64,
   "frameHeight": 64,
   "scale": 2,
-  "anchorY": 160,
-  "personalityPrompt": "Notificaciones directas y disciplinadas. Enfocado en plazos de entrega y cumplimiento de objetivos tecnicos.",
+  "anchorY": 85,
+  "personalityPrompt": "Notificaciones epicas, marciales y directas. Enfocado en la disciplina de estudio y victoria en codigo.",
+  "dialogues": {
+    "alert": "¡A las armas! Tienes 1 hora para tu entrega o el semestre caera.",
+    "victory": "¡Ahu, Ahu! Pull Request mezclado con honor espartano.",
+    "focus": "¡Posiciones de falange! 25 minutos de estudio inquebrantable.",
+    "break": "Descanso merecido, guerrero. Bebe agua y afila tu lanza.",
+    "sleep": "Recuperando fuerzas para la proxima batalla academica..."
+  },
   "states": {
-    "IDLE": {
-      "row": 0,
-      "frames": 4,
-      "fps": 6,
-      "loop": true
-    },
-    "WALK": {
-      "row": 1,
-      "frames": 6,
-      "fps": 10,
-      "loop": true
-    },
-    "ALERT_SEMESTRE": {
-      "row": 2,
-      "frames": 4,
-      "fps": 8,
-      "loop": true
-    },
-    "VICTORY_GITHUB": {
-      "row": 3,
-      "frames": 6,
-      "fps": 12,
-      "loop": false,
-      "nextState": "IDLE"
-    }
+    "IDLE": { "row": 0, "frames": 4, "fps": 6, "loop": true },
+    "WALK": { "row": 1, "frames": 6, "fps": 10, "loop": true },
+    "ALERT_SEMESTRE": { "row": 2, "frames": 4, "fps": 8, "loop": true },
+    "VICTORY_GITHUB": { "row": 3, "frames": 6, "fps": 12, "loop": false, "nextState": "IDLE" },
+    "FOCUS": { "row": 4, "frames": 4, "fps": 6, "loop": true },
+    "SLEEP": { "row": 5, "frames": 4, "fps": 4, "loop": true }
   }
 }
 ```
@@ -262,10 +258,14 @@ Para consultar el analisis critico de ingenieria, el diagnostico de deuda tecnic
 4. [x] Rediseño del controlador bajo estetica Pixel Minimal UI.
 5. [x] Estandarizacion de skins modulares (`manifest.json` y `spritesheet.png`).
 6. [x] Soporte de arrastre 1:1 en pantallas Retina y auto-elevacion de ventana.
-7. [ ] **Modulo de Sincronizacion en Tiempo Real:** Cliente WebSocket / SSE para enlazar con la API de entregas universitarias.
-8. [ ] **Desacoplamiento Multi-Ventana:** Ventana overlay para el sprite y ventana nativa/system tray para ajustes.
-9. [ ] **Integracion con GitHub:** Webhook listener o polling ligero sobre GitHub GraphQL API para monitorear estados de PRs y CI.
-10. [ ] **Modulo de Diálogos LLM:** Formateo de notificaciones segun el `personalityPrompt` definido en el skin del personaje.
+7. [x] Catalogo oficial de 10 personajes de lanzamiento (Ola 1, Ola 2, Ola 3).
+8. [x] Sintetizador de audio retro 8-bits nativo con Web Audio API.
+9. [x] Sistema de concentracion Pomodoro (25 min foco / 5 min descanso) y estados FOCUS / SLEEP.
+10. [x] Dialogos contextuales y deteccion de inactividad por personaje.
+11. [ ] **Modulo de Sincronizacion en Tiempo Real (Fase 2):** Cliente WebSocket / SSE para enlazar con la API de entregas universitarias.
+12. [ ] **Integracion con GitHub (Fase 2):** Webhook listener o polling ligero sobre GitHub GraphQL API para monitorear estados de PRs y CI.
+13. [ ] **Desacoplamiento Multi-Ventana / Tray (Fase 4):** Ventana overlay para el sprite y ventana nativa/system tray para ajustes.
+14. [ ] **Empaquetado y Distribucion (Fase 4):** Binarios firmados .dmg y .msi mediante GitHub Actions.
 
 ---
 
