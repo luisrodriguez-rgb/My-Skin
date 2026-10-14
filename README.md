@@ -178,11 +178,17 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 - **Cuerpo y Controles:** `Outfit` / `Inter` para maxima legibilidad en tamanos pequenos (9 px a 12 px).
 - **Indicadores Tecnicos:** `Press Start 2P` exclusivamente para codigos de estado (`00`, `01`, `SEM`, `GIT`).
 
+### Modos de Comportamiento y Locomocion
+- **Modo Libre / Patrulla (Free Roam):** El personaje se desplaza de forma autonoma a lo largo del borde inferior del monitor (`currentMonitor().size.width`). Sincroniza la animacion `WALK`, invierte el canvas horizontalmente (`scale(-1, 1)`) segun la direccion de avance y alterna con pausas de descanso en estado `IDLE`.
+- **Modo Anclado / Fijo (Pinned):** Fija al personaje en las coordenadas exactas donde fue posicionado. No realiza desplazamientos autonomos y solo reacciona ante notificaciones entrantes.
+- **Interrupcion Inteligente:** Si entra una notificacion del semestre o de GitHub, la locomocion se detiene de forma instantanea para permitir la lectura y el clic sobre el globo de dialogo.
+- **Sincronizacion de Arrastre (Drag & Drop):** Al arrastrar manualmente la ventana, el bucle de locomocion se suspende y se sincronizan las nuevas coordenadas fisicas `(winX, winY)`.
+
 ### Interaccion y Atajos
-- **Tecla `D`:** Alterna la visibilidad del controlador.
-- **Clic Derecho en el Personaje:** Abre o cierra el panel junto al cursor.
-- **Clic Izquierdo Sostenido en el Personaje:** Inicia el arrastre libre de la ventana (`startDragging`).
-- **Clic sobre el Globo de Dialogo:** Descarta la notificacion activa y devuelve al personaje a estado `IDLE`.
+- **Clic Derecho sobre el Personaje:** Alterna entre Modo Fijo (Anclado) y Modo Libre (Patrulla).
+- **Clic Derecho sobre el Fondo / Tecla `D`:** Alterna la visibilidad del panel de control MySkin Controller.
+- **Clic Izquierdo Sostenido sobre el Personaje:** Inicia el arrastre manual nativo de la ventana por la pantalla.
+- **Clic sobre el Globo de Dialogo:** Descarta la notificacion activa y reanuda el estado normal.
 
 ---
 
