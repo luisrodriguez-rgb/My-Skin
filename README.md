@@ -1,6 +1,9 @@
-# MySkin
-
-> Desktop Companion en Pixel Art con ventana transparente, click-through nativo a nivel de sistema operativo y arquitectura de skins modulares. Desarrollado con Tauri v2, Rust, TypeScript y HTML5 Canvas.
+<div align="center">
+  <img src="public/logo.jpg" alt="MySkin Logo" width="220" style="border-radius: 14px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
+  <h1>MySkin</h1>
+  <p><strong>Desktop Companion en Pixel Art con ventana transparente, click-through nativo a nivel de sistema operativo y arquitectura de skins modulares.</strong></p>
+  <p>Desarrollado con Tauri v2, Rust, TypeScript y HTML5 Canvas.</p>
+</div>
 
 ---
 
@@ -74,15 +77,19 @@ El proyecto esta organizado en tres capas independientes:
 ### El problema del mousemove en ventanas click-through
 Cuando una aplicacion de escritorio ejecuta `window.set_ignore_cursor_events(true)`, el sistema operativo deja de entregar eventos de mouse al WebView. La ventana se vuelve un fantasma total y deja de recibir `mousemove` en JavaScript, impidiendo saber cuando el usuario vuelve a pasar el cursor sobre el personaje.
 
-### La solucion: Polling de bajo consumo a nivel de SO
-Para solucionar este cuello de botella sin degradar la bateria:
+### La solucion: Polling adaptativo y Zero-GC a nivel de SO
+Para solucionar este cuello de botella con el menor consumo de CPU y memoria:
 
 1. **Consulta directa al SO:** El comando Rust `get_cursor_rel_pos` consulta `window.cursor_position()` y `window.outer_position()`.
 2. **Normalizacion Retina:** Convierte los pixeles fisicos del monitor a pixeles logicos del canvas dividiendo entre `scale_factor`:
    $$\text{rel\_x} = \frac{\text{cursor.x} - \text{win\_pos.x}}{\text{scale}}$$
-3. **Mapeo $O(1)$ de opacidad:** En TypeScript, se consulta el canal alfa del pixel bajo el cursor en el arreglo `Uint8ClampedArray` del frame activo:
-   $$\text{alpha\_index} = (y \times \text{WIDTH} + x) \times 4 + 3$$
-4. **Filtro de transmision IPC:** El comando `set_ignore_cursor` solo se emite cuando el booleano `shouldIgnore` cambia de valor, evitando saturar el puente IPC.
+3. **Descarte rapido $O(1)$ por Caja Envolvente:** Antes de cualquier operacion sobre el canvas, se valida si el cursor se encuentra dentro de los limites `characterBoundingBox` del frame activo con un margen de 8 px. Si esta fuera, la evaluacion retorna de forma instantanea sin invocar al motor grafico.
+4. **Muestreo puntual Zero-GC (Eliminacion de Churn de Memoria):** Se elimino por completo la extraccion de un buffer completo de 300x240 px (288 KB) por frame. Unicamente cuando el cursor entra en la caja envolvente, se muestrea un micro-parche de 17x17 px (~1 KB), reduciendo la presion del recolector de basura (GC) a cero durante la animacion continua.
+5. **Filtro de transmision y Frecuencia Adaptativa:** 
+   - **10 Hz (100 ms):** Cuando el cursor se encuentra fuera de la ventana, reduciendo el trafico IPC en un 70%.
+   - **33 Hz (30 ms):** Cuando el cursor entra en la ventana para una reactividad inmediata al hacer clic o arrastrar.
+   - **0 Hz (Pausado):** Mientras el panel de control esta abierto o el personaje esta siendo arrastrado, desactivando llamadas IPC innecesarias.
+6. **Gestion Inteligente de Temporizadores de Locomocion:** El temporizador de caminata se suspende por completo cuando el personaje esta anclado (`isPinned: true`), eliminando interrupciones al procesador en reposo.
 
 ---
 
@@ -261,7 +268,7 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 - **Arrastre desde el Controlador:** Permite mover la ventana arrastrando desde el encabezado (`MySkin DESKTOP COMPANION`) o desde la tarjeta del personaje.
 - **Clic Derecho sobre el Personaje:** Alterna entre Modo Fijo (Anclado) y Modo Libre (Patrulla).
 - **Atajo `Cmd + Shift + D` (Mac) / `Ctrl + Shift + D`:** Alterna el controlador de forma segura sin interferir al escribir codigo en el IDE.
-- **Tecla `Escape` o Boton `✕`:** Cierran el controlador y devuelven la ventana a su tamano compacto.
+- **Tecla `Escape` o Boton `X`:** Cierran el controlador y devuelven la ventana a su tamano compacto.
 - **Flechas Direccionales:** Desplazan al personaje con animacion de caminata continua a 10 FPS (pasos de 22 px, o 45 px manteniendo `Shift`).
 - **Clic sobre el Globo de Dialogo:** Descarta la notificacion activa y reanuda el estado normal.
 
@@ -335,10 +342,12 @@ Para consultar el analisis critico de ingenieria, el diagnostico de deuda tecnic
 8. [x] Sintetizador de audio retro 8-bits nativo con Web Audio API.
 9. [x] Sistema de concentracion Pomodoro (25 min foco / 5 min descanso) y estados FOCUS / SLEEP.
 10. [x] Dialogos contextuales y deteccion de inactividad por personaje.
-11. [ ] **Modulo de Sincronizacion en Tiempo Real (Fase 2):** Cliente WebSocket / SSE para enlazar con la API de entregas universitarias.
-12. [ ] **Integracion con GitHub (Fase 2):** Webhook listener o polling ligero sobre GitHub GraphQL API para monitorear estados de PRs y CI.
-13. [ ] **Desacoplamiento Multi-Ventana / Tray (Fase 4):** Ventana overlay para el sprite y ventana nativa/system tray para ajustes.
-14. [ ] **Empaquetado y Distribucion (Fase 4):** Binarios firmados .dmg y .msi mediante GitHub Actions.
+11. [x] **Modulo de Sincronizacion Academica (Fase 2):** Servicio de alertas de entregas y parciales con cuenta regresiva dinamica (`syncService.ts`).
+12. [x] **Monitor Ligero de GitHub (Fase 2):** Polling no invasivo de PRs mergeadas y commits recientes (`githubMonitor.ts`).
+13. [x] **Optimizacion Extrema de RAM y CPU:** Descarte O(1), muestreo puntual Zero-GC por parches y sondeo IPC adaptativo 10Hz/33Hz.
+14. [x] **Identidad Visual e Iconos Nativos:** Suite completa `.icns`, `.ico` y PNGs de alta resolucion integrados en el macOS Dock.
+15. [x] **Pipeline Automatizado de CI/CD (Fase 4):** Workflow de GitHub Actions (`release.yml`) para compilacion de binarios macOS, Windows y Linux.
+16. [ ] **Desacoplamiento Multi-Ventana / Tray (Fase 4):** Ventana overlay exclusiva para el sprite y ventana nativa / System Tray para ajustes.
 
 ---
 
