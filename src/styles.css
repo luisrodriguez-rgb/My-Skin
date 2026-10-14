@@ -36,11 +36,10 @@ html, body {
 
 /* Canvas del personaje flotante en el escritorio */
 #pet-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
+  display: block;
+  margin: 0 auto;
   width: 300px;
-  height: 300px;
+  height: 240px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   z-index: 10;
@@ -50,26 +49,24 @@ html, body {
  * MySkin Controller: Pixel Minimal UI
  * ------------------------------------------------------------*/
 .controller-panel {
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  width: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 320px;
+  margin: 6px auto 14px auto;
   background: var(--bg-dark);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  padding: 14px;
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  padding: 12px;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .controller-panel.hidden {
+  display: none !important;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(12px) scale(0.96);
 }
 
 /* Header */
@@ -79,6 +76,11 @@ html, body {
   align-items: center;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-subtle);
+  cursor: grab;
+}
+
+.controller-header:active {
+  cursor: grabbing;
 }
 
 .brand {

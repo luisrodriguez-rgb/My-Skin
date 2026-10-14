@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import {
   initRoamingSystem,
   togglePinMode,
@@ -8,6 +8,7 @@ import {
   setRoamingAlertState,
   syncPositionAfterUserDrag,
   setIsDragging,
+  moveWindowBy,
 } from "./roaming";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
@@ -37,7 +38,7 @@ const canvas = document.getElementById("pet-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
 
 const CANVAS_WIDTH = 300;
-const CANVAS_HEIGHT = 300;
+const CANVAS_HEIGHT = 240;
 canvas.width = CANVAS_WIDTH;
 canvas.height = CANVAS_HEIGHT;
 
@@ -109,6 +110,9 @@ export function setPetState(
     setRoamingAlertState(false);
     activeNotification = null;
   }
+
+  drawCurrentStateToCanvas();
+  syncActionButtons(newState);
 }
 
 /**
@@ -173,10 +177,10 @@ function drawCurrentStateToCanvas() {
  * 4. Dibuja un globo de diálogo con estética Pixel Art directamente en el Canvas
  */
 function drawPixelSpeechBubble(title: string, subtitle: string, urgent: boolean) {
-  const bx = 25;
-  const by = 30;
-  const bw = 250;
-  const bh = 95;
+  const bx = 20;
+  const by = 8;
+  const bw = 260;
+  const bh = 68;
 
   // Borde exterior negro (estilo retro 8-bits)
   ctx.fillStyle = "#090B10";
@@ -198,17 +202,17 @@ function drawPixelSpeechBubble(title: string, subtitle: string, urgent: boolean)
 
   // Textos de la notificación
   ctx.fillStyle = urgent ? "#FF6B6B" : "#FFD000";
-  ctx.font = "bold 12px monospace";
-  ctx.fillText(title.slice(0, 26), bx + 12, by + 26);
+  ctx.font = "bold 11px monospace";
+  ctx.fillText(title.slice(0, 28), bx + 10, by + 20);
 
   ctx.fillStyle = "#F1FAEE";
-  ctx.font = "11px monospace";
-  ctx.fillText(subtitle.slice(0, 28), bx + 12, by + 50);
+  ctx.font = "10px monospace";
+  ctx.fillText(subtitle.slice(0, 30), bx + 10, by + 40);
 
   // Pequeño indicador para descartar con clic
   ctx.fillStyle = "#8D99AE";
-  ctx.font = "10px monospace";
-  ctx.fillText("[Clic para descartar]", bx + 12, by + 78);
+  ctx.font = "9px monospace";
+  ctx.fillText("[Clic para descartar]", bx + 10, by + 58);
 }
 
 /**
@@ -241,7 +245,7 @@ function animationLoop(timestamp: number) {
   requestAnimationFrame(animationLoop);
 }
 
-// --- HIT-TEST DE CANAL ALPHA (CONECTADO A RUST) ---
+// --- HIT-TEST DE CANAL ALPHA Y PANEL DE CONTROL (CONECTADO A RUST) ---
 function isPixelSolid(x: number, y: number): boolean {
   if (!currentFrameImageData) return false;
   const px = Math.floor(x);
@@ -250,6 +254,42 @@ function isPixelSolid(x: number, y: number): boolean {
 
   const alphaIndex = (py * CANVAS_WIDTH + px) * 4 + 3;
   return currentFrameImageData[alphaIndex] > ALPHA_THRESHOLD;
+}
+
+/**
+ * Determina si las coordenadas del cursor (relativas a la ventana)
+ * caen sobre un elemento interactuable (panel de control abierto o pixel del personaje).
+ */
+function isCursorOverInteractable(windowX: number, windowY: number): boolean {
+  // 1. Si el panel de control esta abierto y el cursor esta sobre su area
+  if (debugPanel && !debugPanel.classList.contains("hidden")) {
+    const panelRect = debugPanel.getBoundingClientRect();
+    if (
+      windowX >= panelRect.left &&
+      windowX <= panelRect.right &&
+      windowY >= panelRect.top &&
+      windowY <= panelRect.bottom
+    ) {
+      return true;
+    }
+  }
+
+  // 2. Si el cursor esta sobre el canvas del personaje
+  const canvasRect = canvas.getBoundingClientRect();
+  if (
+    windowX >= canvasRect.left &&
+    windowX <= canvasRect.right &&
+    windowY >= canvasRect.top &&
+    windowY <= canvasRect.bottom
+  ) {
+    const canvasX = (windowX - canvasRect.left) * (CANVAS_WIDTH / canvasRect.width);
+    const canvasY = (windowY - canvasRect.top) * (CANVAS_HEIGHT / canvasRect.height);
+    if (isPixelSolid(canvasX, canvasY)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function checkCursorHitTest() {
@@ -264,13 +304,13 @@ async function checkCursorHitTest() {
       return;
     }
 
-    const touchingSolidPixel = isPixelSolid(pos.x, pos.y);
-    const shouldIgnore = !touchingSolidPixel;
+    const isInteractable = isCursorOverInteractable(pos.x, pos.y);
+    const shouldIgnore = !isInteractable;
 
     if (shouldIgnore !== isCurrentlyIgnoring) {
       isCurrentlyIgnoring = shouldIgnore;
       await invoke("set_ignore_cursor", { ignore: shouldIgnore });
-      canvas.style.cursor = touchingSolidPixel ? "pointer" : "default";
+      canvas.style.cursor = isInteractable ? "pointer" : "default";
     }
   } catch (err) {
     // Fuera del runtime nativo de Tauri (ej. vista previa en navegador)
@@ -283,23 +323,26 @@ canvas.addEventListener("mousedown", async (e) => {
   if (e.button !== 0 || isCurrentlyIgnoring) return;
 
   const rect = canvas.getBoundingClientRect();
-  const clickY = e.clientY - rect.top;
+  const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+  const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-  // Si hizo clic en la parte superior (donde está el globo de alerta), descartamos la alerta
-  if (activeNotification && clickY < 140) {
+  // Si hizo clic en la parte superior (donde esta el globo de alerta), descartamos la alerta
+  if (activeNotification && clickY < 84) {
     setRoamingAlertState(false);
     setPetState("IDLE");
     drawCurrentStateToCanvas();
     return;
   }
 
-  // Si hizo clic sobre el cuerpo del personaje, permite arrastrarlo por el escritorio
+  // Si hizo clic sobre un pixel solido del cuerpo del personaje, permite arrastrarlo
+  if (!isPixelSolid(clickX, clickY)) return;
+
   try {
     setIsDragging(true);
     await getCurrentWindow().startDragging();
     await syncPositionAfterUserDrag();
   } catch (err) {
-    console.debug("startDragging disponible únicamente dentro de Tauri:", err);
+    console.debug("startDragging disponible unicamente dentro de Tauri:", err);
   } finally {
     setIsDragging(false);
   }
@@ -307,10 +350,7 @@ canvas.addEventListener("mousedown", async (e) => {
 
 // Soporte de interacción con cursor para modo navegador
 canvas.addEventListener("mousemove", (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const solid = isPixelSolid(x, y);
+  const solid = isCursorOverInteractable(e.clientX, e.clientY);
   isCurrentlyIgnoring = !solid;
   canvas.style.cursor = solid ? "pointer" : "default";
 });
@@ -320,7 +360,7 @@ loadSkin("spartan").then(() => {
   initRoamingSystem();
 });
 requestAnimationFrame(animationLoop);
-setInterval(checkCursorHitTest, 50);
+setInterval(checkCursorHitTest, 30);
 
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
 (window as any).testAlert = () => {
@@ -387,19 +427,109 @@ function syncCardInfo() {
   updateThumbnail();
 }
 
-// Atajo de teclado 'D' para alternar visibilidad del controlador
-window.addEventListener("keydown", (e) => {
+// Control dinamico de visibilidad del panel y redimension de la ventana nativa
+const isTauriEnv = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+const mainAppWindow = isTauriEnv ? getCurrentWindow() : null;
+
+function syncActionButtons(state: PetStateName) {
+  document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((btn) => {
+    if (btn.dataset.action === state) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+  if (statusFsmText) {
+    statusFsmText.textContent = `Estado: ${state}`;
+  }
+}
+
+async function setControllerVisibility(visible: boolean) {
+  if (!debugPanel) return;
+  if (visible) {
+    debugPanel.classList.remove("hidden");
+    if (mainAppWindow) {
+      try {
+        await mainAppWindow.setSize(new LogicalSize(340, 580));
+      } catch (err) {
+        console.debug("setSize error:", err);
+      }
+    }
+    // Asegurar inmediatamente que los clics no se ignoren sobre el panel
+    isCurrentlyIgnoring = false;
+    try {
+      await invoke("set_ignore_cursor", { ignore: false });
+    } catch (_) {}
+  } else {
+    debugPanel.classList.add("hidden");
+    if (mainAppWindow) {
+      try {
+        await mainAppWindow.setSize(new LogicalSize(300, 240));
+      } catch (err) {
+        console.debug("setSize error:", err);
+      }
+    }
+  }
+}
+
+// Permitir arrastrar la ventana desde el encabezado del controlador
+const controllerHeader = document.querySelector(".controller-header");
+controllerHeader?.addEventListener("mousedown", async (e) => {
+  const target = (e as MouseEvent).target as HTMLElement;
+  if (target.closest("#btn-close-debug") || target.tagName === "BUTTON" || target.tagName === "SELECT") {
+    return;
+  }
+  if ((e as MouseEvent).button !== 0) return;
+
+  try {
+    setIsDragging(true);
+    await getCurrentWindow().startDragging();
+    await syncPositionAfterUserDrag();
+  } catch (err) {
+    console.debug("startDragging disponible unicamente dentro de Tauri:", err);
+  } finally {
+    setIsDragging(false);
+  }
+});
+
+// Atajos de teclado:
+// - Tecla 'D': Alterna la visibilidad del panel de control
+// - Tecla 'Escape': Cierra el panel de control si esta visible
+// - Flechas Direccionales: Mueven al personaje por la pantalla (Shift para pasos mas largos)
+window.addEventListener("keydown", async (e) => {
   if (e.key === "d" || e.key === "D") {
-    debugPanel?.classList.toggle("hidden");
+    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
+    await setControllerVisibility(isHidden);
+    return;
+  }
+
+  if (e.key === "Escape") {
+    const isVisible = !(debugPanel?.classList.contains("hidden") ?? true);
+    if (isVisible) {
+      await setControllerVisibility(false);
+      return;
+    }
+  }
+
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault();
+    const step = e.shiftKey ? 35 : 12;
+    let dx = 0;
+    let dy = 0;
+    if (e.key === "ArrowLeft") dx = -step;
+    if (e.key === "ArrowRight") dx = step;
+    if (e.key === "ArrowUp") dy = -step;
+    if (e.key === "ArrowDown") dy = step;
+    await moveWindowBy(dx, dy);
   }
 });
 
 // Clic derecho: sobre el personaje alterna modo Fijo/Patrulla; sobre el fondo alterna el controlador
-canvas.addEventListener("contextmenu", (e) => {
+canvas.addEventListener("contextmenu", async (e) => {
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const clickY = e.clientY - rect.top;
+  const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+  const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
   if (isPixelSolid(clickX, clickY)) {
     const pinned = togglePinMode();
@@ -407,12 +537,13 @@ canvas.addEventListener("contextmenu", (e) => {
       statusFsmText.textContent = pinned ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
     }
   } else {
-    debugPanel?.classList.toggle("hidden");
+    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
+    await setControllerVisibility(isHidden);
   }
 });
 
-btnCloseDebug?.addEventListener("click", () => {
-  debugPanel?.classList.add("hidden");
+btnCloseDebug?.addEventListener("click", async () => {
+  await setControllerVisibility(false);
 });
 
 selectSkin?.addEventListener("change", async (e) => {
@@ -423,24 +554,20 @@ selectSkin?.addEventListener("change", async (e) => {
 
 document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".btn-action").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
     const action = btn.dataset.action as PetStateName;
     if (action) {
       setPetState(action);
-      if (statusFsmText) statusFsmText.textContent = `Estado: ${action}`;
     }
   });
 });
 
 btnSemester?.addEventListener("click", () => {
   (window as any).testAlert();
-  if (statusFsmText) statusFsmText.textContent = "Estado: ALERT_SEMESTRE";
 });
 
 btnGithub?.addEventListener("click", () => {
   (window as any).testVictory();
-  if (statusFsmText) statusFsmText.textContent = "Estado: VICTORY_GITHUB";
 });
+
 
 
