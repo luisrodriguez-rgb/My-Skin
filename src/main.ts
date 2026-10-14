@@ -18,6 +18,8 @@ import {
 } from "./roaming";
 import { audioEngine } from "./audio";
 import { pomodoroEngine, PomodoroPhase } from "./pomodoro";
+import { academicSyncService } from "./syncService";
+import { githubMonitor } from "./githubMonitor";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
 export type PetStateName =
@@ -188,6 +190,14 @@ function drawCurrentStateToCanvas() {
   const destX = Math.floor((CANVAS_WIDTH - destWidth) / 2);
   const destY = anchorY;
 
+  // Guardar caja envolvente del personaje para optimizar hit-testing en O(1)
+  characterBoundingBox = {
+    minX: destX,
+    maxX: destX + destWidth,
+    minY: destY,
+    maxY: destY + destHeight,
+  };
+
   // Inversión horizontal sobre el eje central si el personaje camina hacia la izquierda
   ctx.save();
   if (getFacingDirection() === -1) {
@@ -301,8 +311,26 @@ function animationLoop(timestamp: number) {
   requestAnimationFrame(animationLoop);
 }
 
+// Caja envolvente del personaje activo en pantalla para descarte O(1)
+let characterBoundingBox = {
+  minX: 0,
+  maxX: CANVAS_WIDTH,
+  minY: 0,
+  maxY: CANVAS_HEIGHT,
+};
+
 // --- HIT-TEST DE CANAL ALPHA Y PANEL DE CONTROL (CONECTADO A RUST) ---
 function isPixelSolid(x: number, y: number): boolean {
+  // Descarte rápido O(1): si el cursor está fuera del recuadro del sprite, retornar false inmediatamente
+  if (
+    x < characterBoundingBox.minX - 4 ||
+    x >= characterBoundingBox.maxX + 4 ||
+    y < characterBoundingBox.minY - 4 ||
+    y >= characterBoundingBox.maxY + 4
+  ) {
+    return false;
+  }
+
   if (!currentFrameImageData) return false;
   const px = Math.floor(x);
   const py = Math.floor(y);
@@ -539,23 +567,57 @@ loadSkin("spartan").then(() => {
 requestAnimationFrame(animationLoop);
 setInterval(checkCursorHitTest, 30);
 
+// Iniciar servicios en segundo plano (Fase 2: Académico y GitHub)
+academicSyncService.startPeriodicCheck(60);
+githubMonitor.startPolling(180);
+
+academicSyncService.subscribe((deadline, timeRemaining) => {
+  const customAlert = activeManifest?.dialogues?.alert || `${deadline.course}: ${deadline.title}`;
+  setPetState("ALERT_SEMESTRE", {
+    title: `ENTREGA: ${timeRemaining.toUpperCase()}`,
+    subtitle: customAlert.slice(0, 36),
+    urgent: deadline.urgent,
+  });
+});
+
+githubMonitor.subscribe({
+  onMerge: (event) => {
+    const customVic = activeManifest?.dialogues?.victory || `PR #${event.prNumber} mergeada con exito`;
+    setPetState("VICTORY_GITHUB", {
+      title: `GITHUB: PR #${event.prNumber} MERGED`,
+      subtitle: customVic.slice(0, 36),
+      urgent: false,
+    });
+  },
+  onCommit: (commit) => {
+    setPetState("IDLE", {
+      title: `COMMIT: ${commit.sha}`,
+      subtitle: commit.message.slice(0, 36),
+      urgent: false,
+    });
+  },
+});
+
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
 (window as any).testAlert = () => {
-  const customMsg = activeManifest?.dialogues?.alert || "Lab. Física - Circuitos RC";
+  const next = academicSyncService.getNextUrgentDeadline();
+  const timeStr = next ? academicSyncService.formatRemainingTime(next.dueAt) : "1h 45m";
+  const customMsg = activeManifest?.dialogues?.alert || (next ? `${next.course} - ${next.title}` : "Lab. Física - Circuitos RC");
   setPetState("ALERT_SEMESTRE", {
-    title: "ENTREGA PENDIENTE",
+    title: `ENTREGA: ${timeStr.toUpperCase()}`,
     subtitle: customMsg.slice(0, 36),
     urgent: true,
   });
 };
 
 (window as any).testVictory = () => {
-  const customMsg = activeManifest?.dialogues?.victory || "Branch feature/companion integrado";
+  const customMsg = activeManifest?.dialogues?.victory || "PR #12 mergeada en main con honor";
   setPetState("VICTORY_GITHUB", {
-    title: "GITHUB: PR MERGED",
+    title: "GITHUB: PR #12 MERGED",
     subtitle: customMsg.slice(0, 36),
     urgent: false,
   });
+  githubMonitor.triggerSimulatedMerge();
 };
 
 (window as any).setPetState = setPetState;
