@@ -1,14 +1,19 @@
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
 import {
   initRoamingSystem,
   togglePinMode,
   getFacingDirection,
+  setFacingDirection,
   getIsPinned,
   setRoamingAlertState,
   syncPositionAfterUserDrag,
   setIsDragging,
   moveWindowBy,
+  clampWindowPosition,
+  updateWindowCoordinates,
+  getWindowPosition,
+  ensureWindowInBounds,
 } from "./roaming";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
@@ -94,6 +99,12 @@ export function setPetState(
   notification?: { title: string; subtitle: string; urgent?: boolean }
 ) {
   if (!activeManifest || !activeManifest.states[newState]) return;
+
+  // Si ya estamos en el mismo estado y no hay notificacion nueva, NO reiniciar el fotograma.
+  // Esto permite que al mantener presionada la flecha, la animacion de caminata continue fluida sin trabarse.
+  if (currentState === newState && !notification) {
+    return;
+  }
 
   currentState = newState;
   currentFrameIndex = 0;
@@ -293,6 +304,8 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
 }
 
 async function checkCursorHitTest() {
+  if (isMouseDragging) return; // Nunca ignorar cursor mientras se arrastra con el mouse
+
   try {
     const pos = await invoke<{ x: number; y: number; inside: boolean }>("get_cursor_rel_pos");
 
@@ -318,15 +331,21 @@ async function checkCursorHitTest() {
   }
 }
 
-// --- INTERACCIÓN CON EL PERSONAJE Y EL GLOBO ---
-canvas.addEventListener("mousedown", async (e) => {
-  if (e.button !== 0 || isCurrentlyIgnoring) return;
+// --- SISTEMA ROBUSTO DE ARRASTRE DIRECTO CON EL MOUSE (DRAG & DROP) ---
+let isMouseDragging = false;
+let dragStartMouseX = 0;
+let dragStartMouseY = 0;
+let dragStartWinX = 0;
+let dragStartWinY = 0;
+
+canvas.addEventListener("pointerdown", async (e) => {
+  if (e.button !== 0) return;
 
   const rect = canvas.getBoundingClientRect();
   const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
   const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-  // Si hizo clic en la parte superior (donde esta el globo de alerta), descartamos la alerta
+  // 1. Si hizo clic en la parte superior (donde esta el globo de alerta), descartamos la alerta
   if (activeNotification && clickY < 84) {
     setRoamingAlertState(false);
     setPetState("IDLE");
@@ -334,22 +353,66 @@ canvas.addEventListener("mousedown", async (e) => {
     return;
   }
 
-  // Si hizo clic sobre un pixel solido del cuerpo del personaje, permite arrastrarlo
+  // 2. Si hizo clic sobre un pixel solido del cuerpo del personaje, activar arrastre manual
   if (!isPixelSolid(clickX, clickY)) return;
 
   try {
-    setIsDragging(true);
-    await getCurrentWindow().startDragging();
-    await syncPositionAfterUserDrag();
-  } catch (err) {
-    console.debug("startDragging disponible unicamente dentro de Tauri:", err);
-  } finally {
-    setIsDragging(false);
+    canvas.setPointerCapture(e.pointerId);
+  } catch (_) {}
+
+  isMouseDragging = true;
+  setIsDragging(true);
+  dragStartMouseX = e.screenX;
+  dragStartMouseY = e.screenY;
+
+  const currentPos = getWindowPosition();
+  dragStartWinX = currentPos.x;
+  dragStartWinY = currentPos.y;
+
+  // Asegurar que no se ignoren eventos mientras el usuario arrastra
+  isCurrentlyIgnoring = false;
+  try {
+    await invoke("set_ignore_cursor", { ignore: false });
+  } catch (_) {}
+});
+
+window.addEventListener("pointermove", async (e) => {
+  if (!isMouseDragging) return;
+
+  const deltaX = e.screenX - dragStartMouseX;
+  const deltaY = e.screenY - dragStartMouseY;
+
+  if (Math.abs(deltaX) > 2) {
+    setFacingDirection(deltaX > 0 ? 1 : -1);
+    setPetState("WALK");
   }
+
+  const clamped = clampWindowPosition(dragStartWinX + deltaX, dragStartWinY + deltaY);
+  updateWindowCoordinates(clamped.x, clamped.y);
+
+  if (mainAppWindow) {
+    try {
+      await mainAppWindow.setPosition(new PhysicalPosition(Math.round(clamped.x), Math.round(clamped.y)));
+    } catch (err) {
+      console.debug("Error en arrastre de ventana:", err);
+    }
+  }
+});
+
+window.addEventListener("pointerup", (e) => {
+  if (!isMouseDragging) return;
+  try {
+    canvas.releasePointerCapture(e.pointerId);
+  } catch (_) {}
+  isMouseDragging = false;
+  setIsDragging(false);
+  setPetState("IDLE");
+  syncPositionAfterUserDrag();
 });
 
 // Soporte de interacción con cursor para modo navegador
 canvas.addEventListener("mousemove", (e) => {
+  if (isMouseDragging) return;
   const solid = isCursorOverInteractable(e.clientX, e.clientY);
   isCurrentlyIgnoring = !solid;
   canvas.style.cursor = solid ? "pointer" : "default";
@@ -455,6 +518,9 @@ async function setControllerVisibility(visible: boolean) {
         console.debug("setSize error:", err);
       }
     }
+    // Reubicar la ventana si esta cerca del borde para que el controlador NUNCA se corte
+    await ensureWindowInBounds(340, 580);
+
     // Asegurar inmediatamente que los clics no se ignoren sobre el panel
     isCurrentlyIgnoring = false;
     try {
@@ -469,33 +535,43 @@ async function setControllerVisibility(visible: boolean) {
         console.debug("setSize error:", err);
       }
     }
+    await ensureWindowInBounds(300, 240);
   }
 }
 
 // Permitir arrastrar la ventana desde el encabezado del controlador
 const controllerHeader = document.querySelector(".controller-header");
-controllerHeader?.addEventListener("mousedown", async (e) => {
-  const target = (e as MouseEvent).target as HTMLElement;
+controllerHeader?.addEventListener("pointerdown", async (e) => {
+  const me = e as PointerEvent;
+  const target = me.target as HTMLElement;
   if (target.closest("#btn-close-debug") || target.tagName === "BUTTON" || target.tagName === "SELECT") {
     return;
   }
-  if ((e as MouseEvent).button !== 0) return;
+  if (me.button !== 0) return;
 
   try {
-    setIsDragging(true);
-    await getCurrentWindow().startDragging();
-    await syncPositionAfterUserDrag();
-  } catch (err) {
-    console.debug("startDragging disponible unicamente dentro de Tauri:", err);
-  } finally {
-    setIsDragging(false);
-  }
+    (e.currentTarget as HTMLElement).setPointerCapture(me.pointerId);
+  } catch (_) {}
+
+  isMouseDragging = true;
+  setIsDragging(true);
+  dragStartMouseX = me.screenX;
+  dragStartMouseY = me.screenY;
+
+  const currentPos = getWindowPosition();
+  dragStartWinX = currentPos.x;
+  dragStartWinY = currentPos.y;
+
+  isCurrentlyIgnoring = false;
+  try {
+    await invoke("set_ignore_cursor", { ignore: false });
+  } catch (_) {}
 });
 
 // Atajos de teclado:
 // - Tecla 'D': Alterna la visibilidad del panel de control
 // - Tecla 'Escape': Cierra el panel de control si esta visible
-// - Flechas Direccionales: Mueven al personaje por la pantalla (Shift para pasos mas largos)
+// - Flechas Direccionales: Mueven al personaje por la pantalla de forma agil y rapida
 window.addEventListener("keydown", async (e) => {
   if (e.key === "d" || e.key === "D") {
     const isHidden = debugPanel?.classList.contains("hidden") ?? true;
@@ -513,7 +589,7 @@ window.addEventListener("keydown", async (e) => {
 
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
     e.preventDefault();
-    const step = e.shiftKey ? 35 : 12;
+    const step = e.shiftKey ? 45 : 22; // Movimiento agil y rapido
     let dx = 0;
     let dy = 0;
     if (e.key === "ArrowLeft") dx = -step;
