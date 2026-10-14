@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
+import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import {
   initRoamingSystem,
   togglePinMode,
@@ -13,7 +13,8 @@ import {
   clampWindowPosition,
   updateWindowCoordinates,
   getWindowPosition,
-  ensureWindowInBounds,
+  shiftWindowUpForController,
+  restoreWindowAfterController,
 } from "./roaming";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
@@ -449,7 +450,7 @@ window.addEventListener("pointermove", async (e) => {
 
   if (mainAppWindow) {
     try {
-      await mainAppWindow.setPosition(new PhysicalPosition(Math.round(clamped.x), Math.round(clamped.y)));
+      await mainAppWindow.setPosition(new LogicalPosition(Math.round(clamped.x), Math.round(clamped.y)));
     } catch (err) {
       console.debug("Error en arrastre de ventana:", err);
     }
@@ -568,16 +569,15 @@ async function setControllerVisibility(visible: boolean) {
   if (!debugPanel) return;
   if (visible) {
     debugPanel.classList.remove("hidden");
+    // Subir la ventana automáticamente si está cerca del borde inferior para que NUNCA se corte
+    await shiftWindowUpForController(340, 580);
     if (mainAppWindow) {
       try {
-        await mainAppWindow.setSize(new LogicalSize(340, 580));
         await mainAppWindow.setFocus();
       } catch (err) {
-        console.debug("setSize error:", err);
+        console.debug("setFocus error:", err);
       }
     }
-    // Reubicar la ventana si esta cerca del borde para que el controlador NUNCA se corte
-    await ensureWindowInBounds(340, 580);
 
     // Asegurar inmediatamente que los clics no se ignoren sobre el panel
     isCurrentlyIgnoring = false;
@@ -586,14 +586,7 @@ async function setControllerVisibility(visible: boolean) {
     } catch (_) {}
   } else {
     debugPanel.classList.add("hidden");
-    if (mainAppWindow) {
-      try {
-        await mainAppWindow.setSize(new LogicalSize(300, 240));
-      } catch (err) {
-        console.debug("setSize error:", err);
-      }
-    }
-    await ensureWindowInBounds(300, 240);
+    await restoreWindowAfterController(300, 240);
   }
 }
 
@@ -603,6 +596,35 @@ controllerHeader?.addEventListener("pointerdown", async (e) => {
   const me = e as PointerEvent;
   const target = me.target as HTMLElement;
   if (target.closest("#btn-close-debug") || target.tagName === "BUTTON" || target.tagName === "SELECT") {
+    return;
+  }
+  if (me.button !== 0) return;
+
+  try {
+    (e.currentTarget as HTMLElement).setPointerCapture(me.pointerId);
+  } catch (_) {}
+
+  isMouseDragging = true;
+  setIsDragging(true);
+  dragStartMouseX = me.screenX;
+  dragStartMouseY = me.screenY;
+
+  const currentPos = getWindowPosition();
+  dragStartWinX = currentPos.x;
+  dragStartWinY = currentPos.y;
+
+  isCurrentlyIgnoring = false;
+  try {
+    await invoke("set_ignore_cursor", { ignore: false });
+  } catch (_) {}
+});
+
+// Permitir arrastrar también desde la tarjeta del personaje en el controlador
+const cardCharacter = document.querySelector(".card-character");
+cardCharacter?.addEventListener("pointerdown", async (e) => {
+  const me = e as PointerEvent;
+  const target = me.target as HTMLElement;
+  if (target.tagName === "SELECT" || target.tagName === "OPTION" || target.closest("select")) {
     return;
   }
   if (me.button !== 0) return;

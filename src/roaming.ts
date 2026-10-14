@@ -1,4 +1,4 @@
-import { getCurrentWindow, currentMonitor, PhysicalPosition } from "@tauri-apps/api/window";
+import { getCurrentWindow, currentMonitor, LogicalPosition, LogicalSize } from "@tauri-apps/api/window";
 import { setPetState } from "./main";
 
 // Deteccion segura de entorno Tauri v2
@@ -12,15 +12,15 @@ let isDragging = false;          // Pausa el movimiento automatico durante arras
 let hasActiveAlert = false;      // Detiene la caminata mientras hay una alerta desplegada
 let facingDirection: 1 | -1 = 1; // 1 = Derecha, -1 = Izquierda
 
-// Dimensiones de pantalla y limites seguros del monitor
+// Dimensiones de pantalla en PUNTOS LOGICOS (coherente con CSS y el mouse)
 let monitorWidth = 1440;
 let monitorHeight = 900;
 let currentWinWidth = 300;
 let currentWinHeight = 240;
 
-// Coordenadas fisicas de la ventana en el monitor
+// Coordenadas logicas de la ventana en el monitor
 let winX = 200;
-let winY = 700;
+let winY = 600;
 let targetX = 600;
 let minX = 0;
 let maxX = 1200;
@@ -31,14 +31,15 @@ let waitTimer = 0;
 let keyboardWalkTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
- * Limita estrictamente las coordenadas de la ventana para que NUNCA se pierda de pantalla
- * ni quede cortada contra los bordes superior, inferior, izquierdo o derecho.
+ * Limita las coordenadas de la ventana en puntos logicos.
+ * Permite que el personaje suba hasta tocar la barra de menu sin pared invisible,
+ * y evita que caiga fuera de la pantalla por la derecha o abajo.
  */
 export function clampWindowPosition(x: number, y: number, w = currentWinWidth, h = currentWinHeight) {
-  // Margen superior para evitar quedar bajo la barra de menu de macOS
-  const minY = 28;
-  const minX = 0;
-  const safeMaxX = Math.max(0, monitorWidth - w);
+  // -60px permite que la cabeza del personaje alcance la barra de menu superior de macOS
+  const minY = -60;
+  const minX = -40; // Permite que el cuerpo alcance el borde izquierdo real
+  const safeMaxX = Math.max(minX, monitorWidth - w + 40);
   const safeMaxY = Math.max(minY, monitorHeight - h);
 
   return {
@@ -48,7 +49,7 @@ export function clampWindowPosition(x: number, y: number, w = currentWinWidth, h
 }
 
 /**
- * 1. Inicializa limites del monitor para mantener la ventana dentro de los margenes visibles
+ * 1. Inicializa limites del monitor en coordenadas logicas (normalizando escala Retina)
  */
 export async function initRoamingSystem() {
   if (!appWindow) {
@@ -58,26 +59,28 @@ export async function initRoamingSystem() {
 
   try {
     const monitor = await currentMonitor();
-    const winSize = await appWindow.outerSize();
+    const scale = (await appWindow.scaleFactor()) || 1;
     const currentPos = await appWindow.outerPosition();
+    const winSize = await appWindow.outerSize();
 
-    winX = currentPos.x;
-    winY = currentPos.y;
+    // Guardar coordenadas normalizadas a puntos logicos
+    winX = currentPos.x / scale;
+    winY = currentPos.y / scale;
 
     if (monitor) {
-      monitorWidth = monitor.size.width;
-      monitorHeight = monitor.size.height;
-      currentWinWidth = winSize.width;
-      currentWinHeight = winSize.height;
+      monitorWidth = monitor.size.width / scale;
+      monitorHeight = monitor.size.height / scale;
+      currentWinWidth = winSize.width / scale;
+      currentWinHeight = winSize.height / scale;
 
       minX = 0;
-      maxX = Math.max(0, monitor.size.width - winSize.width);
+      maxX = Math.max(0, monitorWidth - currentWinWidth);
 
       // Si la ventana inicio en (0,0), posicionarla en la esquina inferior derecha
       if (winX <= 20 && winY <= 20) {
-        winX = monitor.size.width - winSize.width - 60;
-        winY = monitor.size.height - winSize.height - 90;
-        await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+        winX = monitorWidth - currentWinWidth - 60;
+        winY = monitorHeight - currentWinHeight - 80;
+        await appWindow.setPosition(new LogicalPosition(Math.round(winX), Math.round(winY)));
       }
     }
 
@@ -132,7 +135,7 @@ async function updateMovementStep() {
     winX = clamped.x;
     winY = clamped.y;
     try {
-      await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+      await appWindow.setPosition(new LogicalPosition(Math.round(winX), Math.round(winY)));
     } catch (err) {
       console.debug("[Roaming] Error al posicionar ventana:", err);
     }
@@ -161,33 +164,62 @@ export async function moveWindowBy(dx: number, dy: number) {
   winY = clamped.y;
 
   try {
-    await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+    await appWindow.setPosition(new LogicalPosition(Math.round(winX), Math.round(winY)));
   } catch (err) {
     console.debug("[Roaming] Error al mover ventana con teclado:", err);
   }
 }
 
 /**
- * 5. Reubica la ventana si cambia de tamano para asegurar que no se corte en los bordes
+ * 5. Reubica la ventana subiendola si esta cerca del borde inferior al abrir el controlador
+ * para que el panel de control NUNCA se corte por debajo de la pantalla.
  */
-export async function ensureWindowInBounds(newWidth: number, newHeight: number) {
+export async function shiftWindowUpForController(newW = 340, newH = 580) {
   if (!appWindow) return;
-  currentWinWidth = newWidth;
-  currentWinHeight = newHeight;
-
-  const clamped = clampWindowPosition(winX, winY, newWidth, newHeight);
-  winX = clamped.x;
-  winY = clamped.y;
 
   try {
-    await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+    const monitor = await currentMonitor();
+    const scale = (await appWindow.scaleFactor()) || 1;
+    const screenH = monitor ? monitor.size.height / scale : monitorHeight;
+    const screenW = monitor ? monitor.size.width / scale : monitorWidth;
+
+    currentWinWidth = newW;
+    currentWinHeight = newH;
+
+    // Si la altura del controlador sobrepasaria el borde inferior: subir la ventana
+    if (winY + newH > screenH - 10) {
+      winY = Math.max(30, screenH - newH - 25);
+    }
+
+    // Si sobrepasa el borde derecho:
+    if (winX + newW > screenW - 10) {
+      winX = Math.max(10, screenW - newW - 15);
+    }
+
+    await appWindow.setPosition(new LogicalPosition(Math.round(winX), Math.round(winY)));
+    await appWindow.setSize(new LogicalSize(newW, newH));
   } catch (err) {
-    console.debug("[Roaming] Error al ajustar limites de ventana:", err);
+    console.debug("[Roaming] Error reposicionando ventana para controlador:", err);
   }
 }
 
 /**
- * 6. Alternar entre Modo Fijo (Anclado) y Modo Libre (Patrulla)
+ * 6. Restaura el tamano compacto del personaje al cerrar el controlador
+ */
+export async function restoreWindowAfterController(origW = 300, origH = 240) {
+  if (!appWindow) return;
+  currentWinWidth = origW;
+  currentWinHeight = origH;
+
+  try {
+    await appWindow.setSize(new LogicalSize(origW, origH));
+  } catch (err) {
+    console.debug("[Roaming] Error restaurando ventana:", err);
+  }
+}
+
+/**
+ * 7. Alternar entre Modo Fijo (Anclado) y Modo Libre (Patrulla)
  */
 export function togglePinMode(): boolean {
   isPinned = !isPinned;
@@ -219,7 +251,7 @@ export function togglePinMode(): boolean {
 }
 
 /**
- * 7. Notificar presencia de alerta activa para frenar la caminata
+ * 8. Notificar presencia de alerta activa para frenar la caminata
  */
 export function setRoamingAlertState(hasAlert: boolean) {
   hasActiveAlert = hasAlert;
@@ -229,16 +261,15 @@ export function setRoamingAlertState(hasAlert: boolean) {
 }
 
 /**
- * 8. Sincronizar coordenadas tras arrastre manual del usuario
+ * 9. Sincronizar coordenadas tras arrastre manual del usuario en puntos logicos
  */
 export async function syncPositionAfterUserDrag() {
   if (!appWindow) return;
   try {
+    const scale = (await appWindow.scaleFactor()) || 1;
     const pos = await appWindow.outerPosition();
-    const clamped = clampWindowPosition(pos.x, pos.y);
-    winX = clamped.x;
-    winY = clamped.y;
-    await appWindow.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+    winX = pos.x / scale;
+    winY = pos.y / scale;
   } catch (err) {
     console.debug("[Roaming] Error al sincronizar posicion tras arrastre:", err);
   }
