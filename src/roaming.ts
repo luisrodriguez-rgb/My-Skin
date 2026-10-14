@@ -58,6 +58,11 @@ export async function initRoamingSystem() {
   }
 
   try {
+    try {
+      await appWindow.setAlwaysOnTop(true);
+      await appWindow.setVisibleOnAllWorkspaces(true);
+    } catch (_) {}
+
     const monitor = await currentMonitor();
     const scale = (await appWindow.scaleFactor()) || 1;
     const currentPos = await appWindow.outerPosition();
