@@ -5,7 +5,7 @@
   "frameHeight": 64,
   "scale": 2,
   "anchorY": 160,
-  "personalityPrompt": "Habla como un rey espartano épico y directo. Recuérdale al usuario sus entregas sin rodeos.",
+  "personalityPrompt": "Notificaciones directas y disciplinadas. Enfocado en plazos de entrega y cumplimiento de objetivos técnicos.",
   "states": {
     "IDLE": {
       "row": 0,

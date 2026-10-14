@@ -69,6 +69,7 @@ export async function loadSkin(skinFolder: string) {
     spriteImage = img;
     setPetState("IDLE");
     drawCurrentStateToCanvas();
+    syncCardInfo();
     console.log(`[MySkin] Skin "${activeManifest.name}" cargado exitosamente.`);
   } catch (err) {
     console.error(`Error al cargar el skin "${skinFolder}":`, err);
@@ -296,7 +297,7 @@ setInterval(checkCursorHitTest, 50);
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
 (window as any).testAlert = () => {
   setPetState("ALERT_SEMESTRE", {
-    title: "⚔️ ENTREGA EN 1H 45M",
+    title: "ENTREGA EN 1H 45M",
     subtitle: "Lab. Física - Circuitos RC",
     urgent: true,
   });
@@ -304,7 +305,7 @@ setInterval(checkCursorHitTest, 50);
 
 (window as any).testVictory = () => {
   setPetState("VICTORY_GITHUB", {
-    title: "🐙 PR MERGED EN MAIN",
+    title: "GITHUB: PR MERGED",
     subtitle: "Branch feature/companion integrado",
     urgent: false,
   });
@@ -313,42 +314,90 @@ setInterval(checkCursorHitTest, 50);
 (window as any).setPetState = setPetState;
 (window as any).loadSkin = loadSkin;
 
-// --- PANEL DE CONTROL (TECLA 'D' O EN MODO NAVEGADOR) ---
+// --- PANEL DE CONTROL: PIXEL MINIMAL UI ---
 const debugPanel = document.getElementById("debug-panel");
 const btnCloseDebug = document.getElementById("btn-close-debug");
 const selectSkin = document.getElementById("select-skin") as HTMLSelectElement | null;
 const btnSemester = document.getElementById("btn-event-semester");
 const btnGithub = document.getElementById("btn-event-github");
+const charNameEl = document.getElementById("char-name");
+const charSpecEl = document.getElementById("char-spec");
+const statusFsmText = document.getElementById("status-fsm-text");
+const thumbCanvas = document.getElementById("thumb-canvas") as HTMLCanvasElement | null;
+const thumbCtx = thumbCanvas?.getContext("2d");
 
+// Renderizar miniatura del personaje en la tarjeta del controlador
+function updateThumbnail() {
+  if (!thumbCanvas || !thumbCtx || !activeManifest || !spriteImage) return;
+  thumbCtx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+  thumbCtx.imageSmoothingEnabled = false;
+
+  const { frameWidth, frameHeight } = activeManifest;
+  const sx = 0; // Primer frame IDLE
+  const sy = 0;
+
+  thumbCtx.drawImage(
+    spriteImage,
+    sx,
+    sy,
+    frameWidth,
+    frameHeight,
+    2,
+    2,
+    thumbCanvas.width - 4,
+    thumbCanvas.height - 4
+  );
+}
+
+// Sincronizar metadatos en la tarjeta activa
+function syncCardInfo() {
+  if (!activeManifest) return;
+  if (charNameEl) charNameEl.textContent = activeManifest.name;
+  if (charSpecEl) charSpecEl.textContent = `Skin pixel · ${activeManifest.frameWidth} × ${activeManifest.frameHeight}`;
+  updateThumbnail();
+}
+
+// Clic derecho sobre el personaje o atajo 'D' alterna el controlador
 window.addEventListener("keydown", (e) => {
   if (e.key === "d" || e.key === "D") {
     debugPanel?.classList.toggle("hidden");
   }
 });
 
+canvas.addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+  debugPanel?.classList.toggle("hidden");
+});
+
 btnCloseDebug?.addEventListener("click", () => {
   debugPanel?.classList.add("hidden");
 });
 
-selectSkin?.addEventListener("change", (e) => {
+selectSkin?.addEventListener("change", async (e) => {
   const skin = (e.target as HTMLSelectElement).value;
-  loadSkin(skin);
+  await loadSkin(skin);
+  syncCardInfo();
 });
 
 document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".btn-action").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    const action = btn.dataset.action?.toUpperCase() as PetStateName;
-    if (action) setPetState(action);
+    const action = btn.dataset.action as PetStateName;
+    if (action) {
+      setPetState(action);
+      if (statusFsmText) statusFsmText.textContent = `Estado: ${action}`;
+    }
   });
 });
 
 btnSemester?.addEventListener("click", () => {
   (window as any).testAlert();
+  if (statusFsmText) statusFsmText.textContent = "Estado: ALERT_SEMESTRE";
 });
 
 btnGithub?.addEventListener("click", () => {
   (window as any).testVictory();
+  if (statusFsmText) statusFsmText.textContent = "Estado: VICTORY_GITHUB";
 });
 

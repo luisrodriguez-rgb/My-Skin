@@ -7,46 +7,93 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <!-- Canvas principal donde se dibuja el personaje, animaciones y globos de texto -->
-    <canvas id="pet-canvas" width="320" height="320"></canvas>
+    <!-- Canvas principal donde vive el personaje en el escritorio -->
+    <canvas id="pet-canvas" width="300" height="300"></canvas>
 
-    <!-- Panel de control flotante (se activa con la tecla 'D' o cuando corre en navegador web sin Tauri) -->
-    <div id="debug-panel" class="debug-panel hidden">
-      <div class="panel-header">
-        <span class="panel-title">MySkin Controller</span>
-        <button id="btn-close-debug" class="btn-icon">✕</button>
-      </div>
-
-      <div class="panel-section">
-        <label>Skin Activo</label>
-        <select id="select-skin">
-          <option value="spartan">Leónidas (Espartano 300)</option>
-          <option value="spiderman">Spider-Man</option>
-        </select>
-      </div>
-
-      <div class="panel-section">
-        <label>Estado / Animación</label>
-        <div class="btn-group">
-          <button class="btn-action" data-action="idle">IDLE</button>
-          <button class="btn-action" data-action="walk">WALK</button>
-          <button class="btn-action" data-action="alert">ALERT</button>
-          <button class="btn-action" data-action="celebrate">VICTORY</button>
+    <!-- MySkin Controller: Pixel Minimal UI -->
+    <aside id="debug-panel" class="controller-panel" aria-label="MySkin Controller">
+      <!-- Header -->
+      <header class="controller-header">
+        <div class="brand">
+          <h1 class="brand-title">MySkin</h1>
+          <span class="brand-tag">DESKTOP COMPANION</span>
         </div>
-      </div>
+        <button id="btn-close-debug" class="btn-close" title="Ocultar controlador (tecla D o clic derecho)">✕</button>
+      </header>
 
-      <div class="panel-section">
-        <label>Simular Evento</label>
-        <div class="btn-group">
-          <button id="btn-event-semester" class="btn-secondary">⚠️ Entrega Semestre</button>
-          <button id="btn-event-github" class="btn-secondary">🐙 GitHub PR Merge</button>
+      <!-- Active Character Card -->
+      <section class="card-character">
+        <div class="char-thumb-wrapper">
+          <canvas id="thumb-canvas" width="48" height="48"></canvas>
+          <span class="badge-status">Activo</span>
         </div>
-      </div>
+        <div class="char-info">
+          <div class="char-meta">
+            <h2 id="char-name" class="char-title">Leónidas (300)</h2>
+            <span id="char-spec" class="char-subtitle">Skin pixel · 64 × 64</span>
+          </div>
+          <div class="char-select-wrapper">
+            <select id="select-skin" class="skin-select" aria-label="Cambiar personaje">
+              <option value="spartan">Leónidas (Espartano 300)</option>
+              <option value="spiderman">Spider-Man</option>
+            </select>
+          </div>
+        </div>
+      </section>
 
-      <div class="panel-footer">
-        <span id="status-cursor">Modo: Esperando cursor...</span>
-      </div>
-    </div>
+      <!-- Animation / FSM Section -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">ANIMACIÓN</span>
+          <span class="group-caption">Vista previa</span>
+        </div>
+        <div class="btn-grid-actions">
+          <button class="btn-chip btn-action active" data-action="IDLE">
+            <span class="chip-code">00</span>
+            <span class="chip-label">IDLE</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="WALK">
+            <span class="chip-code">01</span>
+            <span class="chip-label">WALK</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="ALERT_SEMESTRE">
+            <span class="chip-code">02</span>
+            <span class="chip-label">ALERT</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="VICTORY_GITHUB">
+            <span class="chip-code">03</span>
+            <span class="chip-label">WIN</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Notification Simulator -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">PROBAR NOTIFICACIÓN</span>
+          <span class="group-caption">Eventos</span>
+        </div>
+        <div class="btn-grid-events">
+          <button id="btn-event-semester" class="btn-event btn-event-semester">
+            <span class="event-code">SEM</span>
+            <span class="event-label">Entrega Semestre</span>
+          </button>
+          <button id="btn-event-github" class="btn-event btn-event-github">
+            <span class="event-code">GIT</span>
+            <span class="event-label">GitHub Merge</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Footer Status -->
+      <footer class="controller-footer">
+        <div class="footer-state">
+          <span class="state-dot"></span>
+          <span id="status-fsm-text">Estado: IDLE</span>
+        </div>
+        <span class="shortcut-tip">Presiona [D] o Clic Derecho</span>
+      </footer>
+    </aside>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
