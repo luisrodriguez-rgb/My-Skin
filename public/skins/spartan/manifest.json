@@ -1,30 +1,36 @@
 {
-  "id": "spartan",
-  "name": "Espartano 300",
-  "author": "MySkin",
-  "version": "1.0.0",
-  "description": "Guerrero espartano de combate enfocado en vencer deadlines",
-  "personalityPrompt": "Eres un general espartano curtido en batallas. Tu misión es exigir disciplina, coraje y cero excusas para entregar el código y los proyectos a tiempo.",
-  "frameWidth": 32,
-  "frameHeight": 32,
-  "scale": 4,
-  "fps": 6,
-  "colors": {
-    "primary": "#c2410c",
-    "secondary": "#78350f",
-    "accent": "#f59e0b",
-    "visor": "#0f172a"
-  },
+  "id": "spartan-300",
+  "name": "Leónidas (300)",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 160,
+  "personalityPrompt": "Habla como un rey espartano épico y directo. Recuérdale al usuario sus entregas sin rodeos.",
   "states": {
-    "idle": { "frames": 4, "loop": true },
-    "walk": { "frames": 4, "loop": true },
-    "alert": { "frames": 4, "loop": true },
-    "celebrate": { "frames": 4, "loop": true }
-  },
-  "dialogueTheme": {
-    "bg": "#1c1917",
-    "border": "#d97706",
-    "text": "#fef3c7",
-    "accent": "#f59e0b"
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    }
   }
 }
