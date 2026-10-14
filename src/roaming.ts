@@ -174,7 +174,7 @@ export async function moveWindowBy(dx: number, dy: number) {
  * 5. Reubica la ventana subiendola si esta cerca del borde inferior al abrir el controlador
  * para que el panel de control NUNCA se corte por debajo de la pantalla.
  */
-export async function shiftWindowUpForController(newW = 340, newH = 580) {
+export async function shiftWindowUpForController(newW = 340, newH = 620) {
   if (!appWindow) return;
 
   try {

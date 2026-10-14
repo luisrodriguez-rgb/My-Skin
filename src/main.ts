@@ -16,9 +16,17 @@ import {
   shiftWindowUpForController,
   restoreWindowAfterController,
 } from "./roaming";
+import { audioEngine } from "./audio";
+import { pomodoroEngine, PomodoroPhase } from "./pomodoro";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
-export type PetStateName = "IDLE" | "WALK" | "ALERT_SEMESTRE" | "VICTORY_GITHUB";
+export type PetStateName =
+  | "IDLE"
+  | "WALK"
+  | "ALERT_SEMESTRE"
+  | "VICTORY_GITHUB"
+  | "FOCUS"
+  | "SLEEP";
 
 interface StateConfig {
   row: number;
@@ -26,6 +34,14 @@ interface StateConfig {
   fps: number;
   loop: boolean;
   nextState?: PetStateName;
+}
+
+interface SkinDialogues {
+  alert?: string;
+  victory?: string;
+  focus?: string;
+  break?: string;
+  sleep?: string;
 }
 
 interface SkinManifest {
@@ -36,6 +52,7 @@ interface SkinManifest {
   scale: number;
   anchorY: number;
   personalityPrompt: string;
+  dialogues?: SkinDialogues;
   states: Record<PetStateName, StateConfig>;
 }
 
@@ -63,6 +80,18 @@ let spriteImage: HTMLImageElement | null = null;
 let currentState: PetStateName = "IDLE";
 let currentFrameIndex = 0;
 let lastFrameTimestamp = 0;
+
+// Detección de inactividad (Modo Siesta / SLEEP)
+let lastUserInteractionTime = Date.now();
+const IDLE_SLEEP_TIMEOUT_MS = 120000; // 2 minutos sin actividad
+
+function recordUserActivity() {
+  lastUserInteractionTime = Date.now();
+  if (currentState === "SLEEP") {
+    // Despertar al interactuar
+    setPetState("IDLE");
+  }
+}
 
 // Estado del globo de notificación (Web del semestre / GitHub)
 let activeNotification: { title: string; subtitle: string; urgent: boolean } | null = null;
@@ -101,10 +130,20 @@ export function setPetState(
 ) {
   if (!activeManifest || !activeManifest.states[newState]) return;
 
-  // Si ya estamos en el mismo estado y no hay notificacion nueva, NO reiniciar el fotograma.
-  // Esto permite que al mantener presionada la flecha, la animacion de caminata continue fluida sin trabarse.
+  // Si ya estamos en el mismo estado y no hay notificación nueva, evitar reiniciar fotograma
   if (currentState === newState && !notification) {
     return;
+  }
+
+  // Desencadenar efectos sonoros retro según el estado
+  if (newState === "ALERT_SEMESTRE") {
+    audioEngine.playAlert();
+  } else if (newState === "VICTORY_GITHUB") {
+    audioEngine.playVictory();
+  } else if (newState === "FOCUS") {
+    audioEngine.playFocus();
+  } else if (newState === "SLEEP") {
+    audioEngine.playSleep();
   }
 
   currentState = newState;
@@ -189,9 +228,9 @@ function drawCurrentStateToCanvas() {
  * 4. Dibuja un globo de diálogo con estética Pixel Art directamente en el Canvas
  */
 function drawPixelSpeechBubble(title: string, subtitle: string, urgent: boolean) {
-  const bx = 20;
+  const bx = 16;
   const by = 8;
-  const bw = 260;
+  const bw = 268;
   const bh = 68;
 
   // Borde exterior negro (estilo retro 8-bits)
@@ -215,11 +254,11 @@ function drawPixelSpeechBubble(title: string, subtitle: string, urgent: boolean)
   // Textos de la notificación
   ctx.fillStyle = urgent ? "#FF6B6B" : "#FFD000";
   ctx.font = "bold 11px monospace";
-  ctx.fillText(title.slice(0, 28), bx + 10, by + 20);
+  ctx.fillText(title.slice(0, 32), bx + 10, by + 20);
 
   ctx.fillStyle = "#F1FAEE";
   ctx.font = "10px monospace";
-  ctx.fillText(subtitle.slice(0, 30), bx + 10, by + 40);
+  ctx.fillText(subtitle.slice(0, 36), bx + 10, by + 40);
 
   // Pequeño indicador para descartar con clic
   ctx.fillStyle = "#8D99AE";
@@ -239,6 +278,11 @@ function animationLoop(timestamp: number) {
     if (timestamp - lastFrameTimestamp >= frameDurationMs) {
       lastFrameTimestamp = timestamp;
       currentFrameIndex++;
+
+      // Sonido de pasos suave al caminar
+      if (currentState === "WALK" && (currentFrameIndex === 1 || currentFrameIndex === 4)) {
+        audioEngine.playStep();
+      }
 
       if (currentFrameIndex >= stateCfg.frames) {
         if (stateCfg.loop) {
@@ -273,12 +317,12 @@ function isPixelSolid(x: number, y: number): boolean {
  * caen sobre un elemento interactuable (panel de control abierto o pixel del personaje).
  */
 function isCursorOverInteractable(windowX: number, windowY: number): boolean {
-  // 1. Si el panel de control esta abierto, TODA la ventana es interactuable (nunca ignorar cursor)
+  // 1. Si el panel de control está abierto, TODA la ventana es interactuable (nunca ignorar cursor)
   if (debugPanel && !debugPanel.classList.contains("hidden")) {
     return true;
   }
 
-  // 2. Si el cursor esta sobre el canvas del personaje
+  // 2. Si el cursor está sobre el canvas del personaje
   const canvasRect = canvas.getBoundingClientRect();
   if (
     windowX >= canvasRect.left &&
@@ -289,17 +333,17 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
     const canvasX = (windowX - canvasRect.left) * (CANVAS_WIDTH / canvasRect.width);
     const canvasY = (windowY - canvasRect.top) * (CANVAS_HEIGHT / canvasRect.height);
 
-    // Si hay notificacion activa sobre el globo
+    // Si hay notificación activa sobre el globo
     if (activeNotification && canvasY < 84 && canvasX >= 15 && canvasX <= 285) {
       return true;
     }
 
-    // Comprobar pixel solido directo
+    // Comprobar píxel sólido directo
     if (isPixelSolid(canvasX, canvasY)) {
       return true;
     }
 
-    // Margen de tolerancia de 8px alrededor del personaje para capturar clics rapidos sin delay
+    // Margen de tolerancia de 8px alrededor del personaje para capturar clics rápidos sin delay
     for (let dx = -8; dx <= 8; dx += 4) {
       for (let dy = -8; dy <= 8; dy += 4) {
         if (isPixelSolid(canvasX + dx, canvasY + dy)) {
@@ -316,7 +360,6 @@ async function checkCursorHitTest() {
   if (isMouseDragging) return; // Nunca ignorar cursor mientras se arrastra con el mouse
 
   // CRÍTICO: Si el panel de control está abierto, NUNCA ignorar eventos de cursor bajo ninguna circunstancia.
-  // Esto elimina 100% el problema de que los clics del controlador se filtren a la ventana de atrás (IDE).
   if (debugPanel && !debugPanel.classList.contains("hidden")) {
     if (isCurrentlyIgnoring) {
       isCurrentlyIgnoring = false;
@@ -345,7 +388,6 @@ async function checkCursorHitTest() {
       canvas.style.cursor = isInteractable ? "pointer" : "default";
     }
   } catch (err) {
-    // Fuera del runtime nativo de Tauri (ej. vista previa en navegador)
     console.debug("Hit-test poll info:", err);
   }
 }
@@ -359,12 +401,13 @@ let dragStartWinY = 0;
 
 canvas.addEventListener("pointerdown", async (e) => {
   if (e.button !== 0) return;
+  recordUserActivity();
 
   const rect = canvas.getBoundingClientRect();
   const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
   const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-  // 1. Si hizo clic en la parte superior (donde esta el globo de alerta), descartamos la alerta
+  // 1. Si hizo clic en la parte superior (donde está el globo de alerta), descartamos la alerta
   if (activeNotification && clickY < 84) {
     setRoamingAlertState(false);
     setPetState("IDLE");
@@ -372,7 +415,7 @@ canvas.addEventListener("pointerdown", async (e) => {
     return;
   }
 
-  // 2. Comprobar si hizo clic sobre el cuerpo del personaje (con tolerancia para clics agiles)
+  // 2. Comprobar si hizo clic sobre el cuerpo del personaje (con tolerancia para clics ágiles)
   let hitCharacter = isPixelSolid(clickX, clickY);
   if (!hitCharacter) {
     for (let dx = -8; dx <= 8; dx += 4) {
@@ -411,6 +454,8 @@ canvas.addEventListener("pointerdown", async (e) => {
 // Doble clic sobre el personaje: abre o cierra el panel de control
 canvas.addEventListener("dblclick", async (e) => {
   e.preventDefault();
+  recordUserActivity();
+
   const rect = canvas.getBoundingClientRect();
   const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
   const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
@@ -435,6 +480,7 @@ canvas.addEventListener("dblclick", async (e) => {
 });
 
 window.addEventListener("pointermove", async (e) => {
+  recordUserActivity();
   if (!isMouseDragging) return;
 
   const deltaX = e.screenX - dragStartMouseX;
@@ -458,25 +504,35 @@ window.addEventListener("pointermove", async (e) => {
 });
 
 window.addEventListener("pointerup", (e) => {
-  if (!isMouseDragging) return;
-  try {
-    canvas.releasePointerCapture(e.pointerId);
-  } catch (_) {}
-  isMouseDragging = false;
-  setIsDragging(false);
-  setPetState("IDLE");
-  syncPositionAfterUserDrag();
+  if (isMouseDragging) {
+    isMouseDragging = false;
+    setIsDragging(false);
+    try {
+      canvas.releasePointerCapture(e.pointerId);
+    } catch (_) {}
+    syncPositionAfterUserDrag();
+    setPetState("IDLE");
+  }
 });
 
-// Soporte de interacción con cursor para modo navegador
-canvas.addEventListener("mousemove", (e) => {
-  if (isMouseDragging) return;
-  const solid = isCursorOverInteractable(e.clientX, e.clientY);
-  isCurrentlyIgnoring = !solid;
-  canvas.style.cursor = solid ? "pointer" : "default";
-});
+// Comprobación periódica de inactividad (Modo Siesta / SLEEP tras 2 minutos)
+setInterval(() => {
+  if (
+    currentState === "IDLE" &&
+    getIsPinned() &&
+    pomodoroEngine.getPhase() !== "focus" &&
+    Date.now() - lastUserInteractionTime > IDLE_SLEEP_TIMEOUT_MS
+  ) {
+    const sleepDialogue = activeManifest?.dialogues?.sleep || "Modo reposo activado... zZ...";
+    setPetState("SLEEP", {
+      title: "MODO REPOSO",
+      subtitle: sleepDialogue.slice(0, 36),
+      urgent: false,
+    });
+  }
+}, 5000);
 
-// --- INICIALIZACIÓN ---
+// Iniciar aplicación
 loadSkin("spartan").then(() => {
   initRoamingSystem();
 });
@@ -485,17 +541,19 @@ setInterval(checkCursorHitTest, 30);
 
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
 (window as any).testAlert = () => {
+  const customMsg = activeManifest?.dialogues?.alert || "Lab. Física - Circuitos RC";
   setPetState("ALERT_SEMESTRE", {
-    title: "ENTREGA EN 1H 45M",
-    subtitle: "Lab. Física - Circuitos RC",
+    title: "ENTREGA PENDIENTE",
+    subtitle: customMsg.slice(0, 36),
     urgent: true,
   });
 };
 
 (window as any).testVictory = () => {
+  const customMsg = activeManifest?.dialogues?.victory || "Branch feature/companion integrado";
   setPetState("VICTORY_GITHUB", {
     title: "GITHUB: PR MERGED",
-    subtitle: "Branch feature/companion integrado",
+    subtitle: customMsg.slice(0, 36),
     urgent: false,
   });
 };
@@ -508,6 +566,7 @@ setInterval(checkCursorHitTest, 30);
 // --- PANEL DE CONTROL: PIXEL MINIMAL UI ---
 const debugPanel = document.getElementById("debug-panel");
 const btnCloseDebug = document.getElementById("btn-close-debug");
+const btnSoundToggle = document.getElementById("btn-sound-toggle");
 const selectSkin = document.getElementById("select-skin") as HTMLSelectElement | null;
 const btnSemester = document.getElementById("btn-event-semester");
 const btnGithub = document.getElementById("btn-event-github");
@@ -516,6 +575,25 @@ const charSpecEl = document.getElementById("char-spec");
 const statusFsmText = document.getElementById("status-fsm-text");
 const thumbCanvas = document.getElementById("thumb-canvas") as HTMLCanvasElement | null;
 const thumbCtx = thumbCanvas?.getContext("2d");
+
+// Pomodoro UI elements
+const pomoClockEl = document.getElementById("pomo-clock");
+const pomoStatusEl = document.getElementById("pomo-status");
+const btnPomoToggle = document.getElementById("btn-pomo-toggle");
+const btnPomoReset = document.getElementById("btn-pomo-reset");
+
+// Inicializar estado de sonido en el botón
+if (btnSoundToggle) {
+  const enabled = audioEngine.isEnabled();
+  btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
+  btnSoundToggle.classList.toggle("active", enabled);
+}
+
+btnSoundToggle?.addEventListener("click", () => {
+  const enabled = audioEngine.toggle();
+  btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
+  btnSoundToggle.classList.toggle("active", enabled);
+});
 
 // Renderizar miniatura del personaje en la tarjeta del controlador
 function updateThumbnail() {
@@ -548,7 +626,7 @@ function syncCardInfo() {
   updateThumbnail();
 }
 
-// Control dinamico de visibilidad del panel y redimension de la ventana nativa
+// Control dinámico de visibilidad del panel y redimensión de la ventana nativa
 const isTauriEnv = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const mainAppWindow = isTauriEnv ? getCurrentWindow() : null;
 
@@ -570,7 +648,7 @@ async function setControllerVisibility(visible: boolean) {
   if (visible) {
     debugPanel.classList.remove("hidden");
     // Subir la ventana automáticamente si está cerca del borde inferior para que NUNCA se corte
-    await shiftWindowUpForController(340, 580);
+    await shiftWindowUpForController(340, 620);
     if (mainAppWindow) {
       try {
         await mainAppWindow.setFocus();
@@ -595,7 +673,12 @@ const controllerHeader = document.querySelector(".controller-header");
 controllerHeader?.addEventListener("pointerdown", async (e) => {
   const me = e as PointerEvent;
   const target = me.target as HTMLElement;
-  if (target.closest("#btn-close-debug") || target.tagName === "BUTTON" || target.tagName === "SELECT") {
+  if (
+    target.closest("#btn-close-debug") ||
+    target.closest("#btn-sound-toggle") ||
+    target.tagName === "BUTTON" ||
+    target.tagName === "SELECT"
+  ) {
     return;
   }
   if (me.button !== 0) return;
@@ -649,10 +732,12 @@ cardCharacter?.addEventListener("pointerdown", async (e) => {
 });
 
 // Atajos de teclado:
-// - Cmd+Shift+D o Ctrl+Shift+D: Alterna la visibilidad del panel de control sin interferir con la escritura de codigo
-// - Tecla 'Escape': Cierra el panel de control si esta visible
-// - Flechas Direccionales: Mueven al personaje por la pantalla de forma agil y rapida
+// - Cmd+Shift+D o Ctrl+Shift+D: Alterna la visibilidad del panel de control sin interferir con la escritura de código
+// - Tecla 'Escape': Cierra el panel de control si está visible
+// - Flechas Direccionales: Mueven al personaje por la pantalla de forma ágil y rápida
 window.addEventListener("keydown", async (e) => {
+  recordUserActivity();
+
   if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === "d" || e.key === "D")) {
     e.preventDefault();
     const isHidden = debugPanel?.classList.contains("hidden") ?? true;
@@ -670,7 +755,7 @@ window.addEventListener("keydown", async (e) => {
 
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
     e.preventDefault();
-    const step = e.shiftKey ? 45 : 22; // Movimiento agil y rapido
+    const step = e.shiftKey ? 45 : 22; // Movimiento ágil y rápido
     let dx = 0;
     let dy = 0;
     if (e.key === "ArrowLeft") dx = -step;
@@ -684,6 +769,8 @@ window.addEventListener("keydown", async (e) => {
 // Clic derecho: sobre el personaje alterna modo Fijo/Patrulla; sobre el fondo alterna el controlador
 canvas.addEventListener("contextmenu", async (e) => {
   e.preventDefault();
+  recordUserActivity();
+
   const rect = canvas.getBoundingClientRect();
   const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
   const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
@@ -726,5 +813,62 @@ btnGithub?.addEventListener("click", () => {
   (window as any).testVictory();
 });
 
+// --- INTEGRACIÓN POMODORO ---
+pomodoroEngine.subscribe({
+  onTick: (_remaining, phase) => {
+    if (pomoClockEl) {
+      pomoClockEl.textContent = pomodoroEngine.formatTime();
+    }
+    if (pomoStatusEl) {
+      if (phase === "focus") {
+        pomoStatusEl.textContent = "Foco Activo";
+        pomoStatusEl.style.color = "var(--accent-primary)";
+      } else if (phase === "break") {
+        pomoStatusEl.textContent = "Descanso Activo";
+        pomoStatusEl.style.color = "var(--success-green)";
+      } else {
+        pomoStatusEl.textContent = "En reposo";
+        pomoStatusEl.style.color = "var(--text-muted)";
+      }
+    }
+  },
+  onPhaseChange: (newPhase: PomodoroPhase) => {
+    if (newPhase === "focus") {
+      const focusMsg = activeManifest?.dialogues?.focus || "25 min de foco y código continuo";
+      setPetState("FOCUS", {
+        title: "POMODORO: FOCO",
+        subtitle: focusMsg.slice(0, 36),
+        urgent: false,
+      });
+      if (btnPomoToggle) btnPomoToggle.textContent = "PAUSAR";
+    } else if (newPhase === "break") {
+      const breakMsg = activeManifest?.dialogues?.break || "5 min de descanso y estiramiento";
+      setPetState("WALK", {
+        title: "POMODORO: DESCANSO",
+        subtitle: breakMsg.slice(0, 36),
+        urgent: false,
+      });
+      if (btnPomoToggle) btnPomoToggle.textContent = "PAUSAR";
+    } else {
+      setPetState("IDLE");
+      if (btnPomoToggle) btnPomoToggle.textContent = "INICIAR FOCO";
+    }
+  },
+});
 
+btnPomoToggle?.addEventListener("click", () => {
+  const currentPhase = pomodoroEngine.getPhase();
+  if (currentPhase === "idle") {
+    pomodoroEngine.startFocus();
+  } else if (currentPhase === "focus" || currentPhase === "break") {
+    pomodoroEngine.pause();
+    if (btnPomoToggle) btnPomoToggle.textContent = "CONTINUAR";
+  }
+});
 
+btnPomoReset?.addEventListener("click", () => {
+  pomodoroEngine.reset();
+  if (btnPomoToggle) btnPomoToggle.textContent = "INICIAR FOCO";
+  if (pomoClockEl) pomoClockEl.textContent = "25:00";
+  if (pomoStatusEl) pomoStatusEl.textContent = "En reposo";
+});
