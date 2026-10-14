@@ -84,10 +84,21 @@ export async function initRoamingSystem() {
       }
     }
 
-    // Bucle para modo libre (solo activo si el usuario desactiva el anclado)
-    setInterval(updateMovementStep, 30);
+    // Gestion dinamica del temporizador: solo consume CPU cuando modo libre esta activo
+    ensureRoamingTimer();
   } catch (err) {
     console.debug("[Roaming] Error al inicializar monitor:", err);
+  }
+}
+
+let roamingIntervalId: number | null = null;
+
+function ensureRoamingTimer() {
+  if (!isPinned && roamingIntervalId === null) {
+    roamingIntervalId = window.setInterval(updateMovementStep, 30);
+  } else if (isPinned && roamingIntervalId !== null) {
+    window.clearInterval(roamingIntervalId);
+    roamingIntervalId = null;
   }
 }
 
@@ -247,6 +258,7 @@ export function togglePinMode(): boolean {
     }, 2000);
   }
 
+  ensureRoamingTimer();
   return isPinned;
 }
 
