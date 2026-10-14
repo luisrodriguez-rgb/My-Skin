@@ -1,4 +1,8 @@
-use tauri::{Manager, WebviewWindow};
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::TrayIconBuilder,
+    Emitter, Manager, WebviewWindow,
+};
 
 #[derive(serde::Serialize)]
 struct CursorRelPos {
@@ -53,6 +57,51 @@ pub fn run() {
                 // 3. Visible en todos los escritorios virtuales (Spaces) y sobre otras apps
                 let _ = main_window.set_visible_on_all_workspaces(true);
             }
+
+            // 4. Configurar System Tray nativo en la barra de menú de macOS
+            let item_ctrl = MenuItemBuilder::new("Abrir / Cerrar Controlador")
+                .id("toggle_controller")
+                .build(app)?;
+            let item_roam = MenuItemBuilder::new("Alternar Modo Fijo / Libre")
+                .id("toggle_roam")
+                .build(app)?;
+            let item_pomodoro = MenuItemBuilder::new("Iniciar Pomodoro (25m Foco)")
+                .id("start_pomodoro")
+                .build(app)?;
+            let item_audio = MenuItemBuilder::new("Alternar Efectos de Audio")
+                .id("toggle_audio")
+                .build(app)?;
+            let item_quit = MenuItemBuilder::new("Salir de MySkin")
+                .id("quit")
+                .build(app)?;
+
+            let tray_menu = MenuBuilder::new(app)
+                .item(&item_ctrl)
+                .item(&item_roam)
+                .item(&item_pomodoro)
+                .item(&item_audio)
+                .separator()
+                .item(&item_quit)
+                .build()?;
+
+            let mut tray_builder = TrayIconBuilder::new()
+                .menu(&tray_menu)
+                .show_menu_on_left_click(true)
+                .on_menu_event(|app, event| {
+                    let id = event.id().as_ref();
+                    if id == "quit" {
+                        app.exit(0);
+                    } else {
+                        let _ = app.emit("tray-action", id);
+                    }
+                });
+
+            if let Some(icon) = app.default_window_icon() {
+                tray_builder = tray_builder.icon(icon.clone());
+            }
+
+            let _ = tray_builder.build(app)?;
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

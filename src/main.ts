@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import {
   initRoamingSystem,
@@ -580,6 +581,33 @@ githubMonitor.subscribe({
       urgent: false,
     });
   },
+});
+
+// --- ACCIONES DESDE EL SYSTEM TRAY NATIVO (MAC MENU BAR) ---
+listen<string>("tray-action", async (event) => {
+  const action = event.payload;
+  if (action === "toggle_controller") {
+    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
+    await setControllerVisibility(isHidden);
+  } else if (action === "toggle_roam") {
+    const pinned = togglePinMode();
+    if (statusFsmText) {
+      statusFsmText.textContent = pinned ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
+    }
+  } else if (action === "start_pomodoro") {
+    pomodoroEngine.startFocus();
+    setPetState("FOCUS", {
+      title: "POMODORO INICIADO",
+      subtitle: "25 minutos de concentración total",
+      urgent: false,
+    });
+  } else if (action === "toggle_audio") {
+    const enabled = audioEngine.toggle();
+    if (btnSoundToggle) {
+      btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
+      btnSoundToggle.classList.toggle("active", enabled);
+    }
+  }
 });
 
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
