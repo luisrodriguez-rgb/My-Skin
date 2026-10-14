@@ -1,0 +1,18 @@
+[package]
+name = "myskin"
+version = "0.1.0"
+description = "MySkin Desktop Companion"
+authors = ["MySkin"]
+edition = "2021"
+
+[lib]
+name = "myskin_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
