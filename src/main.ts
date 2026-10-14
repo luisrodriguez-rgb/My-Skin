@@ -1,88 +1,243 @@
-import { CharacterRenderer, SpeechBubble, CharacterState } from "./skinEngine";
+import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
-// Detección segura de entorno Tauri v2
-const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+// --- TIPOS DEL SISTEMA DE SKINS ---
+export type PetStateName = "IDLE" | "WALK" | "ALERT_SEMESTRE" | "VICTORY_GITHUB";
 
-let invokeTauri: ((cmd: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null;
-let startDraggingTauri: (() => Promise<void>) | null = null;
-
-if (isTauri) {
-  import("@tauri-apps/api/core").then((core) => {
-    invokeTauri = core.invoke;
-  });
-  import("@tauri-apps/api/window").then((win) => {
-    startDraggingTauri = () => win.getCurrentWindow().startDragging();
-  });
+interface StateConfig {
+  row: number;
+  frames: number;
+  fps: number;
+  loop: boolean;
+  nextState?: PetStateName;
 }
 
+interface SkinManifest {
+  id: string;
+  name: string;
+  frameWidth: number;
+  frameHeight: number;
+  scale: number;
+  anchorY: number;
+  personalityPrompt: string;
+  states: Record<PetStateName, StateConfig>;
+}
+
+// --- CONFIGURACIÓN DEL CANVAS ---
 const canvas = document.getElementById("pet-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
 
-const CANVAS_WIDTH = 320;
-const CANVAS_HEIGHT = 320;
+const CANVAS_WIDTH = 300;
+const CANVAS_HEIGHT = 300;
 canvas.width = CANVAS_WIDTH;
 canvas.height = CANVAS_HEIGHT;
 
-// Instanciar el motor del personaje
-const renderer = new CharacterRenderer("spartan");
+// CRÍTICO: Desactivar el suavizado para mantener Pixel Art puro al escalar
+ctx.imageSmoothingEnabled = false;
 
-// Estado para no saturar el canal IPC de Tauri con llamadas redundantes
+// --- VARIABLES GLOBALES DE ESTADO Y HIT-TEST ---
 let isCurrentlyIgnoring = true;
 let currentFrameImageData: Uint8ClampedArray | null = null;
-
-// Umbral de opacidad (0 a 255). Todo píxel con Alpha > 20 es sólido
 const ALPHA_THRESHOLD = 20;
 
+let activeManifest: SkinManifest | null = null;
+let spriteImage: HTMLImageElement | null = null;
+
+// Variables de la Máquina de Estados Finitos (FSM)
+let currentState: PetStateName = "IDLE";
+let currentFrameIndex = 0;
+let lastFrameTimestamp = 0;
+
+// Estado del globo de notificación (Web del semestre / GitHub)
+let activeNotification: { title: string; subtitle: string; urgent: boolean } | null = null;
+
 /**
- * 1. Dibuja el frame y actualiza la caché de píxeles en memoria
+ * 1. Cargador dinámico de Skins (lee el manifest.json y la textura PNG)
  */
-function renderFrame(_now: number) {
-  // Delta time aproximado a 60 FPS
-  renderer.update(16);
-  renderer.draw(ctx, CANVAS_WIDTH, CANVAS_HEIGHT);
+export async function loadSkin(skinFolder: string) {
+  try {
+    const res = await fetch(`/skins/${skinFolder}/manifest.json`);
+    activeManifest = (await res.json()) as SkinManifest;
 
-  // Guardamos la matriz de píxeles del frame exacto para O(1) hit-testing
-  currentFrameImageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).data;
+    const img = new Image();
+    img.src = `/skins/${skinFolder}/spritesheet.png`;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
 
-  requestAnimationFrame(renderFrame);
+    spriteImage = img;
+    setPetState("IDLE");
+    drawCurrentStateToCanvas();
+    console.log(`[MySkin] Skin "${activeManifest.name}" cargado exitosamente.`);
+  } catch (err) {
+    console.error(`Error al cargar el skin "${skinFolder}":`, err);
+  }
 }
 
 /**
- * 2. Hit-Testing: consulta si el píxel en (x, y) tiene opacidad > ALPHA_THRESHOLD
+ * 2. Cambiar de estado en la Máquina de Estados (FSM)
  */
-function isPixelSolid(x: number, y: number): boolean {
-  if (!currentFrameImageData) return false;
+export function setPetState(
+  newState: PetStateName,
+  notification?: { title: string; subtitle: string; urgent?: boolean }
+) {
+  if (!activeManifest || !activeManifest.states[newState]) return;
 
-  const px = Math.floor(x);
-  const py = Math.floor(y);
+  currentState = newState;
+  currentFrameIndex = 0;
+  lastFrameTimestamp = performance.now();
 
-  if (px < 0 || px >= CANVAS_WIDTH || py < 0 || py >= CANVAS_HEIGHT) {
-    return false;
+  if (notification) {
+    activeNotification = {
+      title: notification.title,
+      subtitle: notification.subtitle,
+      urgent: notification.urgent ?? false,
+    };
+  } else if (newState === "IDLE") {
+    activeNotification = null;
+  }
+}
+
+/**
+ * 3. Dibuja el Sprite + el Globo de Notificación y actualiza la máscara Alpha
+ */
+function drawCurrentStateToCanvas() {
+  if (!activeManifest || !spriteImage) return;
+
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.imageSmoothingEnabled = false;
+
+  const stateCfg = activeManifest.states[currentState];
+  const { frameWidth, frameHeight, scale, anchorY } = activeManifest;
+
+  // Coordenadas de recorte dentro del spritesheet.png
+  const sourceX = currentFrameIndex * frameWidth;
+  const sourceY = stateCfg.row * frameHeight;
+
+  // Tamaño final escalado en pantalla (ej. 64 * 2 = 128x128 px)
+  const destWidth = frameWidth * scale;
+  const destHeight = frameHeight * scale;
+  const destX = Math.floor((CANVAS_WIDTH - destWidth) / 2);
+  const destY = anchorY;
+
+  // Dibujar el frame exacto del personaje
+  ctx.drawImage(
+    spriteImage,
+    sourceX,
+    sourceY,
+    frameWidth,
+    frameHeight,
+    destX,
+    destY,
+    destWidth,
+    destHeight
+  );
+
+  // Si hay una notificación activa (ej. Entrega del semestre o Push en GitHub), dibujamos el globo
+  if (activeNotification) {
+    drawPixelSpeechBubble(
+      activeNotification.title,
+      activeNotification.subtitle,
+      activeNotification.urgent
+    );
   }
 
-  // En ImageData cada píxel ocupa 4 bytes: [R, G, B, A]
+  // Actualizamos la caché de píxeles SOLO cuando se redibuja un frame nuevo
+  currentFrameImageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).data;
+}
+
+/**
+ * 4. Dibuja un globo de diálogo con estética Pixel Art directamente en el Canvas
+ */
+function drawPixelSpeechBubble(title: string, subtitle: string, urgent: boolean) {
+  const bx = 25;
+  const by = 30;
+  const bw = 250;
+  const bh = 95;
+
+  // Borde exterior negro (estilo retro 8-bits)
+  ctx.fillStyle = "#090B10";
+  ctx.fillRect(bx - 4, by - 4, bw + 8, bh + 8);
+
+  // Borde interior de color según urgencia
+  ctx.fillStyle = urgent ? "#E63946" : "#FFD000";
+  ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+
+  // Fondo oscuro del globo
+  ctx.fillStyle = "#141824";
+  ctx.fillRect(bx, by, bw, bh);
+
+  // Pico del globo apuntando al personaje abajo
+  ctx.fillStyle = "#090B10";
+  ctx.fillRect(142, by + bh + 4, 16, 8);
+  ctx.fillStyle = "#141824";
+  ctx.fillRect(144, by + bh, 12, 8);
+
+  // Textos de la notificación
+  ctx.fillStyle = urgent ? "#FF6B6B" : "#FFD000";
+  ctx.font = "bold 12px monospace";
+  ctx.fillText(title.slice(0, 26), bx + 12, by + 26);
+
+  ctx.fillStyle = "#F1FAEE";
+  ctx.font = "11px monospace";
+  ctx.fillText(subtitle.slice(0, 28), bx + 12, by + 50);
+
+  // Pequeño indicador para descartar con clic
+  ctx.fillStyle = "#8D99AE";
+  ctx.font = "10px monospace";
+  ctx.fillText("[Clic para descartar]", bx + 12, by + 78);
+}
+
+/**
+ * 5. Bucle del Motor de Animación (corre sincronizado con requestAnimationFrame)
+ */
+function animationLoop(timestamp: number) {
+  if (activeManifest && spriteImage) {
+    const stateCfg = activeManifest.states[currentState];
+    const frameDurationMs = 1000 / stateCfg.fps;
+
+    // Solo avanzamos de frame cuando se cumple el tiempo exacto de los FPS del estado
+    if (timestamp - lastFrameTimestamp >= frameDurationMs) {
+      lastFrameTimestamp = timestamp;
+      currentFrameIndex++;
+
+      if (currentFrameIndex >= stateCfg.frames) {
+        if (stateCfg.loop) {
+          currentFrameIndex = 0;
+        } else {
+          // Si no es loop (ej. celebración de GitHub), transiciona al estado siguiente
+          setPetState(stateCfg.nextState || "IDLE");
+        }
+      }
+
+      // Redibujamos el Canvas y actualizamos el mapa Alpha únicamente al cambiar de frame
+      drawCurrentStateToCanvas();
+    }
+  }
+
+  requestAnimationFrame(animationLoop);
+}
+
+// --- HIT-TEST DE CANAL ALPHA (CONECTADO A RUST) ---
+function isPixelSolid(x: number, y: number): boolean {
+  if (!currentFrameImageData) return false;
+  const px = Math.floor(x);
+  const py = Math.floor(y);
+  if (px < 0 || px >= CANVAS_WIDTH || py < 0 || py >= CANVAS_HEIGHT) return false;
+
   const alphaIndex = (py * CANVAS_WIDTH + px) * 4 + 3;
   return currentFrameImageData[alphaIndex] > ALPHA_THRESHOLD;
 }
 
-/**
- * 3. Bucle de detección de cursor a nivel de Sistema Operativo (50ms = 20 Hz)
- */
 async function checkCursorHitTest() {
-  if (!isTauri || !invokeTauri) return;
-
   try {
-    const pos = (await invokeTauri("get_cursor_rel_pos")) as {
-      x: number;
-      y: number;
-      inside: boolean;
-    };
+    const pos = await invoke<{ x: number; y: number; inside: boolean }>("get_cursor_rel_pos");
 
     if (!pos.inside) {
       if (!isCurrentlyIgnoring) {
         isCurrentlyIgnoring = true;
-        await invokeTauri("set_ignore_cursor", { ignore: true });
-        updateCursorStatus(false, false);
+        await invoke("set_ignore_cursor", { ignore: true });
       }
       return;
     }
@@ -92,144 +247,108 @@ async function checkCursorHitTest() {
 
     if (shouldIgnore !== isCurrentlyIgnoring) {
       isCurrentlyIgnoring = shouldIgnore;
-      await invokeTauri("set_ignore_cursor", { ignore: shouldIgnore });
-      updateCursorStatus(pos.inside, touchingSolidPixel);
+      await invoke("set_ignore_cursor", { ignore: shouldIgnore });
       canvas.style.cursor = touchingSolidPixel ? "pointer" : "default";
     }
   } catch (err) {
-    console.debug("Hit-test poll error:", err);
+    // Fuera del runtime nativo de Tauri (ej. vista previa en navegador)
+    console.debug("Hit-test poll info:", err);
   }
 }
 
-/**
- * Manejador de clics:
- * - Si se hace clic sobre el globo de texto, se interactúa con él
- * - Si se hace clic sobre el personaje, se inicia el arrastre nativo de ventana
- */
+// --- INTERACCIÓN CON EL PERSONAJE Y EL GLOBO ---
 canvas.addEventListener("mousedown", async (e) => {
-  if (e.button !== 0) return;
+  if (e.button !== 0 || isCurrentlyIgnoring) return;
 
   const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
   const clickY = e.clientY - rect.top;
 
-  // Clic en el globo de texto (zona superior del canvas)
-  if (renderer.bubble && clickY <= 104 && isPixelSolid(clickX, clickY)) {
-    console.log("Globo interactuado:", renderer.bubble.title);
-    renderer.setBubble(null);
-    renderer.setState("celebrate");
-    setTimeout(() => {
-      if (renderer.state === "celebrate") renderer.setState("idle");
-    }, 2000);
+  // Si hizo clic en la parte superior (donde está el globo de alerta), descartamos la alerta
+  if (activeNotification && clickY < 140) {
+    setPetState("IDLE");
+    drawCurrentStateToCanvas();
     return;
   }
 
-  // Clic en el cuerpo del personaje: arrastrar la ventana
-  if (isTauri && startDraggingTauri && isPixelSolid(clickX, clickY)) {
-    await startDraggingTauri();
+  // Si hizo clic sobre el cuerpo del personaje, permite arrastrarlo por el escritorio
+  try {
+    await getCurrentWindow().startDragging();
+  } catch (err) {
+    console.debug("startDragging disponible únicamente dentro de Tauri:", err);
   }
 });
 
-// Soporte para depuración en navegador web (cuando no corre dentro de Tauri)
-if (!isTauri) {
-  canvas.addEventListener("mousemove", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const touching = isPixelSolid(x, y);
-    canvas.style.cursor = touching ? "pointer" : "default";
-    updateCursorStatus(true, touching);
+// Soporte de interacción con cursor para modo navegador
+canvas.addEventListener("mousemove", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const solid = isPixelSolid(x, y);
+  isCurrentlyIgnoring = !solid;
+  canvas.style.cursor = solid ? "pointer" : "default";
+});
+
+// --- INICIALIZACIÓN ---
+loadSkin("spartan");
+requestAnimationFrame(animationLoop);
+setInterval(checkCursorHitTest, 50);
+
+// --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
+(window as any).testAlert = () => {
+  setPetState("ALERT_SEMESTRE", {
+    title: "⚔️ ENTREGA EN 1H 45M",
+    subtitle: "Lab. Física - Circuitos RC",
+    urgent: true,
   });
-}
+};
 
-function updateCursorStatus(inside: boolean, solid: boolean) {
-  const statusEl = document.getElementById("status-cursor");
-  if (!statusEl) return;
-  if (!inside) {
-    statusEl.textContent = "Modo: Fuera de ventana (Click-Through activo)";
-    statusEl.style.color = "#64748b";
-  } else if (solid) {
-    statusEl.textContent = "Modo: Píxel sólido detectado (Clic activo)";
-    statusEl.style.color = "#22c55e";
-  } else {
-    statusEl.textContent = "Modo: Área transparente (Click-Through activo)";
-    statusEl.style.color = "#eab308";
-  }
-}
+(window as any).testVictory = () => {
+  setPetState("VICTORY_GITHUB", {
+    title: "🐙 PR MERGED EN MAIN",
+    subtitle: "Branch feature/companion integrado",
+    urgent: false,
+  });
+};
 
-/* -------------------------------------------------------------
- * Interfaz de Depuración y Simulación de Eventos
- * ------------------------------------------------------------*/
-const debugPanel = document.getElementById("debug-panel") as HTMLDivElement;
-const btnCloseDebug = document.getElementById("btn-close-debug") as HTMLButtonElement;
-const selectSkin = document.getElementById("select-skin") as HTMLSelectElement;
-const btnSemester = document.getElementById("btn-event-semester") as HTMLButtonElement;
-const btnGithub = document.getElementById("btn-event-github") as HTMLButtonElement;
+(window as any).setPetState = setPetState;
+(window as any).loadSkin = loadSkin;
 
-// Mostrar panel con la tecla 'D'
+// --- PANEL DE CONTROL (TECLA 'D' O EN MODO NAVEGADOR) ---
+const debugPanel = document.getElementById("debug-panel");
+const btnCloseDebug = document.getElementById("btn-close-debug");
+const selectSkin = document.getElementById("select-skin") as HTMLSelectElement | null;
+const btnSemester = document.getElementById("btn-event-semester");
+const btnGithub = document.getElementById("btn-event-github");
+
 window.addEventListener("keydown", (e) => {
   if (e.key === "d" || e.key === "D") {
-    debugPanel.classList.toggle("hidden");
+    debugPanel?.classList.toggle("hidden");
   }
 });
 
-btnCloseDebug.addEventListener("click", () => {
-  debugPanel.classList.add("hidden");
+btnCloseDebug?.addEventListener("click", () => {
+  debugPanel?.classList.add("hidden");
 });
 
-// En navegador tradicional sin Tauri, mostrar panel por defecto para facilitar pruebas
-if (!isTauri) {
-  debugPanel.classList.remove("hidden");
-}
-
-selectSkin.addEventListener("change", (e) => {
-  const skinId = (e.target as HTMLSelectElement).value;
-  renderer.setSkin(skinId);
+selectSkin?.addEventListener("change", (e) => {
+  const skin = (e.target as HTMLSelectElement).value;
+  loadSkin(skin);
 });
 
-// Botones de cambio de animación
 document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".btn-action").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    const action = btn.dataset.action as CharacterState;
-    renderer.setState(action);
+    const action = btn.dataset.action?.toUpperCase() as PetStateName;
+    if (action) setPetState(action);
   });
 });
 
-// Simulación de evento: Entrega del Semestre
-btnSemester.addEventListener("click", () => {
-  const skin = renderer.getSkin();
-  const alertBubble: SpeechBubble = {
-    title: "Alerta: Entrega en 2h",
-    message: skin.id === "spartan"
-      ? "¡Guerrero! Quedan 2 horas para entregar Sistemas Distribuidos."
-      : "Deadline inminente: 2 horas restantes para el reporte final.",
-    actionText: "[ Marcar Entregada ]",
-    source: "semester",
-    expiresAt: Date.now() + 15000,
-  };
-
-  renderer.setState("alert");
-  renderer.setBubble(alertBubble);
+btnSemester?.addEventListener("click", () => {
+  (window as any).testAlert();
 });
 
-// Simulación de evento: GitHub
-btnGithub.addEventListener("click", () => {
-  const githubBubble: SpeechBubble = {
-    title: "GitHub: PR Aprobado",
-    message: "Pull Request #42 merged exitosamente en main. Tests en verde.",
-    actionText: "[ Ver en GitHub ]",
-    source: "github",
-    expiresAt: Date.now() + 12000,
-  };
-
-  renderer.setState("celebrate");
-  renderer.setBubble(githubBubble);
+btnGithub?.addEventListener("click", () => {
+  (window as any).testVictory();
 });
 
-// Iniciar bucles de render y polling
-requestAnimationFrame(renderFrame);
-if (isTauri) {
-  setInterval(checkCursorHitTest, 50);
-}
