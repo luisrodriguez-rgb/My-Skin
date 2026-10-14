@@ -179,15 +179,21 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 - **Indicadores Tecnicos:** `Press Start 2P` exclusivamente para codigos de estado (`00`, `01`, `SEM`, `GIT`).
 
 ### Modos de Comportamiento y Locomocion
-- **Modo Libre / Patrulla (Free Roam):** El personaje se desplaza de forma autonoma a lo largo del borde inferior del monitor (`currentMonitor().size.width`). Sincroniza la animacion `WALK`, invierte el canvas horizontalmente (`scale(-1, 1)`) segun la direccion de avance y alterna con pausas de descanso en estado `IDLE`.
-- **Modo Anclado / Fijo (Pinned):** Fija al personaje en las coordenadas exactas donde fue posicionado. No realiza desplazamientos autonomos y solo reacciona ante notificaciones entrantes.
-- **Interrupcion Inteligente:** Si entra una notificacion del semestre o de GitHub, la locomocion se detiene de forma instantanea para permitir la lectura y el clic sobre el globo de dialogo.
-- **Sincronizacion de Arrastre (Drag & Drop):** Al arrastrar manualmente la ventana, el bucle de locomocion se suspende y se sincronizan las nuevas coordenadas fisicas `(winX, winY)`.
+- **Modo Anclado / Fijo (Pinned - Por Defecto):** El personaje reposa exactamente donde lo ubiques, respirando en estado `IDLE`. No se desplaza solo para no distraer durante sesiones de programacion o estudio.
+- **Modo Libre / Patrulla (Free Roam):** Al alternar con clic derecho, el personaje cobra vida propia caminando de un lado a otro sobre la pantalla con pausas aleatorias de descanso.
+- **Interrupcion Inteligente:** Al llegar una notificacion de entrega o de GitHub, la locomocion se detiene de forma instantanea para permitir la lectura y el clic sobre el globo de dialogo.
+- **Arrastre 1:1 por Puntero (Drag & Drop):** Arrastre directo en puntos logicos (normalizado para pantallas Retina) con captura de puntero (`setPointerCapture`). Sigue al cursor de forma instantanea sin retraso ni efecto de media velocidad.
+- **Proteccion de Bordes y Auto-Elevacion:** El sistema calcula las coordenadas para que el personaje nunca se pierda fuera de la pantalla. Si el personaje esta descansando cerca del borde inferior del monitor y se abre el controlador, la ventana se eleva automaticamente hacia arriba para que el panel quede 100% visible sin cortarse.
+- **Eliminacion de Pared Invisible Superior:** Limites calibrados para permitir que el casco del personaje alcance el borde de la barra de menu de macOS sin topes artificiales.
 
 ### Interaccion y Atajos
+- **Doble Clic sobre el Personaje:** Abre o repliega el panel de control MySkin Controller.
+- **Clic Izquierdo Sostenido sobre el Personaje:** Inicia el arrastre manual nativo 1:1 por la pantalla.
+- **Arrastre desde el Controlador:** Permite mover la ventana arrastrando desde el encabezado (`MySkin DESKTOP COMPANION`) o desde la tarjeta del personaje.
 - **Clic Derecho sobre el Personaje:** Alterna entre Modo Fijo (Anclado) y Modo Libre (Patrulla).
-- **Clic Derecho sobre el Fondo / Tecla `D`:** Alterna la visibilidad del panel de control MySkin Controller.
-- **Clic Izquierdo Sostenido sobre el Personaje:** Inicia el arrastre manual nativo de la ventana por la pantalla.
+- **Atajo `Cmd + Shift + D` (Mac) / `Ctrl + Shift + D`:** Alterna el controlador de forma segura sin interferir al escribir codigo en el IDE.
+- **Tecla `Escape` o Boton `✕`:** Cierran el controlador y devuelven la ventana a su tamano compacto.
+- **Flechas Direccionales:** Desplazan al personaje con animacion de caminata continua a 10 FPS (pasos de 22 px, o 45 px manteniendo `Shift`).
 - **Clic sobre el Globo de Dialogo:** Descarta la notificacion activa y reanuda el estado normal.
 
 ---
