@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MySkin Desktop Companion</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <!-- Canvas principal donde se dibuja el personaje, animaciones y globos de texto -->
+    <canvas id="pet-canvas" width="320" height="320"></canvas>
+
+    <!-- Panel de control flotante (se activa con la tecla 'D' o cuando corre en navegador web sin Tauri) -->
+    <div id="debug-panel" class="debug-panel hidden">
+      <div class="panel-header">
+        <span class="panel-title">MySkin Controller</span>
+        <button id="btn-close-debug" class="btn-icon">✕</button>
+      </div>
+
+      <div class="panel-section">
+        <label>Skin Activo</label>
+        <select id="select-skin">
+          <option value="spartan">Espartano 300</option>
+          <option value="cyberpunk">Cyber Agent</option>
+          <option value="retro-bot">Retro Bot</option>
+        </select>
+      </div>
+
+      <div class="panel-section">
+        <label>Estado / Animación</label>
+        <div class="btn-group">
+          <button class="btn-action" data-action="idle">IDLE</button>
+          <button class="btn-action" data-action="walk">WALK</button>
+          <button class="btn-action" data-action="alert">ALERT</button>
+          <button class="btn-action" data-action="celebrate">VICTORY</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <label>Simular Evento</label>
+        <div class="btn-group">
+          <button id="btn-event-semester" class="btn-secondary">⚠️ Entrega Semestre</button>
+          <button id="btn-event-github" class="btn-secondary">🐙 GitHub PR Merge</button>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <span id="status-cursor">Modo: Esperando cursor...</span>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
