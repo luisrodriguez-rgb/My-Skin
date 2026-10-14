@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "commit": "7e5b65f6a8c7e3710183dcd9558faa3f510a0964",
-    "indexed_at": "2026-10-14T21:16:18Z",
+    "commit": "a954b37fafb9d215f94fade0275946f5b1b8cc81",
+    "indexed_at": "2026-10-14T22:13:19Z",
     "project": "Users-leonfeliperodriguez-Desktop-Trabajos-MySkin",
-    "nodes": 320,
-    "edges": 577,
-    "original_size": 1703936,
-    "compressed_size": 222458,
-    "compression_level": 9
+    "nodes": 617,
+    "edges": 1144,
+    "original_size": 3473408,
+    "compressed_size": 400725,
+    "compression_level": 3
 }
