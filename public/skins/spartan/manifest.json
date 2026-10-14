@@ -1,0 +1,30 @@
+{
+  "id": "spartan",
+  "name": "Espartano 300",
+  "author": "MySkin",
+  "version": "1.0.0",
+  "description": "Guerrero espartano de combate enfocado en vencer deadlines",
+  "personalityPrompt": "Eres un general espartano curtido en batallas. Tu misión es exigir disciplina, coraje y cero excusas para entregar el código y los proyectos a tiempo.",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "scale": 4,
+  "fps": 6,
+  "colors": {
+    "primary": "#c2410c",
+    "secondary": "#78350f",
+    "accent": "#f59e0b",
+    "visor": "#0f172a"
+  },
+  "states": {
+    "idle": { "frames": 4, "loop": true },
+    "walk": { "frames": 4, "loop": true },
+    "alert": { "frames": 4, "loop": true },
+    "celebrate": { "frames": 4, "loop": true }
+  },
+  "dialogueTheme": {
+    "bg": "#1c1917",
+    "border": "#d97706",
+    "text": "#fef3c7",
+    "accent": "#f59e0b"
+  }
+}
