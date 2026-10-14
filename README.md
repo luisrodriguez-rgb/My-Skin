@@ -254,14 +254,18 @@ source "$HOME/.cargo/env"
 
 ## 9. Hoja de Ruta Tecnica (Roadmap)
 
+Para consultar el analisis critico de ingenieria, el diagnostico de deuda tecnica y la planificacion detallada por fases, revisa el documento [Auditoria Tecnica y Roadmap Estrategico](docs/AUDIT_AND_ROADMAP.md).
+
 1. [x] Creacion del proyecto con Tauri v2 y ventana flotante transparente.
 2. [x] Comando nativo en Rust para hit-testing y gestion de click-through.
 3. [x] Motor de renderizado en Canvas con FSM desacoplada a 60 FPS.
 4. [x] Rediseño del controlador bajo estetica Pixel Minimal UI.
 5. [x] Estandarizacion de skins modulares (`manifest.json` y `spritesheet.png`).
-6. [ ] **Modulo de Sincronizacion en Tiempo Real:** Cliente WebSocket / SSE para enlazar con la API de entregas universitarias.
-7. [ ] **Integracion con GitHub:** Webhook listener o polling ligero sobre GitHub GraphQL API para monitorear estados de PRs y CI.
-8. [ ] **Modulo de Diálogos LLM:** Formateo de notificaciones segun el `personalityPrompt` definido en el skin del personaje.
+6. [x] Soporte de arrastre 1:1 en pantallas Retina y auto-elevacion de ventana.
+7. [ ] **Modulo de Sincronizacion en Tiempo Real:** Cliente WebSocket / SSE para enlazar con la API de entregas universitarias.
+8. [ ] **Desacoplamiento Multi-Ventana:** Ventana overlay para el sprite y ventana nativa/system tray para ajustes.
+9. [ ] **Integracion con GitHub:** Webhook listener o polling ligero sobre GitHub GraphQL API para monitorear estados de PRs y CI.
+10. [ ] **Modulo de Diálogos LLM:** Formateo de notificaciones segun el `personalityPrompt` definido en el skin del personaje.
 
 ---
 
