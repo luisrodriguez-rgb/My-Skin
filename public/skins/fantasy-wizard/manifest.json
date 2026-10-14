@@ -1,0 +1,55 @@
+{
+  "id": "fantasy-wizard",
+  "name": "Mago de Fantasía (El Hechicero)",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Sabio, misterioso y un tanto dramático con runas y pergaminos.",
+  "dialogues": {
+    "alert": "Las runas del semestre auguran peligro... ¡Haz esa entrega antes de que el tiempo se desvanezca!",
+    "victory": "¡Por los fuegos de Arcania! El hechizo de compilación ha triunfado.",
+    "focus": "Canalizando maná de concentración sobre el pergamino digital.",
+    "break": "El maná requiere reposo. Cierra los grimorios unos minutos.",
+    "sleep": "Soñando con constelaciones y bibliotecas antiguas..."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

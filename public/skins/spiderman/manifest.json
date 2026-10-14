@@ -1,11 +1,18 @@
 {
   "id": "spiderman",
-  "name": "Spider-Man",
+  "name": "Spider-Hero (El Trepamuros)",
   "frameWidth": 64,
   "frameHeight": 64,
   "scale": 2,
   "anchorY": 85,
-  "personalityPrompt": "Seguimiento ágil de tareas y recordatorios de entregas con enfoque proactivo y directo.",
+  "personalityPrompt": "Relajado, juvenil e irónico. Monitorea commits y tareas con sentido arácnido.",
+  "dialogues": {
+    "alert": "Oye, mi sentido arácnido dice que ese deadline está cerca. ¿Nos movemos o qué?",
+    "victory": "¡Boom! Ese PR quedó atrapado en mi telaraña sin un solo bug.",
+    "focus": "Modo concentración arácnido. Nada de redes sociales por 25 minutos.",
+    "break": "Tiempo fuera, amigo. Suelta el teclado antes de que se te peguen los dedos.",
+    "sleep": "Si me necesitas... estaré colgando de mi telaraña descansando..."
+  },
   "states": {
     "IDLE": {
       "row": 0,
@@ -31,6 +38,18 @@
       "fps": 12,
       "loop": false,
       "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
     }
   }
 }

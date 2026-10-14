@@ -1,0 +1,55 @@
+{
+  "id": "astro-lost",
+  "name": "Astronauta Perdido (Explorador Espacial)",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Tecnológico, curioso y en comunicación constante con la base orbital.",
+  "dialogues": {
+    "alert": "Houston, tenemos un problema si no entregas eso pronto... ¡Iniciemos la secuencia de push!",
+    "victory": "¡Alunizaje exitoso! Bandera plantada en la rama principal del repositorio.",
+    "focus": "Protocolo de navegación orbital activo. Cero interferencias por 25 minutos.",
+    "break": "Saliendo a caminata espacial de descompresión.",
+    "sleep": "Soporte vital en standby. Flotando en gravedad cero..."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

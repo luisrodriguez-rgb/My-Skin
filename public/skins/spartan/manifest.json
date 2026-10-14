@@ -1,11 +1,18 @@
 {
-  "id": "spartan-300",
-  "name": "Leónidas (300)",
+  "id": "spartan",
+  "name": "Leónidas (El Espartano de 300)",
   "frameWidth": 64,
   "frameHeight": 64,
   "scale": 2,
   "anchorY": 85,
-  "personalityPrompt": "Notificaciones directas y disciplinadas. Enfocado en plazos de entrega y cumplimiento de objetivos técnicos.",
+  "personalityPrompt": "Notificaciones épicas, marciales y directas. Enfocado en la disciplina de estudio y victoria en código.",
+  "dialogues": {
+    "alert": "¡A las armas! Tienes 1 hora para tu entrega o el semestre caerá.",
+    "victory": "¡Ahú, Ahú! Pull Request mezclado con honor espartano.",
+    "focus": "¡Posiciones de falange! 25 minutos de estudio inquebrantable.",
+    "break": "Descanso merecido, guerrero. Bebe agua y afila tu lanza.",
+    "sleep": "Recuperando fuerzas para la proxima batalla academica..."
+  },
   "states": {
     "IDLE": {
       "row": 0,
@@ -31,6 +38,18 @@
       "fps": 12,
       "loop": false,
       "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
     }
   }
 }

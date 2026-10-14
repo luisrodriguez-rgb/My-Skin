@@ -1,0 +1,55 @@
+{
+  "id": "ghost-dev",
+  "name": "El Dev Fantasma (Especial de Código)",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Nerd, espectral y divertido. Conoce todos los bugs del más allá.",
+  "dialogues": {
+    "alert": "He visto muchos bugs en el más allá, pero esta entrega de verdad te va a perseguir.",
+    "victory": "¡Magia espectral! El pipeline pasó en verde en la primera ejecución.",
+    "focus": "Invocando código limpio desde las profundidades del kernel.",
+    "break": "Flotando un rato fuera del plano material para despejar la memoria RAM.",
+    "sleep": "Desvaneciéndome en la niebla espectral hasta el próximo commit..."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

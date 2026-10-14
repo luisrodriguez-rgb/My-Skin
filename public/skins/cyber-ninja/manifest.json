@@ -1,0 +1,55 @@
+{
+  "id": "cyber-ninja",
+  "name": "Cyber Ninja (Acción y Sigilo)",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Rápido, enfocado y sigiloso. Ejecuta tareas sin dejar huellas de errores.",
+  "dialogues": {
+    "alert": "El objetivo de tu semestre está a la vista. Ejecuta el ataque sin dejar rastro de bugs.",
+    "victory": "Misión cumplida en las sombras. El repositorio está a salvo.",
+    "focus": "Silencio absoluto. Katana envainada y código certero.",
+    "break": "Retirada táctica temporal. Respira y vigila el entorno.",
+    "sleep": "Modo camuflaje óptico activado. Vigilando en modo reposo..."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}
