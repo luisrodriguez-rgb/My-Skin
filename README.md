@@ -90,23 +90,96 @@ Para solucionar este cuello de botella sin degradar la bateria:
 
 Cada personaje reside en una subcarpeta dentro de `public/skins/` y contiene dos archivos: `manifest.json` y `spritesheet.png`.
 
-El proyecto cuenta con el catalogo oficial de **10 personajes de lanzamiento**, estructurado en 3 Olas tematicas:
+El proyecto cuenta con el catalogo oficial de **10 personajes de lanzamiento**, estructurado en 3 Olas tematicas para pruebas graduales de fisica, animacion y viralidad:
 
-* **Ola 1: Fundacionales (Core y Navegacion)**
-  1. `spartan`: **Leonidas (El Espartano de 300)** - Disciplina marcial, lanza y escudo dorado.
-  2. `spiderman`: **Spider-Hero (El Trepamuros)** - Sentido aracnido y acrobacias urbanas.
-  3. `dev-avatar`: **Mi Avatar Pixelado (Tu Mismo)** - Sudadera, audifonos cian, taza de cafe y portatil.
-  4. `ghost-dev`: **El Dev Fantasma (Especial Codigo)** - Sabana espectral y mini-laptop con codigo Matrix.
+### Ola 1: El Core y Navegacion (Los Fundacionales)
+*Enfocados en calibrar la escala del canvas, la fisica de colisiones y el modo de arrastre y anclaje.*
 
-* **Ola 2: Entretenimiento y Memes (Virales)**
-  5. `football-10`: **El Futbolista 10 (La Pulga)** - Camiseta albiceleste, regates y festejo al cielo.
-  6. `capybara`: **Capibara Chill (El Favorito de Internet)** - Naranja en la cabeza y jacuzzi de madera.
-  7. `cyber-ninja`: **Cyber Ninja (Accion y Sigilo)** - Katana laser cian, bufanda neon y bombas de humo.
+1. **Leónidas (`spartan`) - El Espartano de 300**
+   * **Visual:** Casco corintio de bronce con cresta roja, capa escarlata, escudo dorado y lanza de acero.
+   * **Alertas (Semestre):** Alza su escudo y apunta con la lanza en guardia de combate.
+   * **Celebraciones (GitHub):** Golpea su lanza contra el suelo en saludo espartano victorioso.
+   * **Modo Concentracion (Focus):** Sentado en un taburete de bronce revisando un pergamino de estrategia militar.
+   * **Modo Reposo (Sleep):** Apoyado sobre su escudo dorado con ojos cerrados.
+   * **Personalidad:** Epico, marcial y exigente. *"¡A las armas! Tienes 1 hora para tu entrega o el semestre caera."*
 
-* **Ola 3: Nostalgia y Fantasia (Cultura Pop)**
-  8. `fantasy-wizard`: **Mago de Fantasia (El Hechicero)** - Tunica violeta, grimorio y baculo con cristal.
-  9. `game-slime`: **Slime de Videojuego (La Mascota)** - Gota gelatinosa rebotadora y division en 3 slimes.
-  10. `astro-lost`: **Astronauta Perdido (Explorador)** - Traje blanco, visor reflectante y gravedad cero.
+2. **Spider-Hero (`spiderman`) - El Amistoso Vecino**
+   * **Visual:** Traje rojo y azul pixelado, postura agil en cuclillas con ojos blancos triangulares.
+   * **Alertas (Semestre):** Se cuelga de cabeza de la parte superior del globo o apunta con lanzarredes.
+   * **Celebraciones (GitHub):** Lanza una telaraña al aire y realiza un giro acrobatico en el aire.
+   * **Modo Concentracion (Focus):** Colgado boca abajo leyendo un libro de estudio.
+   * **Modo Reposo (Sleep):** Acurrucado en una pequeña hamaca de telaraña tejida.
+   * **Personalidad:** Relajado, juvenil e ironico. *"Oye, mi sentido aracnido dice que ese commit esta tardando. ¿Vamos a movernos o que?"*
+
+3. **Mi Avatar Pixelado (`dev-avatar`) - Tu Mismo**
+   * **Visual:** Ropa casual con sudadera navy, audifonos cian de diadema, vaqueros y zapatillas blancas.
+   * **Alertas (Semestre):** Expresion de alarma sosteniendo una taza de cafe caliente derramandose.
+   * **Celebraciones (GitHub):** Brazos alzados al cielo con lluvia de confeti de colores.
+   * **Modo Concentracion (Focus):** Tecleando intensamente en un portatil plateado con pantalla de codigo matrix.
+   * **Modo Reposo (Sleep):** Dormido sobre el teclado del computador.
+   * **Personalidad:** Identificable, estresado y apasionado. *"¡Uff, menos mal que pusimos ese commit! Una mas para el portafolio."*
+
+4. **El Dev Fantasma (`ghost-dev`) - Especial de Codigo**
+   * **Visual:** Sabana espectral flotante blanca con ojos celestes pixelados y portatil miniatura.
+   * **Alertas (Semestre):** Se vuelve de color rojo titilante con temblor de panico.
+   * **Celebraciones (GitHub):** Se disuelve en particulas de codigo verde y reaparece triunfal.
+   * **Modo Concentracion (Focus):** Flotando estatico con su pantalla emitiendo resplandor verde.
+   * **Modo Reposo (Sleep):** Acurrucado en forma de esfera translucida flotando pacificamente.
+   * **Personalidad:** Nerd, espectral y divertido. *"He visto muchos bugs en el mas alla, pero esta entrega de verdad te va a perseguir si no la haces hoy."*
+
+### Ola 2: Entretenimiento y Memes (Los Virales)
+*Disenados para capturar atencion en redes sociales por su potencial humoristico y referencias de cultura digital.*
+
+5. **El Futbolista 10 (`football-10`) - La Pulga**
+   * **Visual:** Camiseta albiceleste con el dorsal numero 10 dorado, pantalon negro y balon clasico.
+   * **Alertas (Semestre):** Dominadas y toques rapidos de balon en cuenta regresiva.
+   * **Celebraciones (GitHub):** Su iconico festejo senalando al cielo con ambos dedos indices.
+   * **Modo Concentracion (Focus):** Sentado sobre el balon estudiando una pizarra con esquemas tacticos.
+   * **Modo Reposo (Sleep):** Apoyando la cabeza sobre el balon usandolo como almohada.
+   * **Personalidad:** Tranquilo, humilde y motivador. *"Falta poco para que termine el partido. Metamosle este commit y nos llevamos los tres puntos."*
+
+6. **Capibara Chill (`capybara`) - La Mascota de Internet**
+   * **Visual:** Roedor marron de silueta cuadrada con una naranja fresca equilibrada en la cabeza.
+   * **Alertas (Semestre):** La naranja cae rodando y muestra ojos de sorpresa pixelada.
+   * **Celebraciones (GitHub):** Se relaja dentro de una tina de madera (onsen) con destellos de vapor.
+   * **Modo Concentracion (Focus):** Con gafas cuadradas de lectura revisando serenamente un libro.
+   * **Modo Reposo (Sleep):** Tendido completamente plano en el suelo con la naranja a un lado.
+   * **Personalidad:** Ultra-relajado, zen y sabio. *"Amigo, no te estreses, pero hay que entregar eso. Todo va a salir bien, solo dale push."*
+
+7. **Cyber Ninja (`cyber-ninja`) - Accion y Sigilo**
+   * **Visual:** Traje oscuro de operaciones tacticas, visor digital cian y bufanda de energia violeta.
+   * **Alertas (Semestre):** Adopta guardia de combate y desenfunda una katana de plasma brillante.
+   * **Celebraciones (GitHub):** Arroja bombas de humo pixeladas y adopta una pose ninja victoriosa.
+   * **Modo Concentracion (Focus):** Meditacion en posicion de loto con orbes de datos flotantes.
+   * **Modo Reposo (Sleep):** Apoyado en sigilo con el visor cian en standby atenuado.
+   * **Personalidad:** Rapido, enfocado y sigiloso. *"El objetivo de tu semestre esta a la vista. Ejecuta el ataque sin dejar rastro de bugs."*
+
+### Ola 3: Nostalgia y Cultura Pop (Fantasia y Exploracion)
+*Dirigidos a los aficionados del pixel art tradicional, los RPGs retro y la ciencia ficcion.*
+
+8. **Mago de Fantasía (`fantasy-wizard`) - El Hechicero**
+   * **Visual:** Tunica violeta oscuro, sombrero de punta con hebilla dorada, barba blanca y baculo magico.
+   * **Alertas (Semestre):** Levita un grimorio arcano con auras de fuego y runas brillantes.
+   * **Celebraciones (GitHub):** Lanza chispas magicas y fuegos artificiales de colores con el baculo.
+   * **Modo Concentracion (Focus):** Grimorio abierto flotando mientras canaliza mana de estudio.
+   * **Modo Reposo (Sleep):** Inclinado sobre su baculo con el sombrero caido tapandole los ojos.
+   * **Personalidad:** Sabio, misterioso y dramatico. *"Las runas del semestre auguran peligro... ¡Haz esa entrega antes de que el tiempo se desvanezca!"*
+
+9. **Slime de Videojuego (`game-slime`) - La Mascota Rebotadora**
+   * **Visual:** Gota gelatinosa verde esmeralda con reflejos brillantes y ojos redondos.
+   * **Alertas (Semestre):** Se torna rojo furioso e infla sus mejillas en senal de maxima urgencia.
+   * **Celebraciones (GitHub):** Se divide en tres mini-slimes felices rebotando al unisono.
+   * **Modo Concentracion (Focus):** Se solidifica en un cubo regular usando pequenas gafas de pasta.
+   * **Modo Reposo (Sleep):** Se disuelve suavemente en un charco plano de gelatina.
+   * **Personalidad:** Tierno, burbujeante y animado. *"*Plop, plop* ¡Vamos! ¡Tu puedes con esa tarea! ¡Mucho animo!"*
+
+10. **Astronauta Perdido (`astro-lost`) - Explorador Espacial**
+    * **Visual:** Traje espacial blanco, mochila de soporte vital, parches de mision y visor dorado.
+    * **Alertas (Semestre):** Enciende propulsores auxiliares con una luz de baliza roja titilante.
+    * **Celebraciones (GitHub):** Planta una bandera del proyecto sobre el escritorio y realiza un saludo militar.
+    * **Modo Concentracion (Focus):** Examina una tableta estelar con cartas de navegacion orbital.
+    * **Modo Reposo (Sleep):** Flotando ingravido en gravedad cero con balizas apagadas.
+    * **Personalidad:** Tecnologico, curioso y lejano. *"Houston, tenemos un problema si no entregas eso pronto... ¡Iniciemos la secuencia de push!"*
 
 ### Formato de `manifest.json`
 
