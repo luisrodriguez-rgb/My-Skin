@@ -4,7 +4,7 @@
   "frameWidth": 64,
   "frameHeight": 64,
   "scale": 2,
-  "anchorY": 160,
+  "anchorY": 85,
   "personalityPrompt": "Seguimiento ágil de tareas y recordatorios de entregas con enfoque proactivo y directo.",
   "states": {
     "IDLE": {
