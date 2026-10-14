@@ -47,52 +47,11 @@ pub fn run() {
                 // 1. Iniciamos la app dejando pasar todos los clics por defecto
                 let _ = main_window.set_ignore_cursor_events(true);
 
-                // 2. Forzar siempre encima a nivel de API Tauri
+                // 2. Forzar siempre encima a nivel nativo de sistema operativo (NSFloatingWindowLevel)
                 let _ = main_window.set_always_on_top(true);
 
-                // 3. Visible en todos los escritorios virtuales (Spaces)
+                // 3. Visible en todos los escritorios virtuales (Spaces) y sobre otras apps
                 let _ = main_window.set_visible_on_all_workspaces(true);
-
-                // 4. Configuración nativa de macOS para flotar sobre todas las aplicaciones
-                #[cfg(target_os = "macos")]
-                {
-                    use std::ffi::c_void;
-
-                    #[link(name = "AppKit", kind = "framework")]
-                    extern "C" {
-                        fn sel_registerName(name: *const std::os::raw::c_char) -> *mut c_void;
-                    }
-
-                    // En macOS arm64/x86_64 podemos usar msgSend con transmute seguro
-                    extern "C" {
-                        fn objc_msgSend();
-                    }
-
-                    if let Ok(ns_win_ptr) = main_window.ns_window() {
-                        unsafe {
-                            let set_level_sel = sel_registerName(b"setLevel:\0".as_ptr() as *const _);
-                            let set_collection_sel = sel_registerName(b"setCollectionBehavior:\0".as_ptr() as *const _);
-                            let get_collection_sel = sel_registerName(b"collectionBehavior\0".as_ptr() as *const _);
-
-                            // NSFloatingWindowLevel = 3, NSStatusWindowLevel = 25, NSPopUpMenuWindowLevel = 101
-                            // Usamos 25 (NSStatusWindowLevel) para garantizar que flote sobre navegadores, IDEs y apps de pantalla completa
-                            type SetLevelFn = unsafe extern "C" fn(*mut c_void, *mut c_void, isize);
-                            let set_level: SetLevelFn = std::mem::transmute(objc_msgSend as *const ());
-                            set_level(ns_win_ptr, set_level_sel, 25);
-
-                            // NSWindowCollectionBehaviorCanJoinAllSpaces (1 << 0 = 1)
-                            // NSWindowCollectionBehaviorFullScreenAuxiliary (1 << 8 = 256)
-                            type GetCollectionFn = unsafe extern "C" fn(*mut c_void, *mut c_void) -> usize;
-                            type SetCollectionFn = unsafe extern "C" fn(*mut c_void, *mut c_void, usize);
-                            let get_collection: GetCollectionFn = std::mem::transmute(objc_msgSend as *const ());
-                            let set_collection: SetCollectionFn = std::mem::transmute(objc_msgSend as *const ());
-
-                            let current_behavior = get_collection(ns_win_ptr, get_collection_sel);
-                            let new_behavior = current_behavior | 1 | 256;
-                            set_collection(ns_win_ptr, set_collection_sel, new_behavior);
-                        }
-                    }
-                }
             }
             Ok(())
         })

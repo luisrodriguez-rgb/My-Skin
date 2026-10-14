@@ -72,6 +72,7 @@ ctx.imageSmoothingEnabled = false;
 
 // --- VARIABLES GLOBALES DE ESTADO Y HIT-TEST ---
 let isCurrentlyIgnoring = true;
+let currentFrameImageData: Uint8ClampedArray | null = null;
 const ALPHA_THRESHOLD = 20;
 
 let activeManifest: SkinManifest | null = null;
@@ -228,6 +229,9 @@ function drawCurrentStateToCanvas() {
       activeNotification.urgent
     );
   }
+
+  // Cache en memoria del frame activo para hit-testing instantaneo sin latencia de GPU
+  currentFrameImageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).data;
 }
 
 /**
@@ -315,29 +319,36 @@ let characterBoundingBox = {
   maxY: CANVAS_HEIGHT,
 };
 
-// --- HIT-TEST OPTIMIZADO (O(1) BOUNDING BOX + MUESTREO PUNTUAL BAJO DEMANDA) ---
-// Cero asignaciones en memoria por frame. Solo extrae un parche de 17x17 px cuando el cursor toca la caja del personaje.
-function isHoveringCharacter(x: number, y: number): boolean {
+// --- HIT-TEST ROBUSTO DE CANAL ALPHA Y PANEL DE CONTROL ---
+function isPixelSolid(x: number, y: number): boolean {
   if (
-    x < characterBoundingBox.minX - 8 ||
-    x > characterBoundingBox.maxX + 8 ||
-    y < characterBoundingBox.minY - 8 ||
-    y > characterBoundingBox.maxY + 8
+    x < characterBoundingBox.minX - 4 ||
+    x >= characterBoundingBox.maxX + 4 ||
+    y < characterBoundingBox.minY - 4 ||
+    y >= characterBoundingBox.maxY + 4
   ) {
     return false;
   }
 
-  const startX = Math.max(0, Math.floor(x - 8));
-  const startY = Math.max(0, Math.floor(y - 8));
-  const patchWidth = Math.min(CANVAS_WIDTH - startX, 17);
-  const patchHeight = Math.min(CANVAS_HEIGHT - startY, 17);
+  if (!currentFrameImageData) return false;
+  const px = Math.floor(x);
+  const py = Math.floor(y);
+  if (px < 0 || px >= CANVAS_WIDTH || py < 0 || py >= CANVAS_HEIGHT) return false;
 
-  if (patchWidth <= 0 || patchHeight <= 0) return false;
+  const alphaIndex = (py * CANVAS_WIDTH + px) * 4 + 3;
+  return currentFrameImageData[alphaIndex] > ALPHA_THRESHOLD;
+}
 
-  const patch = ctx.getImageData(startX, startY, patchWidth, patchHeight).data;
-  for (let i = 3; i < patch.length; i += 4) {
-    if (patch[i] > ALPHA_THRESHOLD) {
-      return true;
+/**
+ * Tolerancia de 8px alrededor del sprite para capturar clics rápidos de forma instantánea
+ */
+function isCharacterHit(x: number, y: number): boolean {
+  if (isPixelSolid(x, y)) return true;
+  for (let dx = -8; dx <= 8; dx += 4) {
+    for (let dy = -8; dy <= 8; dy += 4) {
+      if (isPixelSolid(x + dx, y + dy)) {
+        return true;
+      }
     }
   }
   return false;
@@ -369,8 +380,8 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
       return true;
     }
 
-    // Comprobación de colisión precisa sobre el sprite (O(1) descarte + 1 parche pequeño)
-    if (isHoveringCharacter(canvasX, canvasY)) {
+    // Comprobación de colisión precisa sobre el sprite
+    if (isCharacterHit(canvasX, canvasY)) {
       return true;
     }
   }
@@ -379,26 +390,17 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
 }
 
 /**
- * Sondeo adaptativo de posición del cursor:
- * - 10 Hz (100ms) cuando el cursor está fuera de la ventana (ahorra 70% de llamadas IPC a Rust).
- * - 33 Hz (30ms) cuando el cursor entra en la ventana para interacción fluida.
- * - Pausado a 8 Hz (120ms) sin llamadas IPC cuando el panel está abierto o se arrastra la ventana.
+ * Sondeo continuo a 30ms para alternar transparencia de clics instantáneamente
  */
-async function adaptiveHitTestLoop() {
-  let nextDelay = 30;
+async function checkCursorHitTest() {
+  if (isMouseDragging) return; // Nunca ignorar cursor mientras se arrastra con el mouse
 
-  if (isMouseDragging) {
-    window.setTimeout(adaptiveHitTestLoop, 100);
-    return;
-  }
-
-  // Si el panel de control está abierto, NUNCA ignorar eventos de cursor y pausar sondeo IPC
+  // CRÍTICO: Si el panel de control está abierto, NUNCA ignorar eventos de cursor bajo ninguna circunstancia
   if (debugPanel && !debugPanel.classList.contains("hidden")) {
     if (isCurrentlyIgnoring) {
       isCurrentlyIgnoring = false;
       await invoke("set_ignore_cursor", { ignore: false });
     }
-    window.setTimeout(adaptiveHitTestLoop, 120);
     return;
   }
 
@@ -410,24 +412,20 @@ async function adaptiveHitTestLoop() {
         isCurrentlyIgnoring = true;
         await invoke("set_ignore_cursor", { ignore: true });
       }
-      nextDelay = 100; // Cursor fuera de la ventana: frecuencia reducida a 10 Hz
-    } else {
-      nextDelay = 30; // Cursor dentro: alta reactividad (33 Hz) para clics y hover
-      const isInteractable = isCursorOverInteractable(pos.x, pos.y);
-      const shouldIgnore = !isInteractable;
+      return;
+    }
 
-      if (shouldIgnore !== isCurrentlyIgnoring) {
-        isCurrentlyIgnoring = shouldIgnore;
-        await invoke("set_ignore_cursor", { ignore: shouldIgnore });
-        canvas.style.cursor = isInteractable ? "pointer" : "default";
-      }
+    const isInteractable = isCursorOverInteractable(pos.x, pos.y);
+    const shouldIgnore = !isInteractable;
+
+    if (shouldIgnore !== isCurrentlyIgnoring) {
+      isCurrentlyIgnoring = shouldIgnore;
+      await invoke("set_ignore_cursor", { ignore: shouldIgnore });
+      canvas.style.cursor = isInteractable ? "pointer" : "default";
     }
   } catch (err) {
     console.debug("Hit-test poll info:", err);
-    nextDelay = 200;
   }
-
-  window.setTimeout(adaptiveHitTestLoop, nextDelay);
 }
 
 // --- SISTEMA ROBUSTO DE ARRASTRE DIRECTO CON EL MOUSE (DRAG & DROP) ---
@@ -453,8 +451,8 @@ canvas.addEventListener("pointerdown", async (e) => {
     return;
   }
 
-  // 2. Comprobar si hizo clic sobre el cuerpo del personaje
-  const hitCharacter = isHoveringCharacter(clickX, clickY);
+  // 2. Comprobar si hizo clic sobre el cuerpo del personaje (con tolerancia para clics ágiles)
+  const hitCharacter = isCharacterHit(clickX, clickY);
   if (!hitCharacter) return;
 
   try {
@@ -486,7 +484,7 @@ canvas.addEventListener("dblclick", async (e) => {
   const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
   const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-  const hitCharacter = isHoveringCharacter(clickX, clickY);
+  const hitCharacter = isCharacterHit(clickX, clickY);
   if (hitCharacter) {
     const isHidden = debugPanel?.classList.contains("hidden") ?? true;
     await setControllerVisibility(isHidden);
@@ -551,7 +549,7 @@ loadSkin("spartan").then(() => {
   initRoamingSystem();
 });
 requestAnimationFrame(animationLoop);
-adaptiveHitTestLoop();
+setInterval(checkCursorHitTest, 30);
 
 // Iniciar servicios en segundo plano (Fase 2: Académico y GitHub)
 academicSyncService.startPeriodicCheck(60);
@@ -823,7 +821,7 @@ canvas.addEventListener("contextmenu", async (e) => {
   const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
   const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-  if (isHoveringCharacter(clickX, clickY)) {
+  if (isCharacterHit(clickX, clickY)) {
     const pinned = togglePinMode();
     if (statusFsmText) {
       statusFsmText.textContent = pinned ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
