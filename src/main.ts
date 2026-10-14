@@ -272,17 +272,9 @@ function isPixelSolid(x: number, y: number): boolean {
  * caen sobre un elemento interactuable (panel de control abierto o pixel del personaje).
  */
 function isCursorOverInteractable(windowX: number, windowY: number): boolean {
-  // 1. Si el panel de control esta abierto y el cursor esta sobre su area
+  // 1. Si el panel de control esta abierto, TODA la ventana es interactuable (nunca ignorar cursor)
   if (debugPanel && !debugPanel.classList.contains("hidden")) {
-    const panelRect = debugPanel.getBoundingClientRect();
-    if (
-      windowX >= panelRect.left &&
-      windowX <= panelRect.right &&
-      windowY >= panelRect.top &&
-      windowY <= panelRect.bottom
-    ) {
-      return true;
-    }
+    return true;
   }
 
   // 2. Si el cursor esta sobre el canvas del personaje
@@ -295,8 +287,24 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
   ) {
     const canvasX = (windowX - canvasRect.left) * (CANVAS_WIDTH / canvasRect.width);
     const canvasY = (windowY - canvasRect.top) * (CANVAS_HEIGHT / canvasRect.height);
+
+    // Si hay notificacion activa sobre el globo
+    if (activeNotification && canvasY < 84 && canvasX >= 15 && canvasX <= 285) {
+      return true;
+    }
+
+    // Comprobar pixel solido directo
     if (isPixelSolid(canvasX, canvasY)) {
       return true;
+    }
+
+    // Margen de tolerancia de 8px alrededor del personaje para capturar clics rapidos sin delay
+    for (let dx = -8; dx <= 8; dx += 4) {
+      for (let dy = -8; dy <= 8; dy += 4) {
+        if (isPixelSolid(canvasX + dx, canvasY + dy)) {
+          return true;
+        }
+      }
     }
   }
 
@@ -305,6 +313,16 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
 
 async function checkCursorHitTest() {
   if (isMouseDragging) return; // Nunca ignorar cursor mientras se arrastra con el mouse
+
+  // CRÍTICO: Si el panel de control está abierto, NUNCA ignorar eventos de cursor bajo ninguna circunstancia.
+  // Esto elimina 100% el problema de que los clics del controlador se filtren a la ventana de atrás (IDE).
+  if (debugPanel && !debugPanel.classList.contains("hidden")) {
+    if (isCurrentlyIgnoring) {
+      isCurrentlyIgnoring = false;
+      await invoke("set_ignore_cursor", { ignore: false });
+    }
+    return;
+  }
 
   try {
     const pos = await invoke<{ x: number; y: number; inside: boolean }>("get_cursor_rel_pos");
@@ -353,8 +371,21 @@ canvas.addEventListener("pointerdown", async (e) => {
     return;
   }
 
-  // 2. Si hizo clic sobre un pixel solido del cuerpo del personaje, activar arrastre manual
-  if (!isPixelSolid(clickX, clickY)) return;
+  // 2. Comprobar si hizo clic sobre el cuerpo del personaje (con tolerancia para clics agiles)
+  let hitCharacter = isPixelSolid(clickX, clickY);
+  if (!hitCharacter) {
+    for (let dx = -8; dx <= 8; dx += 4) {
+      for (let dy = -8; dy <= 8; dy += 4) {
+        if (isPixelSolid(clickX + dx, clickY + dy)) {
+          hitCharacter = true;
+          break;
+        }
+      }
+      if (hitCharacter) break;
+    }
+  }
+
+  if (!hitCharacter) return;
 
   try {
     canvas.setPointerCapture(e.pointerId);
@@ -374,6 +405,32 @@ canvas.addEventListener("pointerdown", async (e) => {
   try {
     await invoke("set_ignore_cursor", { ignore: false });
   } catch (_) {}
+});
+
+// Doble clic sobre el personaje: abre o cierra el panel de control
+canvas.addEventListener("dblclick", async (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+  const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+
+  let hitCharacter = isPixelSolid(clickX, clickY);
+  if (!hitCharacter) {
+    for (let dx = -8; dx <= 8; dx += 4) {
+      for (let dy = -8; dy <= 8; dy += 4) {
+        if (isPixelSolid(clickX + dx, clickY + dy)) {
+          hitCharacter = true;
+          break;
+        }
+      }
+      if (hitCharacter) break;
+    }
+  }
+
+  if (hitCharacter) {
+    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
+    await setControllerVisibility(isHidden);
+  }
 });
 
 window.addEventListener("pointermove", async (e) => {
@@ -514,6 +571,7 @@ async function setControllerVisibility(visible: boolean) {
     if (mainAppWindow) {
       try {
         await mainAppWindow.setSize(new LogicalSize(340, 580));
+        await mainAppWindow.setFocus();
       } catch (err) {
         console.debug("setSize error:", err);
       }
@@ -569,11 +627,12 @@ controllerHeader?.addEventListener("pointerdown", async (e) => {
 });
 
 // Atajos de teclado:
-// - Tecla 'D': Alterna la visibilidad del panel de control
+// - Cmd+Shift+D o Ctrl+Shift+D: Alterna la visibilidad del panel de control sin interferir con la escritura de codigo
 // - Tecla 'Escape': Cierra el panel de control si esta visible
 // - Flechas Direccionales: Mueven al personaje por la pantalla de forma agil y rapida
 window.addEventListener("keydown", async (e) => {
-  if (e.key === "d" || e.key === "D") {
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === "d" || e.key === "D")) {
+    e.preventDefault();
     const isHidden = debugPanel?.classList.contains("hidden") ?? true;
     await setControllerVisibility(isHidden);
     return;
