@@ -73,6 +73,8 @@ const notifications = new NotificationQueue();
 let ambientState: PetStateName = "IDLE";
 let visibleNotificationId: string | null = null;
 let skinError: string | undefined;
+let skinLoading: string | undefined;
+let githubConfigurationError: string | undefined;
 let actionError: string | undefined;
 let currentFrameImageData: Uint8ClampedArray | null = null;
 const ALPHA_THRESHOLD = 20;
@@ -111,6 +113,8 @@ let activeNotification: { title: string; subtitle: string; urgent: boolean } | n
 export async function loadSkin(skinFolder: string) {
   const sequence = ++loadSequence;
   skinError = undefined;
+  skinLoading = skinFolder;
+  publishState();
   try {
     if (!/^[a-z0-9-]+$/.test(skinFolder)) throw new Error("Identificador de skin inválido.");
     const res = await fetch(`/skins/${skinFolder}/manifest.json`);
@@ -128,6 +132,7 @@ export async function loadSkin(skinFolder: string) {
     currentFrameIndex = 0;
     lastFrameTimestamp = performance.now();
     skinError = undefined;
+    skinLoading = undefined;
     refreshPresentation(true);
 
     try {
@@ -139,6 +144,7 @@ export async function loadSkin(skinFolder: string) {
     console.log(`[MySkin] Skin "${activeManifest.name}" cargado exitosamente.`);
   } catch {
     if (sequence !== loadSequence) return;
+    skinLoading = undefined;
     skinError = "No se pudo cargar el personaje. Se conserva el anterior; vuelve a intentarlo.";
     publishState();
   }
@@ -635,6 +641,19 @@ async function registerCommands() {
     listen<string>("notification-dismiss", ({ payload }) => dismissNotification(payload)),
     listen("pomo-reset", () => pomodoroEngine.reset()),
     listen<string>("calendar-sync", ({ payload }) => { void syncCalendar(payload); }),
+    listen<string>("github-repository", ({ payload }) => {
+      try {
+        if (typeof payload !== "string" || !/^[\w.-]+\/[\w.-]+$/.test(payload.trim())) throw new Error();
+        const [owner, repository] = payload.trim().split("/");
+        githubMonitor.setTargetRepo(owner, repository);
+        githubMonitor.lastError = null;
+        githubConfigurationError = undefined;
+        notifications.removeWhere((item) => item.kind === "github");
+        githubMonitor.stopPolling();
+        githubMonitor.startPolling(180);
+      } catch { githubConfigurationError = "Usa el formato propietario/repositorio."; }
+      refreshPresentation();
+    }),
     listen("state-request", () => publishState()),
   ]);
   await initialSkin;
@@ -664,7 +683,9 @@ function publishState() {
     notifications: notifications.snapshot().map(displayNotification),
     activeNotificationId: visibleNotificationId,
     skinError,
+    skinLoading,
     actionError,
+    github: { repository: githubMonitor.getTargetRepo(), error: githubConfigurationError || githubMonitor.lastError || undefined },
     calendar: {
       url: academicSyncService.getCalendarUrl(),
       count: academicSyncService.getDeadlines().length,

@@ -19,7 +19,9 @@ export interface AppState {
   notifications: AppNotification[];
   activeNotificationId: string | null;
   skinError?: string;
+  skinLoading?: string;
   actionError?: string;
+  github: { repository: string; error?: string };
   calendar: {
     url: string;
     count: number;
