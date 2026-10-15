@@ -118,6 +118,18 @@ export async function loadSkin(skinFolder: string) {
     setPetState("IDLE");
     drawCurrentStateToCanvas();
     syncCardInfo();
+
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("myskin_active_skin", skinFolder);
+      }
+    } catch (_) {}
+
+    const selectEl = document.getElementById("select-skin") as HTMLSelectElement | null;
+    if (selectEl && selectEl.value !== skinFolder) {
+      selectEl.value = skinFolder;
+    }
+
     console.log(`[MySkin] Skin "${activeManifest.name}" cargado exitosamente.`);
   } catch (err) {
     console.error(`Error al cargar el skin "${skinFolder}":`, err);
@@ -546,7 +558,8 @@ setInterval(() => {
 }, 5000);
 
 // Iniciar aplicación
-loadSkin("spartan").then(() => {
+const savedSkin = (typeof localStorage !== "undefined" && localStorage.getItem("myskin_active_skin")) || "spartan";
+loadSkin(savedSkin).then(() => {
   initRoamingSystem();
 });
 requestAnimationFrame(animationLoop);
@@ -664,6 +677,11 @@ if (btnSoundToggle) {
   const enabled = audioEngine.isEnabled();
   btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
   btnSoundToggle.classList.toggle("active", enabled);
+}
+
+// Inicializar estado de locomoción en el panel
+if (statusFsmText) {
+  statusFsmText.textContent = getIsPinned() ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
 }
 
 btnSoundToggle?.addEventListener("click", () => {

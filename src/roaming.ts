@@ -7,7 +7,8 @@ const appWindow = isTauri ? getCurrentWindow() : null;
 
 // --- ESTADO DE MOVIMIENTO Y LOCOMOCION ---
 // Por defecto en MODO FIJO: El usuario decide donde colocarlo y no se mueve solo
-let isPinned = true;             // true = Fijo en pantalla | false = Modo patrulla libre
+const savedPinSetting = typeof localStorage !== "undefined" ? localStorage.getItem("myskin_pin_mode") : null;
+let isPinned = savedPinSetting !== null ? savedPinSetting === "true" : true;
 let isDragging = false;          // Pausa el movimiento automatico durante arrastre manual
 let hasActiveAlert = false;      // Detiene la caminata mientras hay una alerta desplegada
 let facingDirection: 1 | -1 = 1; // 1 = Derecha, -1 = Izquierda
@@ -239,6 +240,11 @@ export async function restoreWindowAfterController(origW = 300, origH = 240) {
  */
 export function togglePinMode(): boolean {
   isPinned = !isPinned;
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("myskin_pin_mode", String(isPinned));
+    }
+  } catch (_) {}
 
   if (isPinned) {
     isWalkingNow = false;
