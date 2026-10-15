@@ -63,6 +63,11 @@ class GitHubMonitorService {
     } catch (_) {}
   }
 
+  /**
+   * Configura un token de acceso personal (PAT) de GitHub opcional.
+   * NOTA DE SEGURIDAD: Solo debe suministrarse un token con permisos de solo lectura pública (public_repo).
+   * Para repositorios públicos no se requiere ningún token.
+   */
   public setAuthToken(token: string) {
     try {
       if (token && token.trim().length > 0) {
