@@ -12,3 +12,9 @@ src-tauri/gen/
 # Local test results
 test-results/
 playwright-report/
+
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
