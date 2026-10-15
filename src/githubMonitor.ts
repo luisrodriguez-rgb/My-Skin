@@ -27,6 +27,7 @@ class GitHubMonitorService {
   private repoName: string = "My-Skin";
   private listeners: GitHubListener[] = [];
   private lastCommitSha: string | null = null;
+  private lastPrNumber: number | null = null;
   private pollIntervalId: number | null = null;
 
   constructor() {
@@ -36,6 +37,19 @@ class GitHubMonitorService {
     if (savedRepo) this.repoName = savedRepo;
   }
 
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+    };
+    try {
+      const token = localStorage.getItem("myskin_gh_token");
+      if (token && token.trim().length > 0) {
+        headers["Authorization"] = `Bearer ${token.trim()}`;
+      }
+    } catch (_) {}
+    return headers;
+  }
+
   public getTargetRepo(): string {
     return `${this.repoOwner}/${this.repoName}`;
   }
@@ -43,12 +57,55 @@ class GitHubMonitorService {
   public setTargetRepo(owner: string, repo: string) {
     this.repoOwner = owner.trim();
     this.repoName = repo.trim();
-    localStorage.setItem("myskin_gh_owner", this.repoOwner);
-    localStorage.setItem("myskin_gh_repo", this.repoName);
+    try {
+      localStorage.setItem("myskin_gh_owner", this.repoOwner);
+      localStorage.setItem("myskin_gh_repo", this.repoName);
+    } catch (_) {}
+  }
+
+  public setAuthToken(token: string) {
+    try {
+      if (token && token.trim().length > 0) {
+        localStorage.setItem("myskin_gh_token", token.trim());
+      } else {
+        localStorage.removeItem("myskin_gh_token");
+      }
+    } catch (_) {}
   }
 
   public subscribe(listener: GitHubListener) {
     this.listeners.push(listener);
+  }
+
+  /**
+   * Consulta las últimas Pull Requests cerradas y detecta merges reales
+   */
+  public async fetchLatestPullRequests(): Promise<void> {
+    try {
+      const url = `https://api.github.com/repos/${this.repoOwner}/${this.repoName}/pulls?state=closed&per_page=1`;
+      const res = await fetch(url, { headers: this.getHeaders() });
+      if (!res.ok) return;
+
+      const pulls = await res.json();
+      if (!Array.isArray(pulls) || pulls.length === 0) return;
+
+      const pr = pulls[0];
+      if (pr.merged_at) {
+        if (this.lastPrNumber !== null && this.lastPrNumber !== pr.number) {
+          this.lastPrNumber = pr.number;
+          this.notifyMerge({
+            prNumber: pr.number,
+            title: pr.title || "PR Merged",
+            author: pr.user?.login || "Dev",
+            mergedAt: pr.merged_at,
+          });
+        } else {
+          this.lastPrNumber = pr.number;
+        }
+      }
+    } catch (err) {
+      console.debug("[GitHubMonitor] Error al consultar PRs:", err);
+    }
   }
 
   /**
@@ -58,9 +115,7 @@ class GitHubMonitorService {
     try {
       const url = `https://api.github.com/repos/${this.repoOwner}/${this.repoName}/commits?per_page=1`;
       const res = await fetch(url, {
-        headers: {
-          Accept: "application/vnd.github.v3+json",
-        },
+        headers: this.getHeaders(),
       });
 
       if (!res.ok) {
@@ -116,8 +171,10 @@ class GitHubMonitorService {
   public startPolling(intervalSeconds = 180) {
     if (this.pollIntervalId !== null) return;
     this.fetchLatestActivity();
+    this.fetchLatestPullRequests();
     this.pollIntervalId = window.setInterval(() => {
       this.fetchLatestActivity();
+      this.fetchLatestPullRequests();
     }, intervalSeconds * 1000);
   }
 
