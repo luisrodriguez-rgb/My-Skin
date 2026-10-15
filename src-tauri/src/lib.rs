@@ -60,6 +60,38 @@ fn toggle_controller_window(app: tauri::AppHandle, visible: Option<bool>) -> Res
     Ok(())
 }
 
+// Explicit user action only. Invoke a fixed OS browser launcher without a shell.
+#[tauri::command]
+async fn open_external_url(url: String) -> Result<(), String> {
+    let parsed = tauri::Url::parse(&url).map_err(|_| "El enlace de la entrega no es válido")?;
+    if !matches!(parsed.scheme(), "http" | "https")
+        || parsed.host_str().is_none()
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+    {
+        return Err("El enlace de la entrega debe usar HTTP o HTTPS".into());
+    }
+    #[cfg(target_os = "macos")]
+    let mut command = std::process::Command::new("open");
+    #[cfg(target_os = "windows")]
+    let mut command = {
+        let mut command = std::process::Command::new("rundll32.exe");
+        command.arg("url.dll,FileProtocolHandler");
+        command
+    };
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    let mut command = std::process::Command::new("xdg-open");
+    let status = tauri::async_runtime::spawn_blocking(move || command.arg(parsed.as_str()).status())
+        .await
+        .map_err(|_| "No se pudo completar la apertura del navegador".to_string())?
+        .map_err(|_| "No se pudo iniciar el navegador del sistema".to_string())?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err("El navegador del sistema no pudo abrir la entrega".into())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -170,7 +202,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_ignore_cursor,
             get_cursor_rel_pos,
-            toggle_controller_window
+            toggle_controller_window,
+            open_external_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
