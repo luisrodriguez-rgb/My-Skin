@@ -30,10 +30,12 @@ test("web startup and controller commands work without Tauri errors", async ({ p
   await expect(panel.locator("#btn-sound-toggle")).toHaveText("AUDIO: OFF");
   await panel.click("#btn-pin-toggle");
   await expect(panel.locator("#btn-pin-toggle")).toHaveText("MODO: LIBRE");
-  await panel.click('[data-action="FOCUS"]');
+  await panel.click('#btn-pomo-toggle');
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: FOCUS");
+  await panel.locator(".advanced-controls summary").click();
   await panel.click("#btn-event-semester");
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: ALERT_SEMESTRE");
+  await panel.locator("#notification-list button").first().click();
   await panel.click("#btn-event-github");
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: VICTORY_GITHUB");
   expect(errors).toEqual([]);
@@ -50,7 +52,7 @@ test("Pomodoro has one owner and restores state when the panel reopens", async (
   const paused = await panel.locator("#pomo-clock").textContent();
   await panel.close(); panel = await controller(context);
   await expect(panel.locator("#pomo-clock")).toHaveText(paused!);
-  await expect(panel.locator("#btn-pomo-toggle")).toHaveText("CONTINUAR");
+  await expect(panel.locator("#btn-pomo-toggle")).toHaveText("Continuar");
   await panel.click("#btn-pomo-toggle");
   await expect(panel.locator("#pomo-status")).toHaveText("Concentración activa");
   await panel.click("#btn-pomo-reset");
@@ -68,7 +70,7 @@ test("native-style tray events publish state back to the controller", async ({ p
     await emit("tray-action", "toggle_audio");
   });
   await expect(panel.locator("#char-name")).toContainText("Capibara");
-  await expect(panel.locator("#btn-pomo-toggle")).toHaveText("PAUSAR");
+  await expect(panel.locator("#btn-pomo-toggle")).toHaveText("Pausar");
   await expect(panel.locator("#btn-sound-toggle")).toHaveText("AUDIO: OFF");
 });
 

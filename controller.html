@@ -5,98 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MySkin Controller</title>
     <link rel="stylesheet" href="/src/styles.css" />
-    <style>
-      html, body {
-        background-color: var(--bg-dark) !important;
-        overflow-y: auto !important;
-        height: auto !important;
-        min-height: 100vh;
-        user-select: text;
-        -webkit-user-select: text;
-        padding: 16px;
-      }
-      .controller-window-container {
-        max-width: 520px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-      .window-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border-subtle);
-      }
-      .window-title-box {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .window-title {
-        font-family: 'Press Start 2P', monospace;
-        font-size: 11px;
-        letter-spacing: 0.5px;
-        color: var(--accent-primary);
-      }
-      .window-subtitle {
-        font-size: 11px;
-        color: var(--text-muted);
-      }
-      .input-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .input-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .text-input {
-        width: 100%;
-        padding: 8px 10px;
-        background: var(--surface-card);
-        border: 1px solid var(--border-subtle);
-        border-radius: 6px;
-        color: var(--text-main);
-        font-size: 12px;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.15s;
-      }
-      .text-input:focus {
-        border-color: var(--accent-primary);
-      }
-      .btn-sync-action {
-        padding: 8px 12px;
-        background: var(--accent-primary);
-        border: none;
-        border-radius: 6px;
-        color: #fff;
-        font-weight: 600;
-        font-size: 11px;
-        cursor: pointer;
-        transition: background 0.15s;
-      }
-      .btn-sync-action:hover {
-        background: var(--accent-hover);
-      }
-      .sync-row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      .sync-status-text {
-        font-size: 11px;
-        color: var(--text-muted);
-      }
-    </style>
+
   </head>
-  <body>
+  <body class="controller-page">
     <main class="controller-window-container">
       <!-- Window Header -->
       <header class="window-header">
@@ -108,15 +19,15 @@
           </div>
         </div>
         <div class="header-controls">
-          <button id="btn-sound-toggle" class="btn-sound-toggle" title="Alternar Sonido Retro">AUDIO: ON</button>
-          <button id="btn-pin-toggle" class="btn-sound-toggle" title="Alternar Modo Fijo o Patrulla">MODO: FIJO</button>
+          <button id="btn-sound-toggle" aria-pressed="true" class="btn-sound-toggle" title="Alternar Sonido Retro">AUDIO: ON</button>
+          <button id="btn-pin-toggle" aria-pressed="true" class="btn-sound-toggle" title="Alternar Modo Fijo o Patrulla">MODO: FIJO</button>
         </div>
       </header>
 
       <!-- Active Character Card -->
       <section class="card-character">
         <div class="char-thumb-wrapper">
-          <canvas id="thumb-canvas" width="48" height="48"></canvas>
+          <canvas id="thumb-canvas" width="48" height="48" role="img" aria-label="Personaje seleccionado"></canvas>
           <span class="badge-status">Activo</span>
         </div>
         <div class="char-info">
@@ -147,10 +58,63 @@
         </div>
       </section>
 
-      <!-- Animation / FSM Section -->
+      <p id="skin-error" class="feedback-error" role="alert" hidden></p>
+      <!-- Pomodoro Concentration System -->
       <section class="panel-group">
         <div class="group-header">
-          <span class="group-title">ANIMACIÓN Y FSM</span>
+          <span class="group-title">CONCENTRACIÓN</span>
+          <span id="pomo-status" class="group-caption">En reposo</span>
+        </div>
+        <div class="pomodoro-card">
+          <span id="pomo-clock" class="pomodoro-clock">25:00</span>
+          <div class="pomodoro-actions">
+            <button id="btn-pomo-toggle" class="btn-pomo-toggle">Concentrarme</button>
+            <button id="btn-pomo-reset" class="btn-pomo-reset">Reiniciar</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel-group" aria-labelledby="deadlines-heading">
+        <div class="group-header"><h2 id="deadlines-heading" class="group-title" tabindex="-1">Lo próximo</h2><span id="deadline-count" class="group-caption"></span></div>
+        <p id="deadlines-empty" class="empty-state">Conecta tu calendario para ver las próximas entregas.</p>
+        <ul id="deadline-list" class="item-list"></ul>
+        <p id="task-feedback" class="sr-only" role="status"></p>
+      </section>
+      <section id="notifications-section" class="panel-group" aria-labelledby="notifications-heading" hidden>
+        <div class="group-header"><h2 id="notifications-heading" class="group-title" tabindex="-1">Avisos pendientes</h2><span id="notification-count" class="group-caption"></span></div>
+        <ul id="notification-list" class="item-list"></ul>
+      </section>
+      <p id="action-error" class="feedback-error" role="alert" hidden></p>
+      <!-- Academic Calendar (.ics / Canvas LMS) Integration -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">CALENDARIO ACADÉMICO</span>
+          <span id="sync-status-label" class="group-caption">Canvas / Moodle / iCal</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="input-calendar-url">URL de suscripción (.ics / webcal://)</label>
+          <div class="sync-row">
+            <input
+              id="input-calendar-url"
+              type="url"
+              class="text-input"
+              aria-describedby="calendar-help sync-feedback"
+              placeholder="https://canvas.instructure.com/feeds/calendars/user_...ics"
+            />
+            <button id="btn-sync-calendar" class="btn-sync-action">SINCRONIZAR</button>
+          </div>
+          <p id="calendar-help" class="group-caption">Pega la URL de suscripción de tu calendario de Canvas, Moodle o iCalendar.</p>
+          <span id="sync-feedback" class="sync-status-text" aria-live="polite">Sin sincronizar</span>
+        </div>
+      </section>
+
+      <details class="advanced-controls">
+        <summary>Pruebas avanzadas</summary>
+        <p class="group-caption">Estos controles muestran animaciones de demostración. El foco se inicia con Concentrarme.</p>
+
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">ESTADOS DE PRUEBA</span>
           <span class="group-caption">Vista previa</span>
         </div>
         <div class="btn-grid-actions">
@@ -170,50 +134,11 @@
             <span class="chip-code">03</span>
             <span class="chip-label">WIN</span>
           </button>
-          <button class="btn-chip btn-action" data-action="FOCUS">
-            <span class="chip-code">04</span>
-            <span class="chip-label">FOCUS</span>
-          </button>
+
           <button class="btn-chip btn-action" data-action="SLEEP">
             <span class="chip-code">05</span>
             <span class="chip-label">SLEEP</span>
           </button>
-        </div>
-      </section>
-
-      <!-- Pomodoro Concentration System -->
-      <section class="panel-group">
-        <div class="group-header">
-          <span class="group-title">POMODORO ESTUDIO</span>
-          <span id="pomo-status" class="group-caption">En reposo</span>
-        </div>
-        <div class="pomodoro-card">
-          <span id="pomo-clock" class="pomodoro-clock">25:00</span>
-          <div class="pomodoro-actions">
-            <button id="btn-pomo-toggle" class="btn-pomo-toggle">INICIAR FOCO</button>
-            <button id="btn-pomo-reset" class="btn-pomo-reset">RESET</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Academic Calendar (.ics / Canvas LMS) Integration -->
-      <section class="panel-group">
-        <div class="group-header">
-          <span class="group-title">CALENDARIO ACADÉMICO</span>
-          <span id="sync-status-label" class="group-caption">Canvas / Moodle / iCal</span>
-        </div>
-        <div class="input-group">
-          <label class="input-label" for="input-calendar-url">URL de suscripción (.ics / webcal://)</label>
-          <div class="sync-row">
-            <input
-              id="input-calendar-url"
-              type="url"
-              class="text-input"
-              placeholder="https://canvas.instructure.com/feeds/calendars/user_...ics"
-            />
-            <button id="btn-sync-calendar" class="btn-sync-action">SINCRONIZAR</button>
-          </div>
-          <span id="sync-feedback" class="sync-status-text">Sin sincronizar</span>
         </div>
       </section>
 
@@ -234,6 +159,8 @@
           </button>
         </div>
       </section>
+
+      </details>
 
       <!-- Footer Status -->
       <footer class="controller-footer">
