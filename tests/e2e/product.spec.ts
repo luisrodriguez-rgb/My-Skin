@@ -15,13 +15,15 @@ async function start(page: Page, context: BrowserContext) {
   await expect(page.locator("#pet-canvas")).toHaveAttribute("data-state", "IDLE");
   const panel = await context.newPage();
   await panel.goto("/controller.html");
-  await expect(panel.locator("#select-skin")).toBeEnabled();
+  await expect(panel.locator("#btn-pomo-toggle")).toBeEnabled();
   return panel;
 }
 async function sync(panel: Page) {
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.fill("#input-calendar-url", feedUrl);
   await panel.click("#btn-sync-calendar");
   await expect(panel.locator("#sync-feedback")).toContainText("Sincronizado ahora");
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
 }
 async function merge(page: Page) {
   await page.evaluate(async () => {
@@ -49,10 +51,12 @@ test("deadlines show real details, open safely and preserve completion across re
   await expect(popup).toHaveURL("https://campus.example.test/tarea/1"); await popup.close();
   await task.getByRole("button", { name: "Completar Taller de matrices" }).click();
   await expect(task).toHaveClass(/completed/);
-  await expect(panel.locator("#deadline-count")).toHaveText("0 pendientes · 1 completadas");
+  await expect(panel.locator("#deadline-count")).toHaveText("0 pendientes · 1 completada");
   await expect(page.locator("#pet-canvas")).toHaveAttribute("data-state", "IDLE");
   await expect(panel.locator("#deadlines-heading")).toBeFocused();
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.click("#btn-sync-calendar");
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
   await expect(task.getByRole("button")).toBeDisabled();
   await panel.reload();
   await expect(panel.locator("#deadline-list li")).toHaveClass(/completed/);
@@ -104,12 +108,13 @@ test("Concentrarme starts the timer, celebrations restore focus and pause restor
 
 test("local URL validation survives heartbeats and new owner snapshots until editing", async ({ page, context }) => {
   const panel = await start(page, context);
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.click("#btn-sync-calendar");
   await expect(panel.locator("#sync-feedback")).toHaveText("Ingresa una URL de calendario.");
   // Covers the original two-second heartbeat regression.
   await panel.waitForTimeout(2500);
   await panel.click("#btn-sound-toggle");
-  await expect(panel.locator("#btn-sound-toggle")).toHaveText("AUDIO: OFF");
+  await expect(panel.locator("#btn-sound-toggle")).toHaveText("Sonido desactivado");
   await expect(panel.locator("#sync-feedback")).toHaveText("Ingresa una URL de calendario.");
   await expect(panel.locator("#input-calendar-url")).toHaveAttribute("aria-invalid", "true");
   await panel.fill("#input-calendar-url", "javascript:alert(1)");
@@ -123,39 +128,105 @@ test("local URL validation survives heartbeats and new owner snapshots until edi
 test("failed skin loading keeps the current character and shows a persistent error", async ({ page, context }) => {
   await context.route("**/skins/spiderman/manifest.json", (route) => route.fulfill({ status: 404, body: "Missing" }));
   const panel = await start(page, context);
-  await panel.selectOption("#select-skin", "spiderman");
+  await panel.getByRole("tab", { name: "Compañeros" }).click();
+  await panel.getByRole("button", { name: "Elegir Spider-Hero", exact: true }).click();
   await expect(panel.locator("#skin-error")).toBeVisible();
-  await expect(panel.locator("#select-skin")).toHaveValue("spartan");
+  await expect(panel.locator('[data-skin="spartan"]')).toHaveAttribute("aria-pressed", "true");
   await panel.waitForTimeout(2500);
   await expect(panel.locator("#skin-error")).toBeVisible();
   await expect(panel.locator("#char-name")).toContainText("Leónidas");
-  await panel.selectOption("#select-skin", "capybara");
+  await panel.getByRole("button", { name: "Elegir Capibara", exact: true }).click();
   await expect(panel.locator("#char-name")).toContainText("Capibara");
   await expect(panel.locator("#skin-error")).toBeHidden();
 });
 
-test("populated controller passes accessibility checks and fits narrow windows", async ({ page, context }, testInfo) => {
+test("all three tabs pass accessibility checks and fit narrow windows", async ({ page, context }, testInfo) => {
   const feed = calendar([{ id: "accessible", title: "[Diseño] Evaluación de interfaces", minutes: 15, url: "https://campus.example.test/tarea/2" }]);
   await context.route("**/fixtures/product.ics", (route) => route.fulfill({ body: feed, contentType: "text/calendar" }));
   const panel = await start(page, context); await sync(panel);
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.fill("#input-calendar-url", ""); await panel.click("#btn-sync-calendar");
-  for (const advanced of [false, true]) {
-    if (advanced) await panel.locator(".advanced-controls summary").click();
+  for (const name of ["Hoy", "Compañeros", "Ajustes"]) {
+    await panel.getByRole("tab", { name, exact: true }).click();
+    if (name === "Ajustes") await panel.locator(".advanced-controls summary").click();
     const result = await new AxeBuilder({ page: panel }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
     expect(result.violations).toEqual([]);
-  }
-  for (const width of [280, 390, 560]) {
-    await panel.setViewportSize({ width, height: 900 });
-    expect(await panel.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    for (const id of ["btn-sound-toggle", "btn-pin-toggle", "btn-pomo-toggle", "btn-pomo-reset", "btn-sync-calendar"]) {
-      const bounds = await panel.locator(`#${id}`).boundingBox();
-      expect(bounds!.height).toBeGreaterThanOrEqual(40);
-      expect(bounds!.width).toBeGreaterThanOrEqual(40);
+    for (const width of [280, 390, 560]) {
+      await panel.setViewportSize({ width, height: 900 });
+      expect(await panel.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      const ids = name === "Hoy" ? ["btn-pomo-toggle", "btn-pomo-reset"] : name === "Ajustes" ? ["btn-sound-toggle", "btn-pin-toggle", "btn-sync-calendar"] : [];
+      for (const id of ids) {
+        const bounds = await panel.locator(`#${id}`).boundingBox();
+        expect(bounds!.height).toBeGreaterThanOrEqual(40); expect(bounds!.width).toBeGreaterThanOrEqual(40);
+      }
+      if (width !== 280) await panel.screenshot({ path: testInfo.outputPath(`${name}-${width}.png`), fullPage: true });
     }
-    if (width === 390 || width === 560) await panel.screenshot({ path: testInfo.outputPath(`controller-${width}.png`), fullPage: true });
   }
-  await panel.locator("#btn-sound-toggle").focus();
-  await panel.keyboard.press("Tab");
+  await panel.locator("#btn-sound-toggle").focus(); await panel.keyboard.press("Tab");
   await expect(panel.locator("#btn-pin-toggle")).toBeFocused();
   expect(await panel.locator("#btn-pin-toggle").evaluate((button) => getComputedStyle(button).outlineStyle)).toBe("solid");
+});
+
+test("keyboard tabs preserve the timer, calendar draft and confirmed companion", async ({ page, context }) => {
+  const panel = await start(page, context);
+  await panel.click("#btn-pomo-toggle"); await panel.click("#btn-pomo-toggle");
+  const paused = await panel.locator("#pomo-clock").textContent();
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).focus();
+  await panel.keyboard.press("ArrowRight");
+  await expect(panel.getByRole("tab", { name: "Compañeros" })).toBeFocused();
+  await expect(panel.locator("#pets")).toBeVisible();
+  await expect(panel.locator("#pet-grid button")).toHaveCount(10);
+  await expect.poll(() => panel.locator("#pet-grid canvas").evaluateAll((canvases) => canvases.every((element) => {
+    const canvas = element as HTMLCanvasElement;
+    return canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data.some((v, i) => i % 4 === 3 && v > 0);
+  }))).toBe(true);
+  await panel.getByRole("button", { name: "Elegir Capibara", exact: true }).click();
+  await expect(panel.locator('[data-skin="capybara"]')).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("myskin_active_skin"))).toBe("capybara");
+  await panel.getByRole("tab", { name: "Compañeros" }).focus(); await panel.keyboard.press("End");
+  await expect(panel.getByRole("tab", { name: "Ajustes" })).toBeFocused();
+  await panel.fill("#input-calendar-url", "https://example.test/mi-borrador.ics");
+  await panel.getByRole("tab", { name: "Ajustes" }).focus(); await panel.keyboard.press("Home");
+  await expect(panel.locator("#today")).toBeVisible();
+  await expect(panel.locator("#pets")).toBeHidden(); await expect(panel.locator("#settings")).toBeHidden();
+  await expect(panel.locator("#pomo-clock")).toHaveText(paused!);
+  await expect(panel.locator("#char-name")).toHaveText("Capibara");
+  await panel.keyboard.press("ArrowLeft");
+  await expect(panel.locator("#settings")).toBeVisible();
+  await expect(panel.locator("#input-calendar-url")).toHaveValue("https://example.test/mi-borrador.ics");
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
+  await panel.getByRole("button", { name: "Conectar calendario", exact: true }).click();
+  await expect(panel.locator("#input-calendar-url")).toBeFocused();
+});
+
+test("GitHub settings validate input and persist the repository through the owner", async ({ page, context }) => {
+  let panel = await start(page, context);
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
+  await panel.fill("#input-github-repo", "esto no es un repositorio");
+  await panel.click("#btn-save-github");
+  await expect(panel.locator("#github-feedback")).toHaveText("Usa el formato propietario/repositorio.");
+  await panel.click("#btn-sound-toggle");
+  await expect(panel.locator("#btn-sound-toggle")).toHaveText("Sonido desactivado");
+  await expect(panel.locator("#github-feedback")).toHaveText("Usa el formato propietario/repositorio.");
+  await panel.fill("#input-github-repo", "octocat/Hello-World");
+  await panel.locator("#input-github-repo").press("Enter");
+  await expect(panel.locator("#github-feedback")).toHaveText("Repositorio elegido: octocat/Hello-World");
+  expect(await page.evaluate(() => localStorage.getItem("myskin_gh_owner"))).toBe("octocat");
+  await panel.close(); panel = await context.newPage(); await panel.goto("/controller.html");
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
+  await expect(panel.locator("#input-github-repo")).toHaveValue("octocat/Hello-World");
+});
+
+test("navigation remains usable while the owner is offline and connects in place", async ({ context }) => {
+  await context.route("https://api.github.com/**", (route) => route.fulfill({ json: [] }));
+  const panel = await context.newPage(); await panel.goto("/controller.html");
+  await expect(panel.locator("#btn-pomo-toggle")).toBeDisabled();
+  await panel.getByRole("tab", { name: "Compañeros" }).click();
+  await expect(panel.locator("#pets")).toBeVisible();
+  await expect(panel.locator('[data-skin="capybara"]')).toBeDisabled();
+  const owner = await context.newPage(); await owner.goto("/");
+  await expect(panel.locator('[data-skin="capybara"]')).toBeEnabled();
+  await expect(panel.getByRole("tab", { name: "Compañeros" })).toHaveAttribute("aria-selected", "true");
+  await panel.getByRole("button", { name: "Elegir Capibara", exact: true }).click();
+  await expect(panel.locator('[data-skin="capybara"]')).toHaveAttribute("aria-pressed", "true");
 });
