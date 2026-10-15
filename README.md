@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo.jpg" alt="Logo de MySkin" width="150" />
+  <img src="public/brand/myskin-mark-512.png" alt="MySkin: compañero pixel verde con un brote" width="150" height="150" />
   <h1>MySkin</h1>
   <p><strong>Un compañero en pixel art para estudiar, concentrarte y seguir tus entregas.</strong></p>
   <p>Personajes de escritorio · Pomodoro · Calendario académico · Avisos de GitHub</p>
@@ -10,10 +10,9 @@ Elige un personaje, inicia una sesión de concentración y consulta lo próximo 
 tienes que entregar. MySkin reúne ese flujo en un controlador y lo acompaña con
 un personaje flotante, animaciones y audio retro.
 
-La Fase 2 integra el diseño del prototipo en las vistas **Hoy, Compañeros y
-Ajustes**. Se desarrolla en la rama
-[`feat/circuito-diario-hoy`](https://github.com/luisrodriguez-rgb/My-Skin/tree/feat/circuito-diario-hoy),
-sobre la estabilización ya integrada en `main`.
+Las vistas **Hoy, Compañeros y Ajustes** y la nueva identidad verde ya están
+integradas en `main`. El logo representa un compañero pixel con un brote: pequeños
+pasos, foco y crecimiento.
 
 [Empezar](#empezar-en-modo-web) · [Pruebas](#validación) ·
 [Roadmap](docs/AUDIT_AND_ROADMAP.md) ·
@@ -69,7 +68,7 @@ Necesitas **Node.js 24.19.0** y **pnpm 11.25.0**, declarados en
 [`.node-version`](.node-version) y [`package.json`](package.json).
 
 ```bash
-git clone --branch feat/circuito-diario-hoy https://github.com/luisrodriguez-rgb/My-Skin.git
+git clone https://github.com/luisrodriguez-rgb/My-Skin.git
 cd My-Skin
 pnpm install --frozen-lockfile
 pnpm run dev
@@ -147,9 +146,9 @@ Fase 2 en `893cfa4`:
 | Tipos y empaquetado de las dos entradas | **TypeScript y Vite aprobados**. |
 | Accesibilidad automatizada del panel | Sin infracciones de Axe en las tres pestañas examinadas, incluyendo validación de formularios y controles avanzados. |
 | Adaptación a ventanas estrechas | Sin desbordamiento horizontal a 280, 390 y 560 px; controles principales de al menos 40 px de alto. |
-| CI remoto | La base de estabilización pasó web y `cargo check` en macOS ARM/Intel y Windows. Consultar la ejecución de esta fase en GitHub Actions. |
+| CI remoto | La base de estabilización pasó web y `cargo check` en macOS ARM/Intel y Windows. Consultar las ejecuciones actuales en GitHub Actions. |
 
-[CI de esta rama](https://github.com/luisrodriguez-rgb/My-Skin/actions?query=branch%3Afeat%2Fcircuito-diario-hoy) ·
+[CI de main](https://github.com/luisrodriguez-rgb/My-Skin/actions?query=branch%3Amain) ·
 [CI aprobada de la base](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38790669286).
 El análisis automático de accesibilidad cubre los estados probados; no constituye
 una certificación completa. Las pruebas de red usan respuestas controladas y no
@@ -230,6 +229,7 @@ tranquilidad del prototipo quedan para próximas iteraciones.
 - [Matriz de validación nativa](docs/NATIVE_VALIDATION.md).
 - [Codebase Memory: instalación y uso](docs/CODEBASE_MEMORY.md).
 - [Decisiones de arquitectura](.codebase-memory/adr.md).
+- [Identidad visual y archivos del logo](docs/BRANDING.md).
 - [Historial de cambios](CHANGELOG.md).
 
 ## Licencia

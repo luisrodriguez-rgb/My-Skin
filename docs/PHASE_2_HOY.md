@@ -1,4 +1,4 @@
-# Fase 2: Hoy, Compañeros y Ajustes
+# <img src="../public/brand/myskin-mark-128.png" alt="" width="32" height="32" /> Fase 2: Hoy, Compañeros y Ajustes
 
 15 de octubre de 2026. Código de la integración: `893cfa4`. Rama:
 `feat/circuito-diario-hoy`, basada en la estabilización integrada en main.

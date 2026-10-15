@@ -1,4 +1,4 @@
-# MySkin: auditoría y roadmap de estabilización
+# <img src="../public/brand/myskin-mark-128.png" alt="" width="32" height="32" /> MySkin: auditoría y roadmap de estabilización
 
 Actualizado el 15 de octubre de 2026. Esta revisión sustituye los porcentajes de
 avance y las cifras de rendimiento de la auditoría anterior. La presencia de

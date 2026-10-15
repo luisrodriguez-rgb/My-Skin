@@ -1,4 +1,4 @@
-# Matriz de validación nativa
+# <img src="../public/brand/myskin-mark-128.png" alt="" width="32" height="32" /> Matriz de validación nativa
 
 Estado: pendiente de ejecución en equipos de escritorio. Esta tarea en Linux no
 acredita el comportamiento de Tauri en macOS o Windows.

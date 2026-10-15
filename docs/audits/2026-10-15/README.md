@@ -1,4 +1,4 @@
-# Auditoría de producto y propuesta visual de MySkin
+# <img src="../../../public/brand/myskin-mark-128.png" alt="" width="32" height="32" /> Auditoría de producto y propuesta visual de MySkin
 
 15 de octubre de 2026. Documentación y prototipo de diseño del commit `ec6e908`.
 

@@ -1,4 +1,4 @@
-# Changelog
+# <img src="public/brand/myskin-mark-128.png" alt="" width="32" height="32" /> Changelog
 
 ## Unreleased
 
@@ -13,6 +13,9 @@
 - Lista de avisos pendientes que permite descartarlos sin perder otros eventos.
 
 ### Changed
+
+- Nueva identidad de MySkin en verde salvia: logo, cabeceras, favicons e iconos
+  nativos alineados con el diseño de Hoy / Compañeros / Ajustes.
 
 - Hoy presenta la próxima entrega, el compañero, el foco y un resumen del calendario.
 - Concentrarme inicia el Pomodoro; las animaciones de prueba quedan en el

@@ -1,4 +1,4 @@
-# Codebase Memory en el entorno cloud
+# <img src="../public/brand/myskin-mark-128.png" alt="" width="32" height="32" /> Codebase Memory en el entorno cloud
 
 Se utiliza [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp),
 versión **0.11.0**, mediante su CLI oficial. No requiere claves ni envía el código
