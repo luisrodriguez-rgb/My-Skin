@@ -262,6 +262,14 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 - **Proteccion de Bordes y Auto-Elevacion:** El sistema calcula las coordenadas para que el personaje nunca se pierda fuera de la pantalla. Si el personaje esta descansando cerca del borde inferior del monitor y se abre el controlador, la ventana se eleva automaticamente hacia arriba para que el panel quede 100% visible sin cortarse.
 - **Eliminacion de Pared Invisible Superior:** Limites calibrados para permitir que el casco del personaje alcance el borde de la barra de menu de macOS sin topes artificiales.
 
+### System Tray Nativo (Barra de Menú de macOS)
+- **Presencia en Menu Bar:** Icono oficial integrado en la barra superior de macOS con menú contextual nativo.
+- **Submenú de Personajes (Los 10 de Lanzamiento):** Permite cambiar instantáneamente entre cualquiera de los 10 personajes (Leónidas, Spider-Hero, Mi Avatar, El Dev Fantasma, El Futbolista 10, Capibara Chill, Cyber Ninja, Mago de Fantasía, Slime de Videojuego, Astronauta Perdido) sin abrir el panel.
+- **Alternar Modo Fijo / Libre:** Conmuta el estado de patrulla o anclaje directamente desde el menú global.
+- **Iniciar Pomodoro:** Dispara el temporizador de 25 minutos y pone al personaje en estado de foco (`FOCUS`).
+- **Control de Audio Retro:** Silencia o activa los sintetizadores procedurales de 8 bits al vuelo.
+- **Persistencia Automática:** Skin activo, modo de locomoción y preferencias de audio se almacenan en `localStorage` y se restauran fielmente al iniciar la aplicación.
+
 ### Interaccion y Atajos
 - **Doble Clic sobre el Personaje:** Abre o repliega el panel de control MySkin Controller.
 - **Clic Izquierdo Sostenido sobre el Personaje:** Inicia el arrastre manual nativo 1:1 por la pantalla.

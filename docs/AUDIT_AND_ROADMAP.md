@@ -127,16 +127,20 @@ A pesar de los avances criticos, existen tres areas estructurales a resolver en 
 +------------------------------------+------------------------------------+
                                      |
 +------------------------------------v------------------------------------+
-|                              FASE 3 (85%)                               |
+|                              FASE 3 (100%)                              |
 |  - Dialogos contextuales por personaje                                  |
 |  - Deteccion de inactividad (Modo Siesta reactivo)                      |
 |  - Suite de iconos nativos macOS (.icns) y Dock integration             |
+|  - Flotado permanente sobre todas las apps y escritorios (Spaces)       |
+|  - Soporte de acceptFirstMouse y hit-testing de pixel preciso O(1)      |
 +------------------------------------+------------------------------------+
                                      |
 +------------------------------------v------------------------------------+
-|                              FASE 4 (60%)                               |
+|                              FASE 4 (85%)                               |
 |  - Pipeline CI/CD en GitHub Actions (.github/workflows/release.yml)     |
-|  - [Pendiente] Desacoplamiento Multi-Ventana / Menu Bar Tray           |
+|  - System Tray nativo en Menu Bar con submenú para los 10 personajes    |
+|  - Persistencia integral de usuario (skin, modo anclado, audio)         |
+|  - Monitor GitHub en vivo (commits, PRs mergeadas y soporte de tokens)  |
 |  - [Pendiente] Instalador de paquetes de skins (.zip drag-and-drop)     |
 |  - [Pendiente] Auto-actualizador con tauri-plugin-updater               |
 +-------------------------------------------------------------------------+
