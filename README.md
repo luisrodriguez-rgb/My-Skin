@@ -138,7 +138,7 @@ espacio descartan el aviso visible o abren el controlador.
 ## Validación
 
 Resultados registrados el **15 de octubre de 2026** para el código de la
-Fase 2 en `b517497`:
+Fase 2 en `893cfa4`:
 
 | Comprobación | Resultado |
 | --- | --- |

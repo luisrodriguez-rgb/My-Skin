@@ -1,6 +1,6 @@
 # Fase 2: Hoy, Compañeros y Ajustes
 
-15 de octubre de 2026. Código de la integración: `b517497`. Rama:
+15 de octubre de 2026. Código de la integración: `893cfa4`. Rama:
 `feat/circuito-diario-hoy`, basada en la estabilización integrada en main.
 
 ## Resultado
@@ -19,7 +19,8 @@ y main conserva los servicios y el único reloj de Pomodoro.
 Las pestañas admiten flechas izquierda/derecha, Inicio y Fin. Navegar conserva el
 borrador del calendario, la validación y el reloj. El controlador puede abrirse
 antes que el personaje: la navegación sigue disponible y las acciones se habilitan
-cuando conecta con el propietario del estado.
+cuando conecta con el propietario del estado. El primer snapshot tampoco borra
+los borradores que se hayan escrito sin conexión.
 
 ## Validación
 

@@ -44,7 +44,8 @@ not a submission to the LMS.
 
 Hoy, Companeros and Ajustes are local tab views. Roving keyboard focus supports
 arrows/Home/End. Tabs remain usable when the owner is offline; only data-command
-controls are disabled. Hidden panels retain DOM drafts and validation. Tab changes
+controls are disabled. Hidden panels retain DOM drafts and validation; the first owner snapshot also
+preserves drafts entered offline. Tab changes
 never restart owner services. Hoy uses actual pending/completed/due-today calendar
 counts, not fabricated focus history. The hero previews the confirmed owner skin
 and pet state; the gallery lazily caches previews of all ten skins.
