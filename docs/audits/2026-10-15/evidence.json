@@ -1,0 +1,295 @@
+{
+  "layout": {
+    "viewport": {
+      "width": 560,
+      "height": 620
+    },
+    "document": {
+      "width": 576,
+      "height": 652
+    },
+    "fonts": "loaded",
+    "controls": [
+      {
+        "id": "btn-sound-toggle",
+        "width": 51.9,
+        "height": 18,
+        "font": "7px",
+        "aboveFold": true
+      },
+      {
+        "id": "btn-pin-toggle",
+        "width": 56.2,
+        "height": 18,
+        "font": "7px",
+        "aboveFold": true
+      },
+      {
+        "id": "select-skin",
+        "width": 438,
+        "height": 23,
+        "font": "10px",
+        "aboveFold": true
+      },
+      {
+        "id": "IDLE",
+        "width": 170,
+        "height": 36,
+        "font": "13.3333px",
+        "aboveFold": true
+      },
+      {
+        "id": "WALK",
+        "width": 170,
+        "height": 36,
+        "font": "13.3333px",
+        "aboveFold": true
+      },
+      {
+        "id": "ALERT_SEMESTRE",
+        "width": 170,
+        "height": 36,
+        "font": "13.3333px",
+        "aboveFold": true
+      },
+      {
+        "id": "VICTORY_GITHUB",
+        "width": 170,
+        "height": 36,
+        "font": "13.3333px",
+        "aboveFold": true
+      },
+      {
+        "id": "FOCUS",
+        "width": 170,
+        "height": 36,
+        "font": "13.3333px",
+        "aboveFold": true
+      },
+      {
+        "id": "SLEEP",
+        "width": 170,
+        "height": 36,
+        "font": "13.3333px",
+        "aboveFold": true
+      },
+      {
+        "id": "btn-pomo-toggle",
+        "width": 86.8,
+        "height": 22,
+        "font": "9px",
+        "aboveFold": true
+      },
+      {
+        "id": "btn-pomo-reset",
+        "width": 48,
+        "height": 22,
+        "font": "9px",
+        "aboveFold": true
+      },
+      {
+        "id": "input-calendar-url",
+        "width": 411.6,
+        "height": 32,
+        "font": "12px",
+        "aboveFold": true
+      },
+      {
+        "id": "btn-sync-calendar",
+        "width": 100.4,
+        "height": 28,
+        "font": "11px",
+        "aboveFold": true
+      },
+      {
+        "id": "btn-event-semester",
+        "width": 257,
+        "height": 34,
+        "font": "10px",
+        "aboveFold": true
+      },
+      {
+        "id": "btn-event-github",
+        "width": 257,
+        "height": 34,
+        "font": "10px",
+        "aboveFold": true
+      }
+    ]
+  },
+  "axe": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".panel-group:nth-child(3) > .group-header > .group-caption"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #62728b, background color: #181d29, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-action=\"WALK\"] > .chip-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.14 (foreground color: #6e798c, background color: #252d3b, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-action=\"ALERT_SEMESTRE\"] > .chip-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.14 (foreground color: #6e798c, background color: #252d3b, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-action=\"VICTORY_GITHUB\"] > .chip-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.14 (foreground color: #6e798c, background color: #252d3b, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-action=\"FOCUS\"] > .chip-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.14 (foreground color: #6e798c, background color: #252d3b, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-action=\"SLEEP\"] > .chip-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.14 (foreground color: #6e798c, background color: #252d3b, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "#pomo-status"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #62728b, background color: #181d29, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "#btn-pomo-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3 (foreground color: #ffffff, background color: #f16a64, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "#sync-status-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #62728b, background color: #181d29, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "#btn-sync-calendar"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3 (foreground color: #ffffff, background color: #f16a64, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".panel-group:nth-child(6) > .group-header > .group-caption"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #62728b, background color: #181d29, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "#btn-event-semester > .event-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.96 (foreground color: #f16a64, background color: #3d3440, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "#btn-event-github > .event-code"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.96 (foreground color: #f16a64, background color: #3d3440, font size: 5.3pt (7px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".shortcut-tip"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #62728b, background color: #181d29, font size: 6.4pt (8.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": []
+  },
+  "initialFocus": [],
+  "manualFocus": {
+    "state": "Estado: FOCUS",
+    "pomoStatus": "En reposo",
+    "pomoButton": "INICIAR FOCO"
+  },
+  "focusAfterCelebration": {
+    "state": "Estado: VICTORY_GITHUB",
+    "pomoStatus": "Concentración activa"
+  },
+  "emptyUrlErrorImmediately": "Ingresa una URL de calendario.",
+  "emptyUrlErrorAfterHeartbeat": "0 entregas · Sin sincronizar",
+  "calendar": {
+    "feedback": "2 entregas · Sincronizado ahora",
+    "tasksVisibleInPanel": false,
+    "canvasText": [
+      "ENTREGA: 14M",
+      "¡A las armas! Tienes 1 hora para tu ",
+      "[Clic para descartar]",
+      "ENTREGA: 1H 29M"
+    ]
+  },
+  "deadlineAlerts": [
+    {
+      "title": "Urgente A",
+      "dueAt": 1792084216340
+    },
+    {
+      "title": "Urgente B",
+      "dueAt": 1792084576340
+    }
+  ],
+  "narrow": {
+    "viewport": 390,
+    "scrollWidth": 406,
+    "scrollHeight": 732,
+    "bodyWidth": 390
+  },
+  "zoom200": {
+    "viewport": 560,
+    "scrollWidth": 1152,
+    "scrollHeight": 1304
+  },
+  "fonts": {
+    "outfit": true,
+    "pixel": true
+  },
+  "pageErrors": [],
+  "audio": {
+    "enabled": true,
+    "contextState": "running"
+  },
+  "focusAfterCelebrationSettled": {
+    "state": "Estado: IDLE",
+    "pomoStatus": "Concentración activa"
+  },
+  "skinFailure": {
+    "selected": "spartan",
+    "name": "Leónidas (El Espartano de 300)",
+    "pageText": "v0.1.0\nMySkin COMPANION\nPanel de Control y Ajustes\nAUDIO: ON\nMODO: FIJO\nActivo\nLeónidas (El Espartano de 300)\nSkin pixel · 64 × 64\n01. Leónidas (El Espartano de 300)\n02. Spider-Hero (El Trepamuros)\n03. Mi Avatar Pixelado (Tú Mismo)\n04. El Dev Fantasma (Especial Código)\n05. El Futbolista 10 (La Pulga)\n06. Capibara Chill (Mascota Internet)\n07. Cyber Ninja (Acción y Sigilo)\n08. Mago de Fantasía (El Hechicero)\n09. Slime de Videojuego (Mascota)\n10. Astronauta Perdido (Explorador)\nANIMACIÓN Y FSM\nVista previa\n00\nIDLE\n01\nWALK\n02\nALERT\n03\nWIN\n04\nFOCUS\n05\nSLEEP\nPOMODORO ESTUDIO\nConcentración activa\n24:54\nPAUSAR\nRESET\nCALENDARIO ACADÉMICO\nCanvas / Moodle / iCal\nURL DE SUSCRIPCIÓN (.ICS / WEBCAL://)\nSINCRONIZAR\n0 entregas · Sin sincronizar\nPROBAR EVENTOS\nDiálogos\nSEM\nEntrega Semestre\nGIT\nGitHub Merge\nEstado: IDLE\nVentana auxiliar independiente"
+  },
+  "reflow280": {
+    "viewport": 280,
+    "width": 296,
+    "overflow": []
+  },
+  "notificationPriority": {
+    "before": [
+      "ENTREGA: 15M",
+      "¡A las armas! Tienes 1 hora para tu ",
+      "[Clic para descartar]"
+    ],
+    "after": [
+      "GITHUB: PR #12 MERGED",
+      "¡Ahú, Ahú! Pull Request mezclado con",
+      "[Clic para descartar]"
+    ]
+  }
+}

@@ -2,8 +2,19 @@ node_modules/
 dist/
 .DS_Store
 .pnpm-store/
-.codebase-memory/
+.codebase-memory/*
+!.codebase-memory/adr.md
 
 # Tauri build artifacts
 src-tauri/target/
 src-tauri/gen/
+
+# Local test results
+test-results/
+playwright-report/
+
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem

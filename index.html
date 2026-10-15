@@ -8,7 +8,8 @@
   </head>
   <body>
     <!-- Canvas principal donde vive el personaje en el escritorio (Overlay transparente) -->
-    <canvas id="pet-canvas" width="300" height="240"></canvas>
+    <canvas id="pet-canvas" width="300" height="240" tabindex="0" role="img" aria-label="Compañero MySkin. Pulsa Enter para abrir el controlador."></canvas>
+    <p id="pet-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
