@@ -270,13 +270,22 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 - **Control de Audio Retro:** Silencia o activa los sintetizadores procedurales de 8 bits al vuelo.
 - **Persistencia Automática:** Skin activo, modo de locomoción y preferencias de audio se almacenan en `localStorage` y se restauran fielmente al iniciar la aplicación.
 
+### Arquitectura Multi-Ventana Nativa
+- **Ventana 1 (`main` - Sprite Overlay):** Overlay transparente permanente de 300 × 240 puntos lógicos. Dedicada exclusivamente al Canvas del personaje con hit-testing alfa O(1), sin elementos DOM sobrantes y sin necesidad de redimensionamiento dinámico de ventana.
+- **Ventana 2 (`controller` - Panel de Ajustes):** Ventana nativa auxiliar desacoplada (`controller.html`) con fondo oscuro estilizado, selector de skins con vista previa, controles Pomodoro, sincronizador de calendarios y simulador de eventos. Se invoca instantáneamente mediante doble clic en el personaje, atajo `Cmd + Shift + D` o desde el System Tray.
+- **Comunicación IPC Reactiva:** Sincronización bidireccional en tiempo real entre ambas ventanas mediante eventos nativos de Tauri v2 (`emit` / `listen`).
+
+### Sincronización de Entregas Universitarias (iCalendar / Canvas / Moodle)
+- **Parser RFC 5545 Integrado:** Motor liviano sin dependencias externas que parsea eventos `VEVENT`, marcas temporales UTC y fechas locales de feeds `.ics` y `webcal://`.
+- **Compatibilidad Universitaria:** Diseñado para URLs de suscripción exportadas directamente desde Canvas LMS, Moodle, Blackboard y Google Calendar.
+- **Alertas Proactivas en el Escritorio:** Monitoreo periódico cada 60 segundos con disparo automático del estado `ALERT_SEMESTRE` del personaje cuando una entrega entra en la ventana crítica de las últimas 2 horas.
+
 ### Interaccion y Atajos
-- **Doble Clic sobre el Personaje:** Abre o repliega el panel de control MySkin Controller.
+- **Doble Clic sobre el Personaje:** Abre o repliega la ventana independiente del controlador (MySkin Controller).
 - **Clic Izquierdo Sostenido sobre el Personaje:** Inicia el arrastre manual nativo 1:1 por la pantalla.
-- **Arrastre desde el Controlador:** Permite mover la ventana arrastrando desde el encabezado (`MySkin DESKTOP COMPANION`) o desde la tarjeta del personaje.
 - **Clic Derecho sobre el Personaje:** Alterna entre Modo Fijo (Anclado) y Modo Libre (Patrulla).
-- **Atajo `Cmd + Shift + D` (Mac) / `Ctrl + Shift + D`:** Alterna el controlador de forma segura sin interferir al escribir codigo en el IDE.
-- **Tecla `Escape` o Boton `X`:** Cierran el controlador y devuelven la ventana a su tamano compacto.
+- **Atajo `Cmd + Shift + D` (Mac) / `Ctrl + Shift + D`:** Alterna la ventana del controlador de forma instantánea.
+- **Tecla `Escape` o Boton de Cierre:** Ocultan la ventana del controlador sin destruirla, manteniéndola lista para reapertura en 0 ms.
 - **Flechas Direccionales:** Desplazan al personaje con animacion de caminata continua a 10 FPS (pasos de 22 px, o 45 px manteniendo `Shift`).
 - **Clic sobre el Globo de Dialogo:** Descarta la notificacion activa y reanuda el estado normal.
 

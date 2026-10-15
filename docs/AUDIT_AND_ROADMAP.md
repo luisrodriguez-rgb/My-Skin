@@ -136,12 +136,14 @@ A pesar de los avances criticos, existen tres areas estructurales a resolver en 
 +------------------------------------+------------------------------------+
                                      |
 +------------------------------------v------------------------------------+
-|                              FASE 4 (85%)                               |
+|                              FASE 4 (95%)                               |
 |  - Pipeline CI/CD en GitHub Actions (.github/workflows/release.yml)     |
+|  - Desacoplamiento Multi-Ventana Nativo (sprite-overlay + controller)   |
+|  - Sincronización real con calendarios iCal (.ics / Canvas / Moodle)    |
 |  - System Tray nativo en Menu Bar con submenú para los 10 personajes    |
 |  - Persistencia integral de usuario (skin, modo anclado, audio)         |
 |  - Monitor GitHub en vivo (commits, PRs mergeadas y soporte de tokens)  |
-|  - [Pendiente] Instalador de paquetes de skins (.zip drag-and-drop)     |
+|  - [Pendiente] Importador dinámico de skins comunitarios (.zip / AppData)|
 |  - [Pendiente] Auto-actualizador con tauri-plugin-updater               |
 +-------------------------------------------------------------------------+
 ```
