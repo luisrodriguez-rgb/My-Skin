@@ -45,14 +45,17 @@ fn get_cursor_rel_pos(window: WebviewWindow) -> Result<CursorRelPos, String> {
 
 // 3. Comando para abrir o cerrar la ventana independiente del controlador
 #[tauri::command]
-fn toggle_controller_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(ctrl_win) = app.get_webview_window("controller") {
-        if ctrl_win.is_visible().unwrap_or(false) {
-            let _ = ctrl_win.hide();
-        } else {
-            let _ = ctrl_win.show();
-            let _ = ctrl_win.set_focus();
-        }
+fn toggle_controller_window(app: tauri::AppHandle, visible: Option<bool>) -> Result<(), String> {
+    let window = app.get_webview_window("controller").ok_or("No existe la ventana del controlador")?;
+    let show = match visible {
+        Some(value) => value,
+        None => !window.is_visible().map_err(|error| error.to_string())?,
+    };
+    if show {
+        window.show().map_err(|error| error.to_string())?;
+        window.set_focus().map_err(|error| error.to_string())?;
+    } else {
+        window.hide().map_err(|error| error.to_string())?;
     }
     Ok(())
 }

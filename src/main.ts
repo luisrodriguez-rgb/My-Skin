@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { emit, listen, isTauri } from "./platform";
+import type { AppState, PetStateName } from "./appState";
+export type { PetStateName } from "./appState";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import {
   initRoamingSystem,
@@ -21,14 +23,6 @@ import { academicSyncService } from "./syncService";
 import { githubMonitor } from "./githubMonitor";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
-export type PetStateName =
-  | "IDLE"
-  | "WALK"
-  | "ALERT_SEMESTRE"
-  | "VICTORY_GITHUB"
-  | "FOCUS"
-  | "SLEEP";
-
 interface StateConfig {
   row: number;
   frames: number;
@@ -71,10 +65,17 @@ ctx.imageSmoothingEnabled = false;
 
 // --- VARIABLES GLOBALES DE ESTADO Y HIT-TEST ---
 let isCurrentlyIgnoring = true;
+let cursorInsideWindow = false;
+let academicNotificationId: string | null = null;
 let currentFrameImageData: Uint8ClampedArray | null = null;
 const ALPHA_THRESHOLD = 20;
 
 let activeManifest: SkinManifest | null = null;
+let loadSequence = 0;
+let calendarSyncing = false;
+let calendarError: string | undefined;
+let controllerWindow: Window | null = null;
+const mainAppWindow = isTauri ? getCurrentWindow() : null;
 let spriteImage: HTMLImageElement | null = null;
 
 // Variables de la Máquina de Estados Finitos (FSM)
@@ -101,32 +102,31 @@ let activeNotification: { title: string; subtitle: string; urgent: boolean } | n
  * 1. Cargador dinámico de Skins (lee el manifest.json y la textura PNG)
  */
 export async function loadSkin(skinFolder: string) {
+  const sequence = ++loadSequence;
   try {
+    if (!/^[a-z0-9-]+$/.test(skinFolder)) throw new Error("Identificador de skin inválido.");
     const res = await fetch(`/skins/${skinFolder}/manifest.json`);
-    activeManifest = (await res.json()) as SkinManifest;
+    if (!res.ok) throw new Error(`Skin HTTP ${res.status}`);
+    const manifest = (await res.json()) as SkinManifest;
 
     const img = new Image();
+    const ready = new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
     img.src = `/skins/${skinFolder}/spritesheet.png`;
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-    });
+    await ready;
 
+    if (sequence !== loadSequence) return;
+    activeManifest = manifest;
     spriteImage = img;
-    setPetState("IDLE");
+    currentFrameIndex = 0;
+    lastFrameTimestamp = performance.now();
     drawCurrentStateToCanvas();
-    syncCardInfo();
+    publishState();
 
     try {
       if (typeof localStorage !== "undefined") {
         localStorage.setItem("myskin_active_skin", skinFolder);
       }
     } catch (_) {}
-
-    const selectEl = document.getElementById("select-skin") as HTMLSelectElement | null;
-    if (selectEl && selectEl.value !== skinFolder) {
-      selectEl.value = skinFolder;
-    }
 
     console.log(`[MySkin] Skin "${activeManifest.name}" cargado exitosamente.`);
   } catch (err) {
@@ -159,6 +159,7 @@ export function setPetState(
     audioEngine.playSleep();
   }
 
+  academicNotificationId = null;
   currentState = newState;
   currentFrameIndex = 0;
   lastFrameTimestamp = performance.now();
@@ -176,7 +177,7 @@ export function setPetState(
   }
 
   drawCurrentStateToCanvas();
-  syncActionButtons(newState);
+  publishState();
 }
 
 /**
@@ -370,11 +371,6 @@ function isCharacterHit(x: number, y: number): boolean {
  * caen sobre un elemento interactuable (panel de control abierto o pixel del personaje).
  */
 function isCursorOverInteractable(windowX: number, windowY: number): boolean {
-  // 1. Si el panel de control está abierto, TODA la ventana es interactuable (nunca ignorar cursor)
-  if (debugPanel && !debugPanel.classList.contains("hidden")) {
-    return true;
-  }
-
   // 2. Si el cursor está sobre el canvas del personaje
   const canvasRect = canvas.getBoundingClientRect();
   if (
@@ -406,18 +402,10 @@ function isCursorOverInteractable(windowX: number, windowY: number): boolean {
 async function checkCursorHitTest() {
   if (isMouseDragging) return; // Nunca ignorar cursor mientras se arrastra con el mouse
 
-  // CRÍTICO: Si el panel de control está abierto, NUNCA ignorar eventos de cursor bajo ninguna circunstancia
-  if (debugPanel && !debugPanel.classList.contains("hidden")) {
-    if (isCurrentlyIgnoring) {
-      isCurrentlyIgnoring = false;
-      await invoke("set_ignore_cursor", { ignore: false });
-    }
-    return;
-  }
-
   try {
     const pos = await invoke<{ x: number; y: number; inside: boolean }>("get_cursor_rel_pos");
 
+    cursorInsideWindow = pos.inside;
     if (!pos.inside) {
       if (!isCurrentlyIgnoring) {
         isCurrentlyIgnoring = true;
@@ -497,8 +485,7 @@ canvas.addEventListener("dblclick", async (e) => {
 
   const hitCharacter = isCharacterHit(clickX, clickY);
   if (hitCharacter) {
-    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
-    await setControllerVisibility(isHidden);
+    await setControllerVisibility();
   }
 });
 
@@ -557,16 +544,19 @@ setInterval(() => {
 
 // Iniciar aplicación
 const savedSkin = (typeof localStorage !== "undefined" && localStorage.getItem("myskin_active_skin")) || "spartan";
-loadSkin(savedSkin).then(() => {
-  initRoamingSystem();
-});
+const initialSkin = loadSkin(savedSkin).then(() => initRoamingSystem());
 requestAnimationFrame(animationLoop);
-setInterval(checkCursorHitTest, 30);
+// A normal browser has no native cursor bridge. Await each poll to prevent overlap.
+let cursorPollTimer: number | undefined;
+if (isTauri) {
+  const pollCursor = async () => {
+    await checkCursorHitTest();
+    cursorPollTimer = window.setTimeout(pollCursor, isMouseDragging ? 120 : cursorInsideWindow ? 30 : 100);
+  };
+  void pollCursor();
+}
 
-// Iniciar servicios en segundo plano (Fase 2: Académico y GitHub)
-academicSyncService.startPeriodicCheck(60);
-githubMonitor.startPolling(180);
-
+// React to service events in the sprite window.
 academicSyncService.subscribe((deadline, timeRemaining) => {
   const customAlert = activeManifest?.dialogues?.alert || `${deadline.course}: ${deadline.title}`;
   setPetState("ALERT_SEMESTRE", {
@@ -574,6 +564,7 @@ academicSyncService.subscribe((deadline, timeRemaining) => {
     subtitle: customAlert.slice(0, 36),
     urgent: deadline.urgent,
   });
+  academicNotificationId = deadline.id;
 });
 
 githubMonitor.subscribe({
@@ -594,77 +585,67 @@ githubMonitor.subscribe({
   },
 });
 
-// --- ACCIONES DESDE EL SYSTEM TRAY NATIVO (MAC MENU BAR) ---
-listen<string>("tray-action", async (event) => {
-  const action = event.payload;
-  if (action.startsWith("skin_")) {
-    const skinId = action.replace("skin_", "");
-    await loadSkin(skinId);
-  } else if (action === "toggle_controller") {
-    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
-    await setControllerVisibility(isHidden);
-  } else if (action === "toggle_roam") {
-    const pinned = togglePinMode();
-    if (statusFsmText) {
-      statusFsmText.textContent = pinned ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
-    }
-  } else if (action === "start_pomodoro") {
-    pomodoroEngine.startFocus();
-    setPetState("FOCUS", {
-      title: "POMODORO INICIADO",
-      subtitle: "25 minutos de concentración total",
-      urgent: false,
-    });
-  } else if (action === "toggle_audio") {
-    const enabled = audioEngine.toggle();
-    if (btnSoundToggle) {
-      btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
-      btnSoundToggle.classList.toggle("active", enabled);
-    }
-  }
-});
+// Commands are handled only here. The controller renders snapshots and owns no timers.
+async function registerCommands() {
+  await Promise.all([
+    listen<string>("tray-action", async ({ payload: action }) => {
+      if (action.startsWith("skin_")) await loadSkin(action.slice(5));
+      else if (action === "toggle_controller") await setControllerVisibility();
+      else if (action === "toggle_roam") togglePinMode();
+      else if (action === "start_pomodoro") pomodoroEngine.startFocus();
+      else if (action === "toggle_audio") audioEngine.toggle();
+      publishState();
+    }),
+    listen<string>("skin-changed", ({ payload }) => { void loadSkin(payload); }),
+    listen<{ state: PetStateName; notification?: { title: string; subtitle: string; urgent?: boolean } }>(
+      "set-pet-state", ({ payload }) => setPetState(payload.state, payload.notification)),
+    listen<boolean>("toggle-audio", ({ payload }) => {
+      if (audioEngine.isEnabled() !== payload) audioEngine.toggle();
+      publishState();
+    }),
+    listen<boolean>("toggle-pin", ({ payload }) => {
+      if (getIsPinned() !== payload) togglePinMode();
+      publishState();
+    }),
+    listen("pomo-toggle", () => pomodoroEngine.toggle()),
+    listen("pomo-reset", () => pomodoroEngine.reset()),
+    listen<string>("calendar-sync", ({ payload }) => { void syncCalendar(payload); }),
+    listen("state-request", () => publishState()),
+  ]);
+  await initialSkin;
+  academicSyncService.startPeriodicCheck(60);
+  githubMonitor.startPolling(180);
+  publishState();
+}
 
-// --- COMUNICACIÓN IPC MULTI-VENTANA CON EL CONTROLADOR ---
-listen<string>("skin-changed", async (event) => {
-  await loadSkin(event.payload);
-});
+async function syncCalendar(url: string) {
+  if (calendarSyncing) return;
+  calendarSyncing = true;
+  calendarError = undefined;
+  publishState();
+  const result = await academicSyncService.syncFromIcs(url);
+  calendarError = result.error;
+  calendarSyncing = false;
+  publishState();
+}
 
-listen<{ state: PetStateName; notification?: { title: string; subtitle: string; urgent?: boolean } }>(
-  "set-pet-state",
-  (event) => {
-    setPetState(event.payload.state, event.payload.notification);
-  }
-);
-
-listen<boolean>("toggle-audio", (event) => {
-  if (audioEngine.isEnabled() !== event.payload) {
-    audioEngine.toggle();
-  }
-});
-
-listen<boolean>("toggle-pin", (event) => {
-  if (getIsPinned() !== event.payload) {
-    togglePinMode();
-  }
-});
-
-listen("pomo-toggle", () => {
-  pomodoroEngine.toggle();
-});
-
-listen("pomo-reset", () => {
-  pomodoroEngine.reset();
-});
-
-listen<{ count: number }>("calendar-synced", (event) => {
-  const next = academicSyncService.getNextUrgentDeadline();
-  const timeStr = next ? academicSyncService.formatRemainingTime(next.dueAt) : "";
-  setPetState("ALERT_SEMESTRE", {
-    title: `CALENDARIO: ${event.payload.count} ENTREGAS`,
-    subtitle: next ? `${next.course}: ${timeStr}` : "Calendario sincronizado con éxito",
-    urgent: next?.urgent ?? false,
-  });
-});
+function publishState() {
+  const state: AppState = {
+    skin: activeManifest?.id || "spartan",
+    petState: currentState,
+    pinned: getIsPinned(),
+    audio: audioEngine.isEnabled(),
+    pomodoro: pomodoroEngine.snapshot(),
+    calendar: {
+      url: academicSyncService.getCalendarUrl(),
+      count: academicSyncService.getDeadlines().length,
+      lastSync: academicSyncService.getLastSyncFormatted(),
+      syncing: calendarSyncing,
+      error: calendarError,
+    },
+  };
+  void emit("state-changed", state).catch((error) => console.error("No se pudo compartir el estado", error));
+}
 
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
 (window as any).testAlert = () => {
@@ -672,7 +653,7 @@ listen<{ count: number }>("calendar-synced", (event) => {
   const timeStr = next ? academicSyncService.formatRemainingTime(next.dueAt) : "1h 45m";
   const customMsg = activeManifest?.dialogues?.alert || (next ? `${next.course} - ${next.title}` : "Lab. Física - Circuitos RC");
   setPetState("ALERT_SEMESTRE", {
-    title: `ENTREGA: ${timeStr.toUpperCase()}`,
+    title: `DEMO: ENTREGA ${timeStr.toUpperCase()}`,
     subtitle: customMsg.slice(0, 36),
     urgent: true,
   });
@@ -681,312 +662,76 @@ listen<{ count: number }>("calendar-synced", (event) => {
 (window as any).testVictory = () => {
   const customMsg = activeManifest?.dialogues?.victory || "PR #12 mergeada en main con honor";
   setPetState("VICTORY_GITHUB", {
-    title: "GITHUB: PR #12 MERGED",
+    title: "DEMO: GITHUB PR #12",
     subtitle: customMsg.slice(0, 36),
     urgent: false,
   });
-  githubMonitor.triggerSimulatedMerge();
 };
 
 (window as any).setPetState = setPetState;
 (window as any).loadSkin = loadSkin;
-(window as any).togglePinMode = togglePinMode;
+(window as any).togglePinMode = () => { const pinned = togglePinMode(); publishState(); return pinned; };
 (window as any).getIsPinned = getIsPinned;
 
-// --- PANEL DE CONTROL: PIXEL MINIMAL UI ---
-const debugPanel = document.getElementById("debug-panel");
-const btnCloseDebug = document.getElementById("btn-close-debug");
-const btnSoundToggle = document.getElementById("btn-sound-toggle");
-const selectSkin = document.getElementById("select-skin") as HTMLSelectElement | null;
-const btnSemester = document.getElementById("btn-event-semester");
-const btnGithub = document.getElementById("btn-event-github");
-const charNameEl = document.getElementById("char-name");
-const charSpecEl = document.getElementById("char-spec");
-const statusFsmText = document.getElementById("status-fsm-text");
-const thumbCanvas = document.getElementById("thumb-canvas") as HTMLCanvasElement | null;
-const thumbCtx = thumbCanvas?.getContext("2d");
-
-// Pomodoro UI elements
-const pomoClockEl = document.getElementById("pomo-clock");
-const pomoStatusEl = document.getElementById("pomo-status");
-const btnPomoToggle = document.getElementById("btn-pomo-toggle");
-const btnPomoReset = document.getElementById("btn-pomo-reset");
-
-// Inicializar estado de sonido en el botón
-if (btnSoundToggle) {
-  const enabled = audioEngine.isEnabled();
-  btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
-  btnSoundToggle.classList.toggle("active", enabled);
-}
-
-// Inicializar estado de locomoción en el panel
-if (statusFsmText) {
-  statusFsmText.textContent = getIsPinned() ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
-}
-
-btnSoundToggle?.addEventListener("click", () => {
-  const enabled = audioEngine.toggle();
-  btnSoundToggle.textContent = enabled ? "AUDIO: ON" : "AUDIO: OFF";
-  btnSoundToggle.classList.toggle("active", enabled);
-});
-
-// Renderizar miniatura del personaje en la tarjeta del controlador
-function updateThumbnail() {
-  if (!thumbCanvas || !thumbCtx || !activeManifest || !spriteImage) return;
-  thumbCtx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-  thumbCtx.imageSmoothingEnabled = false;
-
-  const { frameWidth, frameHeight } = activeManifest;
-  const sx = 0; // Primer frame IDLE
-  const sy = 0;
-
-  thumbCtx.drawImage(
-    spriteImage,
-    sx,
-    sy,
-    frameWidth,
-    frameHeight,
-    2,
-    2,
-    thumbCanvas.width - 4,
-    thumbCanvas.height - 4
-  );
-}
-
-// Sincronizar metadatos en la tarjeta activa
-function syncCardInfo() {
-  if (!activeManifest) return;
-  if (charNameEl) charNameEl.textContent = activeManifest.name;
-  if (charSpecEl) charSpecEl.textContent = `Skin pixel · ${activeManifest.frameWidth} × ${activeManifest.frameHeight}`;
-  updateThumbnail();
-}
-
-// Control dinámico de visibilidad del panel y redimensión de la ventana nativa
-const isTauriEnv = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const mainAppWindow = isTauriEnv ? getCurrentWindow() : null;
-
-function syncActionButtons(state: PetStateName) {
-  document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((btn) => {
-    if (btn.dataset.action === state) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
-  });
-  if (statusFsmText) {
-    statusFsmText.textContent = `Estado: ${state}`;
-  }
-}
-
-async function setControllerVisibility(_visible?: boolean) {
-  try {
-    await invoke("toggle_controller_window");
-  } catch (err) {
-    console.debug("[Main] Error alternando ventana de controlador:", err);
-  }
-}
-
-// Permitir arrastrar la ventana desde el encabezado del controlador
-const controllerHeader = document.querySelector(".controller-header");
-controllerHeader?.addEventListener("pointerdown", async (e) => {
-  const me = e as PointerEvent;
-  const target = me.target as HTMLElement;
-  if (
-    target.closest("#btn-close-debug") ||
-    target.closest("#btn-sound-toggle") ||
-    target.tagName === "BUTTON" ||
-    target.tagName === "SELECT"
-  ) {
-    return;
-  }
-  if (me.button !== 0) return;
-
-  try {
-    (e.currentTarget as HTMLElement).setPointerCapture(me.pointerId);
-  } catch (_) {}
-
-  isMouseDragging = true;
-  setIsDragging(true);
-  dragStartMouseX = me.screenX;
-  dragStartMouseY = me.screenY;
-
-  const currentPos = getWindowPosition();
-  dragStartWinX = currentPos.x;
-  dragStartWinY = currentPos.y;
-
-  isCurrentlyIgnoring = false;
-  try {
-    await invoke("set_ignore_cursor", { ignore: false });
-  } catch (_) {}
-});
-
-// Permitir arrastrar también desde la tarjeta del personaje en el controlador
-const cardCharacter = document.querySelector(".card-character");
-cardCharacter?.addEventListener("pointerdown", async (e) => {
-  const me = e as PointerEvent;
-  const target = me.target as HTMLElement;
-  if (target.tagName === "SELECT" || target.tagName === "OPTION" || target.closest("select")) {
-    return;
-  }
-  if (me.button !== 0) return;
-
-  try {
-    (e.currentTarget as HTMLElement).setPointerCapture(me.pointerId);
-  } catch (_) {}
-
-  isMouseDragging = true;
-  setIsDragging(true);
-  dragStartMouseX = me.screenX;
-  dragStartMouseY = me.screenY;
-
-  const currentPos = getWindowPosition();
-  dragStartWinX = currentPos.x;
-  dragStartWinY = currentPos.y;
-
-  isCurrentlyIgnoring = false;
-  try {
-    await invoke("set_ignore_cursor", { ignore: false });
-  } catch (_) {}
-});
-
-// Atajos de teclado:
-// - Cmd+Shift+D o Ctrl+Shift+D: Alterna la visibilidad del panel de control sin interferir con la escritura de código
-// - Tecla 'Escape': Cierra el panel de control si está visible
-// - Flechas Direccionales: Mueven al personaje por la pantalla de forma ágil y rápida
-window.addEventListener("keydown", async (e) => {
-  recordUserActivity();
-
-  if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === "d" || e.key === "D")) {
-    e.preventDefault();
-    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
-    await setControllerVisibility(isHidden);
-    return;
-  }
-
-  if (e.key === "Escape") {
-    const isVisible = !(debugPanel?.classList.contains("hidden") ?? true);
-    if (isVisible) {
-      await setControllerVisibility(false);
-      return;
-    }
-  }
-
-  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-    e.preventDefault();
-    const step = e.shiftKey ? 45 : 22; // Movimiento ágil y rápido
-    let dx = 0;
-    let dy = 0;
-    if (e.key === "ArrowLeft") dx = -step;
-    if (e.key === "ArrowRight") dx = step;
-    if (e.key === "ArrowUp") dy = -step;
-    if (e.key === "ArrowDown") dy = step;
-    await moveWindowBy(dx, dy);
-  }
-});
-
-// Clic derecho: sobre el personaje alterna modo Fijo/Patrulla; sobre el fondo alterna el controlador
-canvas.addEventListener("contextmenu", async (e) => {
-  e.preventDefault();
-  recordUserActivity();
-
-  const rect = canvas.getBoundingClientRect();
-  const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
-  const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
-
-  if (isCharacterHit(clickX, clickY)) {
-    const pinned = togglePinMode();
-    if (statusFsmText) {
-      statusFsmText.textContent = pinned ? "Estado: FIJO (ANCLADO)" : "Estado: LIBRE (PATRULLA)";
-    }
+async function setControllerVisibility(visible?: boolean) {
+  if (isTauri) {
+    await invoke("toggle_controller_window", { visible: visible ?? null });
+  } else if (visible === false) {
+    controllerWindow?.close();
   } else {
-    const isHidden = debugPanel?.classList.contains("hidden") ?? true;
-    await setControllerVisibility(isHidden);
+    controllerWindow = window.open("/controller.html", "myskin-controller", "width=560,height=720");
+    controllerWindow?.focus();
+  }
+}
+
+// Local shortcuts; desktop-wide shortcuts require a native plugin.
+window.addEventListener("keydown", async (event) => {
+  recordUserActivity();
+  if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "d") {
+    event.preventDefault();
+    await setControllerVisibility();
+  } else if (event.key === "Escape") {
+    await setControllerVisibility(false);
+  } else if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+    event.preventDefault();
+    const step = event.shiftKey ? 45 : 22;
+    await moveWindowBy(event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0,
+      event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0);
   }
 });
 
-btnCloseDebug?.addEventListener("click", async () => {
-  await setControllerVisibility(false);
+canvas.addEventListener("contextmenu", async (event) => {
+  event.preventDefault();
+  recordUserActivity();
+  const rect = canvas.getBoundingClientRect();
+  if (isCharacterHit((event.clientX - rect.left) * CANVAS_WIDTH / rect.width,
+    (event.clientY - rect.top) * CANVAS_HEIGHT / rect.height)) {
+    togglePinMode();
+    publishState();
+  } else await setControllerVisibility();
 });
 
-selectSkin?.addEventListener("change", async (e) => {
-  const skin = (e.target as HTMLSelectElement).value;
-  await loadSkin(skin);
-  syncCardInfo();
-});
-
-document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const action = btn.dataset.action as PetStateName;
-    if (action) {
-      setPetState(action);
-    }
-  });
-});
-
-btnSemester?.addEventListener("click", () => {
-  (window as any).testAlert();
-});
-
-btnGithub?.addEventListener("click", () => {
-  (window as any).testVictory();
-});
-
-// --- INTEGRACIÓN POMODORO ---
 pomodoroEngine.subscribe({
-  onTick: (_remaining, phase) => {
-    if (pomoClockEl) {
-      pomoClockEl.textContent = pomodoroEngine.formatTime();
-    }
-    if (pomoStatusEl) {
-      if (phase === "focus") {
-        pomoStatusEl.textContent = "Foco Activo";
-        pomoStatusEl.style.color = "var(--accent-primary)";
-      } else if (phase === "break") {
-        pomoStatusEl.textContent = "Descanso Activo";
-        pomoStatusEl.style.color = "var(--success-green)";
-      } else {
-        pomoStatusEl.textContent = "En reposo";
-        pomoStatusEl.style.color = "var(--text-muted)";
-      }
-    }
-  },
-  onPhaseChange: (newPhase: PomodoroPhase) => {
-    if (newPhase === "focus") {
-      const focusMsg = activeManifest?.dialogues?.focus || "25 min de foco y código continuo";
-      setPetState("FOCUS", {
-        title: "POMODORO: FOCO",
-        subtitle: focusMsg.slice(0, 36),
-        urgent: false,
-      });
-      if (btnPomoToggle) btnPomoToggle.textContent = "PAUSAR";
-    } else if (newPhase === "break") {
-      const breakMsg = activeManifest?.dialogues?.break || "5 min de descanso y estiramiento";
-      setPetState("WALK", {
-        title: "POMODORO: DESCANSO",
-        subtitle: breakMsg.slice(0, 36),
-        urgent: false,
-      });
-      if (btnPomoToggle) btnPomoToggle.textContent = "PAUSAR";
-    } else {
-      setPetState("IDLE");
-      if (btnPomoToggle) btnPomoToggle.textContent = "INICIAR FOCO";
-    }
+  onTick: () => publishState(),
+  onPhaseChange: (phase: PomodoroPhase) => {
+    if (phase === "focus") setPetState("FOCUS", {
+      title: "POMODORO: FOCO", subtitle: activeManifest?.dialogues?.focus?.slice(0, 36) || "25 minutos de concentración",
+    });
+    else if (phase === "break") setPetState("WALK", {
+      title: "POMODORO: DESCANSO", subtitle: activeManifest?.dialogues?.break?.slice(0, 36) || "5 minutos de descanso",
+    });
+    else setPetState("IDLE");
   },
 });
-
-btnPomoToggle?.addEventListener("click", () => {
-  const currentPhase = pomodoroEngine.getPhase();
-  if (currentPhase === "idle") {
-    pomodoroEngine.startFocus();
-  } else if (currentPhase === "focus" || currentPhase === "break") {
-    pomodoroEngine.pause();
-    if (btnPomoToggle) btnPomoToggle.textContent = "CONTINUAR";
-  }
+academicSyncService.onChange(() => {
+  if (academicNotificationId && !academicSyncService.getPendingDeadlines().some((deadline) => deadline.id === academicNotificationId && deadline.urgent)) {
+    setPetState("IDLE");
+  } else publishState();
 });
-
-btnPomoReset?.addEventListener("click", () => {
-  pomodoroEngine.reset();
-  if (btnPomoToggle) btnPomoToggle.textContent = "INICIAR FOCO";
-  if (pomoClockEl) pomoClockEl.textContent = "25:00";
-  if (pomoStatusEl) pomoStatusEl.textContent = "En reposo";
+void registerCommands().catch((error) => console.error("No se pudieron iniciar los servicios", error));
+window.addEventListener("pagehide", () => {
+  if (cursorPollTimer !== undefined) clearTimeout(cursorPollTimer);
+  academicSyncService.stopPeriodicCheck();
+  githubMonitor.stopPolling();
+  pomodoroEngine.pause();
 });

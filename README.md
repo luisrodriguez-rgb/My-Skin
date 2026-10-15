@@ -9,11 +9,16 @@
 
 ---
 
+**Estado de validación:** el flujo web cuenta con pruebas de servicios y de dos ventanas.
+La ejecución nativa y las cifras de recursos requieren validación por plataforma.
+Consulta el [roadmap actualizado](docs/AUDIT_AND_ROADMAP.md), la
+[matriz nativa](docs/NATIVE_VALIDATION.md) y la [memoria de código](docs/CODEBASE_MEMORY.md).
+
 ## 1. Resumen y Filosofia del Proyecto
 
 MySkin es un laboratorio de ingenieria enfocado en interfaces de escritorio de bajo consumo, renderizado de sprites en tiempo real y comunicacion bidireccional entre el sistema operativo y la web.
 
-A diferencia de soluciones pesadas basadas en Electron que empaquetan un navegador Chromium completo, MySkin utiliza **Tauri v2** y el motor nativo del sistema operativo (`WKWebView` en macOS). El resultado es un ejecutable compacto con un consumo inferior a 15 MB de memoria RAM y una carga de CPU cercana a cero en estado de reposo.
+A diferencia de soluciones pesadas basadas en Electron que empaquetan un navegador Chromium completo, MySkin utiliza **Tauri v2** y el motor nativo del sistema operativo (`WKWebView` en macOS). Esta arquitectura busca reducir el coste de distribución y ejecución. El consumo real de RAM, CPU y energía está pendiente de medición reproducible por plataforma.
 
 La estetica sigue el principio **Pixel Minimal UI**: figuras pequenas en pixel art con siluetas claras y animaciones fluidas a 60 FPS, acompanadas de un panel de control sobrio, compacto y de baja saturacion visual.
 
@@ -79,18 +84,15 @@ El proyecto esta organizado en tres capas independientes:
 ### El problema del mousemove en ventanas click-through
 Cuando una aplicacion de escritorio ejecuta `window.set_ignore_cursor_events(true)`, el sistema operativo deja de entregar eventos de mouse al WebView. La ventana se vuelve un fantasma total y deja de recibir `mousemove` en JavaScript, impidiendo saber cuando el usuario vuelve a pasar el cursor sobre el personaje.
 
-### La solucion: Polling adaptativo y Zero-GC a nivel de SO
+### Consulta del cursor y máscara alfa
 Para solucionar este cuello de botella con el menor consumo de CPU y memoria:
 
 1. **Consulta directa al SO:** El comando Rust `get_cursor_rel_pos` consulta `window.cursor_position()` y `window.outer_position()`.
 2. **Normalizacion Retina:** Convierte los pixeles fisicos del monitor a pixeles logicos del canvas dividiendo entre `scale_factor`:
    $$\text{rel\_x} = \frac{\text{cursor.x} - \text{win\_pos.x}}{\text{scale}}$$
 3. **Descarte rapido $O(1)$ por Caja Envolvente:** Antes de cualquier operacion sobre el canvas, se valida si el cursor se encuentra dentro de los limites `characterBoundingBox` del frame activo con un margen de 8 px. Si esta fuera, la evaluacion retorna de forma instantanea sin invocar al motor grafico.
-4. **Muestreo puntual Zero-GC (Eliminacion de Churn de Memoria):** Se elimino por completo la extraccion de un buffer completo de 300x240 px (288 KB) por frame. Unicamente cuando el cursor entra en la caja envolvente, se muestrea un micro-parche de 17x17 px (~1 KB), reduciendo la presion del recolector de basura (GC) a cero durante la animacion continua.
-5. **Filtro de transmision y Frecuencia Adaptativa:** 
-   - **10 Hz (100 ms):** Cuando el cursor se encuentra fuera de la ventana, reduciendo el trafico IPC en un 70%.
-   - **33 Hz (30 ms):** Cuando el cursor entra en la ventana para una reactividad inmediata al hacer clic o arrastrar.
-   - **0 Hz (Pausado):** Mientras el panel de control esta abierto o el personaje esta siendo arrastrado, desactivando llamadas IPC innecesarias.
+4. **Máscara alfa del frame:** se lee el canvas completo al redibujar un fotograma. No se ha implementado todavía muestreo por parches ni se acredita cero asignaciones.
+5. **Sondeo secuencial del cursor:** aproximadamente 100 ms fuera de la ventana, 30 ms dentro y 120 ms sin consulta nativa durante arrastre. El navegador omite este sondeo. La latencia y el consumo nativos necesitan mediciones.
 6. **Gestion Inteligente de Temporizadores de Locomocion:** El temporizador de caminata se suspende por completo cuando el personaje esta anclado (`isPinned: true`), eliminando interrupciones al procesador en reposo.
 
 ---
@@ -296,8 +298,9 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 ## 7. Requisitos y Configuracion
 
 ### Requisitos Previos
-- **Node.js:** v18.0 o superior (verificado con v20+).
-- **Rust Toolchain:** `rustc` y `cargo` v1.75+ (verificado con Rust 1.99.0 en arquitectura Apple Silicon aarch64).
+- **Node.js:** 24.19.0 (ver `.node-version`).
+- **pnpm:** 11.25.0 (ver `packageManager` en `package.json`).
+- **Rust Toolchain:** estable y prerrequisitos oficiales de Tauri para compilación nativa. Verificación de escritorio pendiente.
 - **macOS:** 12.0 o superior para compatibilidad con `macOSPrivateApi` de transparencia.
 
 ### Instalación Rápida para Usuarios (Sin compilar código)
@@ -326,7 +329,7 @@ Clonar el repositorio e instalar las dependencias de Node:
 ```bash
 git clone https://github.com/luisrodriguez-rgb/My-Skin.git
 cd My-Skin
-npm install
+pnpm install --frozen-lockfile
 ```
 
 Verificar la compilación del backend nativo de Rust:
@@ -344,7 +347,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 Ejecuta el servidor Vite local para calibrar sprites, probar la FSM y verificar la paleta visual desde cualquier navegador:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Abre `http://localhost:5173/`. Desde la consola de desarrollador puedes invocar directamente:
@@ -361,7 +364,7 @@ Compila el binario en modo depuracion y levanta la ventana flotante con soporte 
 
 ```bash
 source "$HOME/.cargo/env"
-./node_modules/.bin/tauri dev
+pnpm tauri dev
 ```
 
 ---
@@ -382,13 +385,36 @@ Para consultar el analisis critico de ingenieria, el diagnostico de deuda tecnic
 10. [x] Dialogos contextuales y deteccion de inactividad por personaje.
 11. [x] **Modulo de Sincronizacion Academica (Fase 2):** Servicio de alertas de entregas y parciales con cuenta regresiva dinamica (`syncService.ts`).
 12. [x] **Monitor Ligero de GitHub (Fase 2):** Polling no invasivo de PRs mergeadas y commits recientes (`githubMonitor.ts`).
-13. [x] **Optimizacion Extrema de RAM y CPU:** Descarte O(1), muestreo puntual Zero-GC por parches y sondeo IPC adaptativo 10Hz/33Hz.
+13. [ ] **Rendimiento medido:** validar CPU, RAM, energía y latencia; evaluar la máscara alfa después de obtener una línea base.
 14. [x] **Identidad Visual e Iconos Nativos:** Suite completa `.icns`, `.ico` y PNGs de alta resolucion integrados en el macOS Dock.
-15. [x] **Pipeline Automatizado de CI/CD (Fase 4):** Workflow de GitHub Actions (`release.yml`) para compilacion de binarios macOS, Windows y Linux.
-16. [ ] **Desacoplamiento Multi-Ventana / Tray (Fase 4):** Ventana overlay exclusiva para el sprite y ventana nativa / System Tray para ajustes.
+15. [x] **Pipeline Automatizado de CI/CD (Fase 4):** Workflow de GitHub Actions (`release.yml`) para compilación de binarios macOS y Windows. Configuración presente; ejecución remota por verificar.
+16. [x] **Desacoplamiento Multi-Ventana / Tray (Fase 4):** Ventana overlay exclusiva para el sprite y ventana nativa / System Tray para ajustes.
 
 ---
 
 ## 10. Licencia
 
 Distribuido bajo licencia MIT. Consulta el archivo `LICENSE` para mas informacion.
+
+## Validación de desarrollo
+
+```bash
+pnpm test
+pnpm run build
+pnpm exec playwright install chromium
+pnpm run test:e2e
+```
+
+Las pruebas E2E levantan su propio servidor en el puerto 4173. En el entorno cloud
+con Chromium del sistema puede usarse
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/chromium pnpm run test:e2e`.
+Para la simulación, mantener una sola pestaña del personaje y abrir
+`/controller.html` en otra pestaña del mismo origen. Doble clic en el personaje
+también abre el controlador. Pomodoro y calendario se ejecutan en la ventana del
+personaje; cerrar el panel no reinicia sus servicios. Los atajos son locales a la
+ventana enfocada.
+
+Los tokens de GitHub configurados mediante la API del servicio duran sólo durante
+la sesión; no se guardan nuevos tokens en localStorage. Los feeds con TZID deben
+incluir VTIMEZONE. Las recurrencias se expanden a 90 días. Una descarga fallida
+conserva las entregas previas; un calendario válido vacío las elimina.
