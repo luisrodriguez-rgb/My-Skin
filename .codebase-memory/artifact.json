@@ -1,12 +1,12 @@
 {
     "schema_version": 2,
-    "commit": "cc3da329f638a779fd4d3e12cd99ed0b46955e93",
-    "indexed_at": "2026-10-15T19:02:16Z",
+    "commit": "f6250c1261f4014742173447a3db0d29698f0797",
+    "indexed_at": "2026-10-15T19:27:51Z",
     "project": "workspace-My-Skin",
-    "nodes": 998,
-    "edges": 1869,
-    "original_size": 4718592,
-    "compressed_size": 800287,
+    "nodes": 1006,
+    "edges": 1936,
+    "original_size": 4784128,
+    "compressed_size": 807735,
     "compression_level": 3,
     "reconcile_basis": "git-clean-head"
 }
