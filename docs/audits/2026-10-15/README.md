@@ -2,6 +2,8 @@
 
 15 de octubre de 2026. Documentación y prototipo de diseño del commit `ec6e908`.
 
+**Actualización:** [ver las siete correcciones implementadas y sus capturas](CORRECCIONES.md).
+
 ## Abrir el contenido
 
 - **[Leer el informe completo aquí en GitHub](INFORME.md)**

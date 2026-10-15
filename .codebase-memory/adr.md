@@ -24,6 +24,22 @@ recurrences and embedded VTIMEZONE, bounded to 90 future days and 10000 steps pe
 series. Missing timezone definitions fail explicitly. Deadline urgency means
 future, incomplete and within two hours; notifications deduplicate within a session.
 
+## Notification policy and controller actions
+
+Main also owns NotificationQueue. Academic deadlines outrank Pomodoro completion,
+GitHub activity, demos and ambient messages. Academic entries retain their actual
+course/title/dueAt; earlier deadlines win. Transient lifetime counts only while
+visible. Completion or removal prunes academic entries; dismissal does not complete
+a task. Queue state and dismissal history are session-only. The normal sprite
+state comes from the running/paused timer after a notification ends.
+
+AppState publishes full deadlines, the queue, active notification ID and errors.
+The controller sends deadline-complete, deadline-open and notification-dismiss
+commands. Local form validation persists independently from owner snapshots.
+HTTP(S) links open only on explicit user action; native code validates the URL
+and runs a fixed OS launcher off the UI thread. Task completion is local to MySkin,
+not a submission to the LMS.
+
 ## GitHub and credentials
 
 PR monitoring uses updated-order pagination, a per-repository persisted cursor,
@@ -33,8 +49,9 @@ current process. OS credential storage and real provider validation remain pendi
 
 ## Validation and limits
 
-24 unit tests and 5 Chromium multi-window tests passed on 2026-10-15, along with
+34 unit tests and 11 Chromium multi-window tests passed on 2026-10-15, along with
 TypeScript/Vite build and frozen pnpm installation. Network tests use controlled
-fixtures. Native macOS/Windows builds and UI tests, installer signing/notarization,
+fixtures. Native compilation is checked by GitHub Actions; interactive macOS/Windows UI
+tests, installer signing/notarization,
 RAM/CPU/energy measurements and real calendar CORS behavior are not validated.
 The roadmap and remaining acceptance criteria are in docs/AUDIT_AND_ROADMAP.md.

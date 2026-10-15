@@ -35,6 +35,8 @@ Eso comprueba compilación y configuración, no las interacciones de ventanas.
 | Menú nativo | Skin, pin, audio y Pomodoro actualizan el panel | Pendiente |
 | Pomodoro | Pausa/reanuda; reapertura conserva estado; suspensión corrige reloj | Pendiente |
 | Calendario real | Descarga, zona horaria, urgencia y errores correctos | Pendiente |
+| Entregas | Completar localmente, persistir al resincronizar y abrir HTTP(S) en el navegador del sistema; error visible si falla | Pendiente |
+| Prioridad de avisos | Dos entregas urgentes mantienen su orden ante merge y fin de Pomodoro; descartar avanza al siguiente aviso | Pendiente |
 | Desconexión y rate limit | No bloquea interfaz ni borra tareas | Pendiente |
 | Instalador | Instalación, arranque y desinstalación en equipo limpio | Pendiente |
 

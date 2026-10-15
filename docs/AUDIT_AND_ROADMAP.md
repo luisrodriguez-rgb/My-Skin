@@ -49,6 +49,15 @@ skins y el autoactualizador quedan para después de una beta validada.
 - Codebase Memory MCP 0.11.0 instalado en la nube, con habilidad local,
   instalador verificable y decisiones de arquitectura persistentes.
 
+## Correcciones de producto de esta iteración
+
+Se implementaron los siete hallazgos de la auditoría de producto: entregas
+accionables, cola de prioridades, avisos con datos reales, una acción de
+concentración, errores persistentes, contraste y controles accesibles.
+El [registro de correcciones y capturas](audits/2026-10-15/CORRECCIONES.md)
+relaciona cada hallazgo con su prueba. La navegación Hoy / Compañeros / Ajustes
+sigue como propuesta para una iteración posterior.
+
 ## Arquitectura de estado
 
 ```mermaid
@@ -72,12 +81,13 @@ concentración. Preferencias y entregas siguen persistidas en localStorage.
 
 | Comprobación | Resultado |
 | --- | --- |
-| Pruebas unitarias de Pomodoro, calendario y GitHub | 24 aprobadas |
-| Pruebas de Chromium con personaje y controlador | 5 aprobadas |
+| Pruebas unitarias de servicios, cola de avisos y enlaces | 34 aprobadas |
+| Pruebas de Chromium con personaje y controlador | 11 aprobadas |
+| Accesibilidad automatizada del panel poblado | Sin infracciones en los estados examinados; sin desbordamiento a 280/390/560 px |
 | Compilación TypeScript y Vite | Aprobada |
 | Descarga y checksum del instalador de Codebase Memory | Verificados |
-| Ejecución de GitHub Actions | Configurada; no ejecutada desde esta tarea |
-| Compilación de Rust y capacidades Tauri en macOS/Windows | Pendiente |
+| Ejecución de GitHub Actions | [CI de la implementación](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38789745833); consultar resultado remoto |
+| Interacciones reales de Tauri en macOS/Windows | Pendientes de validación en escritorio |
 | Consumo nativo de RAM, CPU y energía | Sin medición |
 | Firma, notarización y pruebas de instaladores | Pendientes |
 
@@ -111,9 +121,9 @@ no la integración del menú con el sistema operativo.
 
 | Fase | Estado | Trabajo y criterio de cierre |
 | --- | --- | --- |
-| 1. Base reproducible | Implementada y validada localmente | Instalación congelada, build y pruebas de web. Falta observar el primer resultado de CI remoto. |
+| 1. Base reproducible | Implementada y validada localmente | Instalación congelada, build y pruebas de web. CI remoto configurado y ejecutado; consultar la ejecución enlazada. |
 | 2. Estado consistente | Validada en simulación web | Una autoridad; reabrir controlador conserva reloj, skin y preferencias. Repetir matriz en Tauri nativo. |
-| 3. Integraciones fiables | Correcciones principales implementadas | Casos de calendario y GitHub pasan con fixtures. Probar proveedores reales, CORS, límites y recuperación de errores; decidir persistencia de alertas y política de prioridades. |
+| 3. Integraciones fiables | Correcciones principales implementadas | Casos de calendario y GitHub pasan con fixtures. Prioridades implementadas y probadas. Probar proveedores reales, CORS, límites y recuperación; decidir persistencia de avisos entre reinicios. |
 | 4. Escritorio y rendimiento | Pendiente de ejecución nativa | Completar `NATIVE_VALIDATION.md` en macOS ARM, macOS Intel y Windows; adjuntar resultados y mediciones de reposo, animación y controlador. |
 | 5. Beta distribuible | Pendiente | Validar instaladores limpios, identidad/firma por plataforma, notarización macOS, política de credenciales y documentación de soporte. |
 | 6. Evolución | Posterior a beta | Importación segura de skins, editor visual, personalización y actualizaciones firmadas, cada una con sus propios criterios de aceptación. |
@@ -125,8 +135,8 @@ pruebas web.
 
 ## Próximo trabajo concreto
 
-1. Ejecutar el pipeline de CI con estos cambios y resolver cualquier diferencia
-   de compilación en los tres targets nativos.
+1. Comprobar el pipeline enlazado y resolver cualquier diferencia de compilación
+   en los tres targets nativos. La siguiente validación de escritorio es interactiva.
 2. Probar el controlador real: eventos, permisos, menú, Escape, cierre y reapertura.
 3. Probar feeds reales de Canvas/Moodle y definir transporte nativo si CORS impide
    el acceso. No guardar URLs privadas en fixtures ni en logs.
