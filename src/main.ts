@@ -737,7 +737,7 @@ pomodoroEngine.subscribe({
     ambientState = "IDLE";
     if (phase === "break") notifications.push({
       id: `pomodoro:${Date.now()}`, kind: "pomodoro", state: "WALK",
-      title: "SESIÓN COMPLETADA", subtitle: "Tienes 5 minutos de descanso.", durationMs: 8000,
+      title: "SESIÓN COMPLETADA", subtitle: "Completaste tu sesión de concentración.", durationMs: 8000,
     });
     if (phase === "idle") notifications.removeWhere((item) => item.kind === "pomodoro");
     refreshPresentation();

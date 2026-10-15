@@ -71,12 +71,16 @@ test("two urgent tasks retain priority over Pomodoro completion and GitHub", asy
   await expect(panel.locator("#notification-list .current")).toContainText("Sistemas: Laboratorio");
   await page.clock.fastForward(25 * 60 * 1000);
   await expect(panel.locator("#notification-list li")).toHaveCount(4);
+  // An urgent task can keep the completion notice queued beyond the break.
+  await page.clock.fastForward(5 * 60 * 1000);
+  await expect(panel.locator("#pomo-status")).toHaveText("Concentración activa");
   await expect(page.locator("#pet-canvas")).toHaveAttribute("data-state", "ALERT_SEMESTRE");
   await panel.getByRole("button", { name: "Descartar Sistemas: Laboratorio" }).click();
   await expect(panel.locator("#notification-list .current")).toContainText("Redes: Informe");
   await expect(page.locator("#pet-canvas")).toHaveAttribute("data-state", "ALERT_SEMESTRE");
   await panel.getByRole("button", { name: "Descartar Redes: Informe" }).click();
   await expect(panel.locator("#notification-list .current")).toContainText("SESIÓN COMPLETADA");
+  await expect(panel.locator("#notification-list .current")).toContainText("Completaste tu sesión de concentración.");
   await panel.locator("#notification-list .current button").click();
   await expect(panel.locator("#notification-list .current")).toContainText("GITHUB: PR #51 MERGED");
   await expect(page.locator("#pet-canvas")).toHaveAttribute("data-state", "VICTORY_GITHUB");
