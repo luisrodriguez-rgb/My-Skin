@@ -26,6 +26,8 @@ const petGrid = document.getElementById("pet-grid")!;
 let state: AppState | null = null;
 let lastCalendarUrl: string | null = null;
 let lastRepository: string | null = null;
+let calendarDraftChanged = false;
+let repositoryDraftChanged = false;
 let metadataSequence = 0;
 let heroKey = "";
 let lastStateAt = 0;
@@ -266,8 +268,18 @@ function render(snapshot: AppState) {
   document.getElementById("summary-completed")!.textContent = String(snapshot.calendar.deadlines.length - pending.length);
   const today = new Date().toDateString();
   document.getElementById("summary-today")!.textContent = String(pending.filter((deadline) => new Date(deadline.dueAt).toDateString() === today).length);
-  if (lastCalendarUrl !== snapshot.calendar.url) { calendarUrl.value = snapshot.calendar.url; lastCalendarUrl = snapshot.calendar.url; }
-  if (lastRepository !== snapshot.github.repository) { githubRepo.value = snapshot.github.repository; lastRepository = snapshot.github.repository; }
+  if (lastCalendarUrl !== snapshot.calendar.url) {
+    if (!calendarDraftChanged || calendarUrl.value.trim() === snapshot.calendar.url) {
+      calendarUrl.value = snapshot.calendar.url; calendarDraftChanged = false;
+    }
+    lastCalendarUrl = snapshot.calendar.url;
+  }
+  if (lastRepository !== snapshot.github.repository) {
+    if (!repositoryDraftChanged || githubRepo.value.trim() === snapshot.github.repository) {
+      githubRepo.value = snapshot.github.repository; repositoryDraftChanged = false;
+    }
+    lastRepository = snapshot.github.repository;
+  }
   syncButton.disabled = snapshot.calendar.syncing;
   renderFeedback(); renderTasks(snapshot); renderNotifications(snapshot);
   showError(skinFeedback, snapshot.skinError || metadataError);
@@ -288,7 +300,7 @@ document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((button) => 
 });
 pomoToggle.addEventListener("click", () => command("pomo-toggle"));
 document.getElementById("btn-pomo-reset")!.addEventListener("click", () => command("pomo-reset"));
-calendarUrl.addEventListener("input", () => { validationError = ""; renderFeedback(); });
+calendarUrl.addEventListener("input", () => { calendarDraftChanged = true; validationError = ""; renderFeedback(); });
 document.getElementById("calendar-form")!.addEventListener("submit", (event) => {
   event.preventDefault();
   const url = calendarUrl.value.trim();
@@ -297,7 +309,7 @@ document.getElementById("calendar-form")!.addEventListener("submit", (event) => 
   if (validationError) { calendarUrl.focus(); return; }
   command("calendar-sync", url);
 });
-githubRepo.addEventListener("input", () => { githubValidationError = ""; renderFeedback(); });
+githubRepo.addEventListener("input", () => { repositoryDraftChanged = true; githubValidationError = ""; renderFeedback(); });
 document.getElementById("github-form")!.addEventListener("submit", (event) => {
   event.preventDefault();
   const repository = githubRepo.value.trim();

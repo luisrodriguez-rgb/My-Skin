@@ -221,6 +221,9 @@ test("navigation remains usable while the owner is offline and connects in place
   await context.route("https://api.github.com/**", (route) => route.fulfill({ json: [] }));
   const panel = await context.newPage(); await panel.goto("/controller.html");
   await expect(panel.locator("#btn-pomo-toggle")).toBeDisabled();
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
+  await panel.fill("#input-calendar-url", "https://example.test/borrador.ics");
+  await panel.fill("#input-github-repo", "octocat/Hello-World");
   await panel.getByRole("tab", { name: "Compañeros" }).click();
   await expect(panel.locator("#pets")).toBeVisible();
   await expect(panel.locator('[data-skin="capybara"]')).toBeDisabled();
@@ -229,4 +232,7 @@ test("navigation remains usable while the owner is offline and connects in place
   await expect(panel.getByRole("tab", { name: "Compañeros" })).toHaveAttribute("aria-selected", "true");
   await panel.getByRole("button", { name: "Elegir Capibara", exact: true }).click();
   await expect(panel.locator('[data-skin="capybara"]')).toHaveAttribute("aria-pressed", "true");
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
+  await expect(panel.locator("#input-calendar-url")).toHaveValue("https://example.test/borrador.ics");
+  await expect(panel.locator("#input-github-repo")).toHaveValue("octocat/Hello-World");
 });
