@@ -1,0 +1,9 @@
+{
+  "axe": [],
+  "narrow": {
+    "viewport": 390,
+    "width": 390
+  },
+  "interactions": "Passed: navigation, companion selection, start/pause/reset, add/complete task, silence toggle",
+  "pageErrors": []
+}
