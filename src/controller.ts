@@ -1,11 +1,11 @@
 import { emit, listen, isTauri } from "./platform";
 import { invoke } from "@tauri-apps/api/core";
 import { calendarFeedUrl, safeTaskUrl } from "./webLinks";
+import { setupTabs } from "./controllerTabs";
+import { skinCatalog, loadPreview, drawPreview } from "./skinCatalog";
 import type { AppState, PetStateName } from "./appState";
 
-const selectSkin = document.querySelector<HTMLSelectElement>("#select-skin")!;
 const charName = document.getElementById("char-name")!;
-const charSpec = document.getElementById("char-spec")!;
 const thumbnail = document.querySelector<HTMLCanvasElement>("#thumb-canvas")!;
 const sound = document.querySelector<HTMLButtonElement>("#btn-sound-toggle")!;
 const pin = document.querySelector<HTMLButtonElement>("#btn-pin-toggle")!;
@@ -20,55 +20,105 @@ const deadlineList = document.getElementById("deadline-list")!;
 const notificationList = document.getElementById("notification-list")!;
 const skinFeedback = document.getElementById("skin-error")!;
 const actionFeedback = document.getElementById("action-error")!;
+const githubRepo = document.querySelector<HTMLInputElement>("#input-github-repo")!;
+const githubFeedback = document.getElementById("github-feedback")!;
+const petGrid = document.getElementById("pet-grid")!;
 let state: AppState | null = null;
-let loadedSkin = "";
 let lastCalendarUrl: string | null = null;
+let lastRepository: string | null = null;
+let calendarDraftChanged = false;
+let repositoryDraftChanged = false;
 let metadataSequence = 0;
+let heroKey = "";
 let lastStateAt = 0;
 let validationError = "";
+let githubValidationError = "";
 let metadataError = "";
 let commandError = "";
 let taskSignature = "";
 let notificationSignature = "";
 let previousCompleted = new Set<string>();
 let connected = false;
+let galleryReady = false;
+
+const activateTab = setupTabs((panel) => {
+  if (panel === "pets") initializeGallery();
+  window.scrollTo({ top: 0, behavior: "auto" });
+});
+document.querySelector(".brand")!.addEventListener("click", (event) => { event.preventDefault(); activateTab("today", true); });
+document.getElementById("choose-companion")!.addEventListener("click", () => activateTab("pets", true));
+document.querySelectorAll<HTMLButtonElement>("[data-calendar-shortcut]").forEach((button) => {
+  button.addEventListener("click", () => { activateTab("settings"); calendarUrl.focus(); });
+});
 
 function setConnected(value: boolean) {
   connected = value;
-  document.querySelectorAll<HTMLButtonElement | HTMLSelectElement>("button, select").forEach((control) => {
-    control.disabled = !value || control.dataset.completed === "true";
+  document.querySelectorAll<HTMLButtonElement>("[data-command]").forEach((control) => {
+    control.disabled = !value || control.dataset.completed === "true" || (!!state?.skinLoading && control.dataset.skin === state.skinLoading);
   });
-  if (!value) fsm.textContent = "Esperando al personaje. Abre MySkin para conectar.";
+  const status = document.getElementById("connection-status")!;
+  const label = value ? "En compañía" : "Abre MySkin para conectar";
+  if (status.textContent !== label) status.textContent = label;
+  status.dataset.connected = String(value);
 }
 setConnected(false);
 
-async function loadMetadata(skin: string) {
+async function loadMetadata(snapshot: AppState) {
+  const key = `${snapshot.skin}:${snapshot.petState}`;
+  if (heroKey === key) return;
+  heroKey = key;
   const sequence = ++metadataSequence;
+  const name = skinCatalog.find((skin) => skin.id === snapshot.skin)?.name ?? snapshot.skin;
+  charName.textContent = name;
+  thumbnail.setAttribute("aria-label", `${name}, tu compañero`);
   try {
-    const response = await fetch(`/skins/${skin}/manifest.json`);
-    if (!response.ok) throw new Error("No se pudo cargar el personaje.");
-    const manifest = await response.json();
-    const image = new Image();
-    const ready = new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = reject; });
-    image.src = `/skins/${skin}/spritesheet.png`;
-    await ready;
+    const asset = await loadPreview(snapshot.skin);
     if (sequence !== metadataSequence) return;
-    charName.textContent = manifest.name;
-    charSpec.textContent = "Tu compañero de escritorio";
-    const context = thumbnail.getContext("2d")!;
-    context.clearRect(0, 0, thumbnail.width, thumbnail.height);
-    context.imageSmoothingEnabled = false;
-    context.drawImage(image, 0, manifest.states.IDLE.row * manifest.frameHeight,
-      manifest.frameWidth, manifest.frameHeight, 0, 0, thumbnail.width, thumbnail.height);
-    thumbnail.setAttribute("aria-label", manifest.name);
+    drawPreview(thumbnail, asset, snapshot.petState);
     metadataError = "";
-    loadedSkin = skin;
   } catch {
     if (sequence !== metadataSequence) return;
-    loadedSkin = "";
+    heroKey = "";
     metadataError = "No se pudo cargar la vista del personaje. Vuelve a seleccionarlo.";
   }
   showError(skinFeedback, state?.skinError || metadataError);
+}
+
+function initializeGallery() {
+  if (galleryReady) return;
+  galleryReady = true;
+  for (const skin of skinCatalog) {
+    const button = document.createElement("button");
+    button.className = "pet-choice"; button.dataset.skin = skin.id; button.dataset.command = "";
+    button.style.setProperty("--pet-color", skin.color);
+    button.setAttribute("aria-label", `Elegir ${skin.name}`);
+    button.setAttribute("aria-pressed", String(state?.skin === skin.id));
+    button.disabled = !connected;
+    const canvas = document.createElement("canvas"); canvas.width = 96; canvas.height = 96; canvas.setAttribute("aria-hidden", "true");
+    const name = document.createElement("span"); name.className = "pet-label"; name.textContent = skin.name;
+    const detail = document.createElement("span"); detail.className = "pet-detail"; detail.textContent = skin.detail;
+    const selected = document.createElement("span"); selected.className = "pet-selection";
+    button.append(canvas, name, detail, selected); petGrid.append(button);
+    button.addEventListener("click", () => command("skin-changed", skin.id));
+    void loadPreview(skin.id).then((asset) => drawPreview(canvas, asset)).catch(() => { detail.textContent = "Vista previa no disponible"; });
+  }
+  if (state) renderGallery(state);
+}
+
+function renderGallery(snapshot: AppState) {
+  petGrid.setAttribute("aria-busy", String(!!snapshot.skinLoading));
+  for (const button of petGrid.querySelectorAll<HTMLButtonElement>("[data-skin]")) {
+    const selected = button.dataset.skin === snapshot.skin;
+    const loading = button.dataset.skin === snapshot.skinLoading;
+    button.setAttribute("aria-pressed", String(selected));
+    button.setAttribute("aria-busy", String(loading));
+    button.querySelector(".pet-selection")!.textContent = loading ? "Cargando…" : selected ? "Tu compañero" : "Elegir";
+    button.disabled = !connected || loading;
+  }
+  const name = skinCatalog.find((skin) => skin.id === snapshot.skin)?.name ?? snapshot.skin;
+  const text = snapshot.skinLoading ? "Preparando tu compañero…" : `${name} te acompaña. Listo para seguir en Hoy.`;
+  const feedback = document.getElementById("companion-feedback")!;
+  if (feedback.textContent !== text) feedback.textContent = text;
 }
 
 function showError(element: HTMLElement, message?: string) {
@@ -80,10 +130,16 @@ function showError(element: HTMLElement, message?: string) {
 function renderFeedback() {
   calendarUrl.setAttribute("aria-invalid", String(!!validationError));
   syncFeedback.classList.toggle("feedback-error", !!validationError || !!state?.calendar.error);
+  const count = state?.calendar.count ?? 0;
   const text = validationError || (state?.calendar.syncing ? "Sincronizando calendario…"
     : state?.calendar.error ? `Error: ${state.calendar.error}`
-    : `${state?.calendar.count ?? 0} entregas · ${state?.calendar.lastSync ?? "Sin sincronizar"}`);
+    : `${count} ${count === 1 ? "entrega" : "entregas"} · ${state?.calendar.lastSync ?? "Sin sincronizar"}`);
   if (syncFeedback.textContent !== text) syncFeedback.textContent = text;
+  const githubError = githubValidationError || state?.github.error;
+  githubRepo.setAttribute("aria-invalid", String(!!githubValidationError));
+  githubFeedback.classList.toggle("feedback-error", !!githubError);
+  const githubText = githubError || (state ? `Repositorio elegido: ${state.github.repository}` : "Esperando al personaje.");
+  if (githubFeedback.textContent !== githubText) githubFeedback.textContent = githubText;
 }
 
 function taskTime(dueAt: number, completed: boolean): string {
@@ -120,6 +176,7 @@ function renderTasks(snapshot: AppState) {
       complete.setAttribute("aria-label", `Completar ${deadline.title}`);
       complete.dataset.completed = String(deadline.completed);
       complete.disabled = deadline.completed || !connected;
+      complete.dataset.command = "";
       complete.addEventListener("click", () => command("deadline-complete", deadline.id));
       actions.append(complete);
       const url = safeTaskUrl(deadline.link);
@@ -137,7 +194,7 @@ function renderTasks(snapshot: AppState) {
         document.getElementById("task-feedback")!.textContent = `Entrega completada: ${deadline.title}`;
       }
     }
-    if (focused) document.getElementById("deadlines-heading")!.focus();
+    if (focused && !document.getElementById("today")!.hidden) document.getElementById("deadlines-heading")!.focus();
     taskSignature = signature;
     previousCompleted = new Set(deadlines.filter((d) => d.completed).map((d) => d.id));
   }
@@ -148,11 +205,11 @@ function renderTasks(snapshot: AppState) {
   }
   document.getElementById("deadlines-empty")!.hidden = deadlines.length > 0;
   const pending = deadlines.filter((d) => !d.completed).length;
-  document.getElementById("deadline-count")!.textContent = deadlines.length ? `${pending} pendientes · ${deadlines.length - pending} completadas` : "";
+  document.getElementById("deadline-count")!.textContent = deadlines.length ? `${pending} ${pending === 1 ? "pendiente" : "pendientes"} · ${deadlines.length - pending} ${deadlines.length - pending === 1 ? "completada" : "completadas"}` : "";
 }
 
 function renderNotifications(snapshot: AppState) {
-  const signature = snapshot.notifications.map((item) => item.id).join("|");
+  const signature = JSON.stringify(snapshot.notifications.map((item) => [item.id, item.subtitle]));
   if (signature !== notificationSignature) {
     const focused = document.activeElement instanceof HTMLElement && notificationList.contains(document.activeElement);
     notificationList.replaceChildren();
@@ -162,13 +219,15 @@ function renderNotifications(snapshot: AppState) {
       const title = document.createElement("h3"); const subtitle = document.createElement("p");
       info.append(title, subtitle);
       const dismiss = document.createElement("button"); dismiss.className = "secondary-button";
+      dismiss.dataset.command = "";
+      dismiss.disabled = !connected;
       dismiss.textContent = "Descartar"; dismiss.setAttribute("aria-label", `Descartar ${notification.subtitle}`);
       dismiss.addEventListener("click", () => command("notification-dismiss", notification.id));
       item.dataset.notificationId = notification.id;
       item.append(info, dismiss); notificationList.append(item);
     }
     notificationSignature = signature;
-    if (focused) {
+    if (focused && !document.getElementById("today")!.hidden) {
       if (snapshot.notifications.length) document.getElementById("notifications-heading")!.focus();
       else pomoToggle.focus();
     }
@@ -187,24 +246,40 @@ function render(snapshot: AppState) {
   state = snapshot;
   lastStateAt = Date.now();
   setConnected(true);
-  selectSkin.value = snapshot.skin;
-  if (loadedSkin !== snapshot.skin) { loadedSkin = snapshot.skin; void loadMetadata(snapshot.skin); }
-  sound.textContent = snapshot.audio ? "AUDIO: ON" : "AUDIO: OFF";
-  sound.classList.toggle("active", snapshot.audio);
+  void loadMetadata(snapshot);
+  renderGallery(snapshot);
+  sound.textContent = snapshot.audio ? "Sonido activado" : "Sonido desactivado";
   sound.setAttribute("aria-pressed", String(snapshot.audio));
-  pin.textContent = snapshot.pinned ? "MODO: FIJO" : "MODO: LIBRE";
-  pin.classList.toggle("active", snapshot.pinned);
+  pin.textContent = snapshot.pinned ? "Modo fijo" : "Modo libre";
   pin.setAttribute("aria-pressed", String(snapshot.pinned));
   fsm.textContent = `Estado: ${snapshot.petState}`;
   document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((button) => {
-    button.classList.toggle("active", button.dataset.action === snapshot.petState);
     button.setAttribute("aria-pressed", String(button.dataset.action === snapshot.petState));
   });
   const { phase, running, remainingSeconds } = snapshot.pomodoro;
   pomoClock.textContent = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
   pomoStatus.textContent = phase === "idle" ? "En reposo" : !running ? "En pausa" : phase === "focus" ? "Concentración activa" : "Descanso";
   pomoToggle.textContent = running ? "Pausar" : phase === "idle" ? "Concentrarme" : "Continuar";
-  if (lastCalendarUrl !== snapshot.calendar.url) { calendarUrl.value = snapshot.calendar.url; lastCalendarUrl = snapshot.calendar.url; }
+  const pending = snapshot.calendar.deadlines.filter((deadline) => !deadline.completed);
+  const next = pending.find((deadline) => deadline.dueAt > Date.now());
+  document.getElementById("focus-task")!.textContent = next?.title || "Haz espacio para concentrarte.";
+  document.getElementById("focus-course")!.textContent = next?.course || "Un paso pequeño también cuenta.";
+  document.getElementById("summary-pending")!.textContent = String(pending.length);
+  document.getElementById("summary-completed")!.textContent = String(snapshot.calendar.deadlines.length - pending.length);
+  const today = new Date().toDateString();
+  document.getElementById("summary-today")!.textContent = String(pending.filter((deadline) => new Date(deadline.dueAt).toDateString() === today).length);
+  if (lastCalendarUrl !== snapshot.calendar.url) {
+    if (!calendarDraftChanged || calendarUrl.value.trim() === snapshot.calendar.url) {
+      calendarUrl.value = snapshot.calendar.url; calendarDraftChanged = false;
+    }
+    lastCalendarUrl = snapshot.calendar.url;
+  }
+  if (lastRepository !== snapshot.github.repository) {
+    if (!repositoryDraftChanged || githubRepo.value.trim() === snapshot.github.repository) {
+      githubRepo.value = snapshot.github.repository; repositoryDraftChanged = false;
+    }
+    lastRepository = snapshot.github.repository;
+  }
   syncButton.disabled = snapshot.calendar.syncing;
   renderFeedback(); renderTasks(snapshot); renderNotifications(snapshot);
   showError(skinFeedback, snapshot.skinError || metadataError);
@@ -218,7 +293,6 @@ function command<T>(name: string, payload?: T) {
     showError(actionFeedback, commandError);
   });
 }
-selectSkin.addEventListener("change", () => command("skin-changed", selectSkin.value));
 sound.addEventListener("click", () => { if (state) command("toggle-audio", !state.audio); });
 pin.addEventListener("click", () => { if (state) command("toggle-pin", !state.pinned); });
 document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((button) => {
@@ -226,13 +300,23 @@ document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((button) => 
 });
 pomoToggle.addEventListener("click", () => command("pomo-toggle"));
 document.getElementById("btn-pomo-reset")!.addEventListener("click", () => command("pomo-reset"));
-calendarUrl.addEventListener("input", () => { validationError = ""; renderFeedback(); });
-syncButton.addEventListener("click", () => {
+calendarUrl.addEventListener("input", () => { calendarDraftChanged = true; validationError = ""; renderFeedback(); });
+document.getElementById("calendar-form")!.addEventListener("submit", (event) => {
+  event.preventDefault();
   const url = calendarUrl.value.trim();
   validationError = !url ? "Ingresa una URL de calendario." : !calendarFeedUrl(url) ? "Usa una URL HTTP, HTTPS o webcal válida." : "";
   renderFeedback();
   if (validationError) { calendarUrl.focus(); return; }
   command("calendar-sync", url);
+});
+githubRepo.addEventListener("input", () => { repositoryDraftChanged = true; githubValidationError = ""; renderFeedback(); });
+document.getElementById("github-form")!.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const repository = githubRepo.value.trim();
+  githubValidationError = /^[\w.-]+\/[\w.-]+$/.test(repository) ? "" : "Usa el formato propietario/repositorio.";
+  renderFeedback();
+  if (githubValidationError) { githubRepo.focus(); return; }
+  command("github-repository", repository);
 });
 document.getElementById("btn-event-semester")!.addEventListener("click", () => command("set-pet-state", {
   state: "ALERT_SEMESTRE", notification: { title: "DEMO: ENTREGA ACADÉMICA", subtitle: "Esta es una alerta de prueba", urgent: true },
@@ -247,7 +331,6 @@ window.addEventListener("keydown", (event) => {
     });
   }
 });
-
 async function connect() {
   await listen<AppState>("state-changed", ({ payload }) => render(payload));
   await emit("state-request");
@@ -257,4 +340,4 @@ async function connect() {
   }, 2000);
   window.addEventListener("pagehide", () => clearInterval(heartbeat), { once: true });
 }
-void connect().catch(() => { fsm.textContent = "No se pudo conectar con MySkin."; });
+void connect().catch(() => { document.getElementById("connection-status")!.textContent = "No se pudo conectar con MySkin."; });

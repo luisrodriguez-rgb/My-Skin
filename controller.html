@@ -1,177 +1,117 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MySkin Controller</title>
-    <link rel="stylesheet" href="/src/styles.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MySkin · Tu día, en compañía</title>
+  <link rel="stylesheet" href="/src/controller.css" />
+</head>
+<body class="controller-page">
+<main class="controller-window-container">
+  <header class="app-header">
+    <a class="brand" href="#today" aria-label="MySkin, ir a Hoy"><span class="brand-icon" aria-hidden="true"></span>MySkin</a>
+    <span id="connection-status" class="connection-status" role="status">Esperando al personaje</span>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Secciones de MySkin">
+    <button id="tab-today" role="tab" aria-selected="true" aria-controls="today">Hoy</button>
+    <button id="tab-pets" role="tab" aria-selected="false" aria-controls="pets" tabindex="-1">Compañeros</button>
+    <button id="tab-settings" role="tab" aria-selected="false" aria-controls="settings" tabindex="-1">Ajustes</button>
+  </nav>
+  <p id="skin-error" class="feedback-error" role="alert" hidden></p>
+  <p id="action-error" class="feedback-error" role="alert" hidden></p>
+  <p id="view-feedback" class="sr-only" role="status"></p>
 
-  </head>
-  <body class="controller-page">
-    <main class="controller-window-container">
-      <!-- Window Header -->
-      <header class="window-header">
-        <div class="window-title-box">
-          <span class="pixel-badge">v0.1.0</span>
-          <div>
-            <h1 class="window-title">MySkin COMPANION</h1>
-            <span class="window-subtitle">Panel de Control y Ajustes</span>
-          </div>
-        </div>
-        <div class="header-controls">
-          <button id="btn-sound-toggle" aria-pressed="true" class="btn-sound-toggle" title="Alternar Sonido Retro">AUDIO: ON</button>
-          <button id="btn-pin-toggle" aria-pressed="true" class="btn-sound-toggle" title="Alternar Modo Fijo o Patrulla">MODO: FIJO</button>
-        </div>
-      </header>
+  <section id="today" role="tabpanel" aria-labelledby="tab-today" tabindex="0">
+    <h1>Vamos con lo importante.</h1>
+    <p class="intro">Una tarea, un rato de foco y buena compañía.</p>
+    <article class="focus-card" aria-labelledby="focus-task">
+      <p class="eyebrow">TU SIGUIENTE PASO</p>
+      <h2 id="focus-task" class="focus-title">Haz espacio para concentrarte.</h2>
+      <p id="focus-course" class="focus-course"></p>
+      <div id="pomo-clock" class="pomodoro-clock" role="timer" aria-label="Tiempo restante de la sesión">25:00</div>
+      <p id="pomo-status" class="session-state">En reposo</p>
+      <p class="focus-rhythm">25 min de foco · 5 min de descanso</p>
+      <div class="pet-box">
+        <canvas id="thumb-canvas" width="128" height="128" role="img" aria-label="Tu compañero"></canvas>
+        <div class="pet-floor" aria-hidden="true"></div>
+        <span id="char-name" class="pet-name">Tu compañero</span>
+        <button id="choose-companion" class="text-button" type="button">Cambiar compañero</button>
+      </div>
+      <div class="focus-actions">
+        <button id="btn-pomo-toggle" class="primary-button" data-command>Concentrarme</button>
+        <button id="btn-pomo-reset" class="reset-button" data-command aria-label="Reiniciar" title="Reiniciar sesión">↺</button>
+      </div>
+    </article>
+    <section class="panel-group" aria-labelledby="deadlines-heading">
+      <div class="section-head"><h2 id="deadlines-heading" tabindex="-1">Lo próximo</h2><button class="text-button" data-calendar-shortcut>Gestionar calendario</button></div>
+      <p id="deadline-count" class="group-caption"></p>
+      <div id="deadlines-empty" class="empty-state"><p>Tu próximo paso puede empezar aquí.</p><p class="group-caption">Conecta tu calendario para ver tus entregas. Puedes concentrarte desde ahora.</p><button class="secondary-button" data-calendar-shortcut>Conectar calendario</button></div>
+      <ul id="deadline-list" class="item-list"></ul>
+      <p id="task-feedback" class="sr-only" role="status"></p>
+    </section>
+    <section class="summary" aria-label="Resumen de entregas">
+      <div><strong id="summary-pending">0</strong><span>pendientes</span></div>
+      <div><strong id="summary-completed">0</strong><span>completadas</span></div>
+      <div><strong id="summary-today">0</strong><span>vencen hoy</span></div>
+    </section>
+    <section id="notifications-section" class="panel-group" aria-labelledby="notifications-heading" hidden>
+      <div class="section-head"><h2 id="notifications-heading" tabindex="-1">Avisos pendientes</h2><span id="notification-count" class="count-badge"></span></div>
+      <ul id="notification-list" class="item-list"></ul>
+    </section>
+  </section>
 
-      <!-- Active Character Card -->
-      <section class="card-character">
-        <div class="char-thumb-wrapper">
-          <canvas id="thumb-canvas" width="48" height="48" role="img" aria-label="Personaje seleccionado"></canvas>
-          <span class="badge-status">Activo</span>
-        </div>
-        <div class="char-info">
-          <div class="char-meta">
-            <h2 id="char-name" class="char-title">Leónidas (El Espartano de 300)</h2>
-            <span id="char-spec" class="char-subtitle">Skin pixel · 64 × 64</span>
-          </div>
-          <div class="char-select-wrapper">
-            <select id="select-skin" class="skin-select" aria-label="Cambiar personaje">
-              <optgroup label="Ola 1: Fundacionales">
-                <option value="spartan">01. Leónidas (El Espartano de 300)</option>
-                <option value="spiderman">02. Spider-Hero (El Trepamuros)</option>
-                <option value="dev-avatar">03. Mi Avatar Pixelado (Tú Mismo)</option>
-                <option value="ghost-dev">04. El Dev Fantasma (Especial Código)</option>
-              </optgroup>
-              <optgroup label="Ola 2: Entretenimiento y Memes">
-                <option value="football-10">05. El Futbolista 10 (La Pulga)</option>
-                <option value="capybara">06. Capibara Chill (Mascota Internet)</option>
-                <option value="cyber-ninja">07. Cyber Ninja (Acción y Sigilo)</option>
-              </optgroup>
-              <optgroup label="Ola 3: Nostalgia y Fantasía">
-                <option value="fantasy-wizard">08. Mago de Fantasía (El Hechicero)</option>
-                <option value="game-slime">09. Slime de Videojuego (Mascota)</option>
-                <option value="astro-lost">10. Astronauta Perdido (Explorador)</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-      </section>
+  <section id="pets" role="tabpanel" aria-labelledby="tab-pets" tabindex="0" hidden>
+    <h1>Elige tu compañía.</h1>
+    <p class="intro">Mismo objetivo. Una personalidad a tu manera.</p>
+    <div id="pet-grid" class="pet-grid" role="group" aria-label="Personajes disponibles"></div>
+    <p id="companion-feedback" class="selection-feedback" role="status"></p>
+    <p class="group-caption gallery-note">Tu elección se guarda y se comparte con el personaje del escritorio.</p>
+  </section>
 
-      <p id="skin-error" class="feedback-error" role="alert" hidden></p>
-      <!-- Pomodoro Concentration System -->
-      <section class="panel-group">
-        <div class="group-header">
-          <span class="group-title">CONCENTRACIÓN</span>
-          <span id="pomo-status" class="group-caption">En reposo</span>
-        </div>
-        <div class="pomodoro-card">
-          <span id="pomo-clock" class="pomodoro-clock">25:00</span>
-          <div class="pomodoro-actions">
-            <button id="btn-pomo-toggle" class="btn-pomo-toggle">Concentrarme</button>
-            <button id="btn-pomo-reset" class="btn-pomo-reset">Reiniciar</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel-group" aria-labelledby="deadlines-heading">
-        <div class="group-header"><h2 id="deadlines-heading" class="group-title" tabindex="-1">Lo próximo</h2><span id="deadline-count" class="group-caption"></span></div>
-        <p id="deadlines-empty" class="empty-state">Conecta tu calendario para ver las próximas entregas.</p>
-        <ul id="deadline-list" class="item-list"></ul>
-        <p id="task-feedback" class="sr-only" role="status"></p>
-      </section>
-      <section id="notifications-section" class="panel-group" aria-labelledby="notifications-heading" hidden>
-        <div class="group-header"><h2 id="notifications-heading" class="group-title" tabindex="-1">Avisos pendientes</h2><span id="notification-count" class="group-caption"></span></div>
-        <ul id="notification-list" class="item-list"></ul>
-      </section>
-      <p id="action-error" class="feedback-error" role="alert" hidden></p>
-      <!-- Academic Calendar (.ics / Canvas LMS) Integration -->
-      <section class="panel-group">
-        <div class="group-header">
-          <span class="group-title">CALENDARIO ACADÉMICO</span>
-          <span id="sync-status-label" class="group-caption">Canvas / Moodle / iCal</span>
-        </div>
-        <div class="input-group">
-          <label class="input-label" for="input-calendar-url">URL de suscripción (.ics / webcal://)</label>
-          <div class="sync-row">
-            <input
-              id="input-calendar-url"
-              type="url"
-              class="text-input"
-              aria-describedby="calendar-help sync-feedback"
-              placeholder="https://canvas.instructure.com/feeds/calendars/user_...ics"
-            />
-            <button id="btn-sync-calendar" class="btn-sync-action">SINCRONIZAR</button>
-          </div>
-          <p id="calendar-help" class="group-caption">Pega la URL de suscripción de tu calendario de Canvas, Moodle o iCalendar.</p>
-          <span id="sync-feedback" class="sync-status-text" aria-live="polite">Sin sincronizar</span>
-        </div>
-      </section>
-
-      <details class="advanced-controls">
-        <summary>Pruebas avanzadas</summary>
-        <p class="group-caption">Estos controles muestran animaciones de demostración. El foco se inicia con Concentrarme.</p>
-
-      <section class="panel-group">
-        <div class="group-header">
-          <span class="group-title">ESTADOS DE PRUEBA</span>
-          <span class="group-caption">Vista previa</span>
-        </div>
-        <div class="btn-grid-actions">
-          <button class="btn-chip btn-action active" data-action="IDLE">
-            <span class="chip-code">00</span>
-            <span class="chip-label">IDLE</span>
-          </button>
-          <button class="btn-chip btn-action" data-action="WALK">
-            <span class="chip-code">01</span>
-            <span class="chip-label">WALK</span>
-          </button>
-          <button class="btn-chip btn-action" data-action="ALERT_SEMESTRE">
-            <span class="chip-code">02</span>
-            <span class="chip-label">ALERT</span>
-          </button>
-          <button class="btn-chip btn-action" data-action="VICTORY_GITHUB">
-            <span class="chip-code">03</span>
-            <span class="chip-label">WIN</span>
-          </button>
-
-          <button class="btn-chip btn-action" data-action="SLEEP">
-            <span class="chip-code">05</span>
-            <span class="chip-label">SLEEP</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Notification Simulator -->
-      <section class="panel-group">
-        <div class="group-header">
-          <span class="group-title">PROBAR EVENTOS</span>
-          <span class="group-caption">Diálogos</span>
-        </div>
-        <div class="btn-grid-events">
-          <button id="btn-event-semester" class="btn-event btn-event-semester">
-            <span class="event-code">SEM</span>
-            <span class="event-label">Entrega Semestre</span>
-          </button>
-          <button id="btn-event-github" class="btn-event btn-event-github">
-            <span class="event-code">GIT</span>
-            <span class="event-label">GitHub Merge</span>
-          </button>
-        </div>
-      </section>
-
-      </details>
-
-      <!-- Footer Status -->
-      <footer class="controller-footer">
-        <div class="footer-state">
-          <span class="state-dot"></span>
-          <span id="status-fsm-text">Estado: IDLE</span>
-        </div>
-        <span class="shortcut-tip">Ventana auxiliar independiente</span>
-      </footer>
-    </main>
-
-    <script type="module" src="/src/controller.ts"></script>
-  </body>
+  <section id="settings" role="tabpanel" aria-labelledby="tab-settings" tabindex="0" hidden>
+    <h1>A tu ritmo.</h1>
+    <p class="intro">Conecta lo que necesitas. Elige cómo te acompaña MySkin.</p>
+    <section class="settings-card" aria-labelledby="preferences-heading">
+      <h2 id="preferences-heading">Sonido y movimiento</h2>
+      <div class="setting"><div><h3>Efectos retro</h3><p class="group-caption">Sonidos breves para tus avisos y sesiones.</p></div><button id="btn-sound-toggle" class="secondary-button" aria-pressed="true" data-command>Sonido activado</button></div>
+      <div class="setting"><div><h3>Posición del compañero</h3><p class="group-caption">Fijo donde lo dejes o de paseo por el escritorio.</p></div><button id="btn-pin-toggle" class="secondary-button" aria-pressed="true" data-command>Modo fijo</button></div>
+    </section>
+    <section class="settings-card" aria-labelledby="calendar-heading">
+      <h2 id="calendar-heading">Calendario académico</h2>
+      <p id="calendar-help" class="group-caption">Copia la URL de suscripción de Canvas, Moodle o iCalendar. No hace falta conectar una cuenta para usar el foco.</p>
+      <form id="calendar-form" novalidate>
+        <label for="input-calendar-url">URL de suscripción (.ics / webcal://)</label>
+        <input id="input-calendar-url" type="url" class="text-input" aria-describedby="calendar-help sync-feedback" placeholder="https://tu-campus.edu/calendario.ics" autocomplete="off" spellcheck="false" />
+        <button id="btn-sync-calendar" class="primary-button" data-command>Sincronizar calendario</button>
+        <p id="sync-feedback" class="sync-status-text" aria-live="polite">Sin sincronizar</p>
+      </form>
+    </section>
+    <section class="settings-card" aria-labelledby="github-heading">
+      <h2 id="github-heading">GitHub</h2>
+      <p id="github-help" class="group-caption">Recibe avisos de merges y commits de un repositorio público. La actividad se revisa cada tres minutos.</p>
+      <form id="github-form" novalidate>
+        <label for="input-github-repo">Propietario / repositorio</label>
+        <input id="input-github-repo" class="text-input" placeholder="propietario/repositorio" aria-describedby="github-help github-feedback" autocomplete="off" spellcheck="false" />
+        <button id="btn-save-github" class="secondary-button" data-command>Guardar repositorio</button>
+        <p id="github-feedback" class="sync-status-text" aria-live="polite"></p>
+      </form>
+    </section>
+    <details class="advanced-controls settings-card">
+      <summary>Pruebas avanzadas</summary>
+      <p class="group-caption">Animaciones y eventos de demostración. El foco se inicia desde Hoy.</p>
+      <div class="btn-grid-actions" role="group" aria-label="Animaciones de prueba">
+        <button class="btn-action secondary-button" data-action="IDLE" data-command>Reposo</button>
+        <button class="btn-action secondary-button" data-action="WALK" data-command>Caminar</button>
+        <button class="btn-action secondary-button" data-action="ALERT_SEMESTRE" data-command>Alerta</button>
+        <button class="btn-action secondary-button" data-action="VICTORY_GITHUB" data-command>Celebrar</button>
+        <button class="btn-action secondary-button" data-action="SLEEP" data-command>Dormir</button>
+      </div>
+      <div class="btn-grid-events"><button id="btn-event-semester" class="secondary-button" data-command>Probar entrega</button><button id="btn-event-github" class="secondary-button" data-command>Probar merge</button></div>
+      <p id="status-fsm-text" class="group-caption">Estado: IDLE</p>
+    </details>
+  </section>
+  <footer class="controller-footer">A tu ritmo. Un paso a la vez.</footer>
+</main>
+<script type="module" src="/src/controller.ts"></script>
+</body>
 </html>

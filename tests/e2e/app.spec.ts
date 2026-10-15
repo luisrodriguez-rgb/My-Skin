@@ -12,7 +12,7 @@ async function sprite(page: Page) {
 async function controller(context: BrowserContext) {
   const page = await context.newPage();
   await page.goto("/controller.html");
-  await expect(page.locator("#select-skin")).toBeEnabled();
+  await expect(page.locator("#btn-pomo-toggle")).toBeEnabled();
   return page;
 }
 
@@ -23,19 +23,26 @@ test("web startup and controller commands work without Tauri errors", async ({ p
   page.on("pageerror", (error) => errors.push(error.message));
   await sprite(page);
   const panel = await controller(context);
-  await panel.selectOption("#select-skin", "spiderman");
+  await panel.getByRole("tab", { name: "Compañeros" }).click();
+  await panel.getByRole("button", { name: "Elegir Spider-Hero", exact: true }).click();
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
   await expect(panel.locator("#char-name")).toContainText("Spider-Hero");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("myskin_active_skin"))).toBe("spiderman");
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.click("#btn-sound-toggle");
-  await expect(panel.locator("#btn-sound-toggle")).toHaveText("AUDIO: OFF");
+  await expect(panel.locator("#btn-sound-toggle")).toHaveText("Sonido desactivado");
   await panel.click("#btn-pin-toggle");
-  await expect(panel.locator("#btn-pin-toggle")).toHaveText("MODO: LIBRE");
-  await panel.click('#btn-pomo-toggle');
+  await expect(panel.locator("#btn-pin-toggle")).toHaveText("Modo libre");
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
+  await panel.click("#btn-pomo-toggle");
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: FOCUS");
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.locator(".advanced-controls summary").click();
   await panel.click("#btn-event-semester");
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: ALERT_SEMESTRE");
+  await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
   await panel.locator("#notification-list button").first().click();
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.click("#btn-event-github");
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: VICTORY_GITHUB");
   expect(errors).toEqual([]);
@@ -71,7 +78,7 @@ test("native-style tray events publish state back to the controller", async ({ p
   });
   await expect(panel.locator("#char-name")).toContainText("Capibara");
   await expect(panel.locator("#btn-pomo-toggle")).toHaveText("Pausar");
-  await expect(panel.locator("#btn-sound-toggle")).toHaveText("AUDIO: OFF");
+  await expect(panel.locator("#btn-sound-toggle")).toHaveText("Sonido desactivado");
 });
 
 test("calendar requests run in the owner and empty feeds clear its data", async ({ page, context }) => {
@@ -80,9 +87,10 @@ test("calendar requests run in the owner and empty feeds clear its data", async 
   let feed = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:e2e\r\nSUMMARY:[Prueba] Entrega\r\nDTSTART:${due}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
   await context.route("**/fixtures/calendar.ics", (route) => route.fulfill({ body: feed, contentType: "text/calendar" }));
   await sprite(page); const panel = await controller(context);
+  await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.fill("#input-calendar-url", "http://127.0.0.1:4173/fixtures/calendar.ics");
   await panel.click("#btn-sync-calendar");
-  await expect(panel.locator("#sync-feedback")).toContainText("1 entregas");
+  await expect(panel.locator("#sync-feedback")).toContainText("1 entrega");
   await expect(panel.locator("#status-fsm-text")).toHaveText("Estado: ALERT_SEMESTRE");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("myskin_academic_deadlines")!)[0].title)).toBe("Entrega");
   feed = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR";

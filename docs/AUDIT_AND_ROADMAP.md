@@ -56,7 +56,7 @@ accionables, cola de prioridades, avisos con datos reales, una acción de
 concentración, errores persistentes, contraste y controles accesibles.
 El [registro de correcciones y capturas](audits/2026-10-15/CORRECCIONES.md)
 relaciona cada hallazgo con su prueba. La navegación Hoy / Compañeros / Ajustes
-sigue como propuesta para una iteración posterior.
+ya está integrada en el panel; ver [Fase 2](PHASE_2_HOY.md).
 
 ## Arquitectura de estado
 
@@ -82,7 +82,7 @@ concentración. Preferencias y entregas siguen persistidas en localStorage.
 | Comprobación | Resultado |
 | --- | --- |
 | Pruebas unitarias de servicios, cola de avisos y enlaces | 34 aprobadas |
-| Pruebas de Chromium con personaje y controlador | 11 aprobadas |
+| Pruebas de Chromium con personaje y controlador | 14 aprobadas |
 | Accesibilidad automatizada del panel poblado | Sin infracciones en los estados examinados; sin desbordamiento a 280/390/560 px |
 | Compilación TypeScript y Vite | Aprobada |
 | Descarga y checksum del instalador de Codebase Memory | Verificados |
@@ -117,7 +117,19 @@ no la integración del menú con el sistema operativo.
 - Varios monitores, escalas diferentes y escritorios virtuales requieren pruebas
   de escritorio. Los atajos actuales son locales a la ventana enfocada.
 
-## Roadmap con criterios de aceptación
+## Roadmap de producto: avance de las fases 1 y 2
+
+| Fase de producto | Estado | Criterio cubierto y seguimiento |
+| --- | --- | --- |
+| 1. Avisos correctos y legibilidad | Implementada y probada en web | Siete hallazgos corregidos, con pruebas de prioridades, tiempos y errores persistentes. |
+| 2. Hoy y diseño del prototipo | Navegación y circuito con calendario implementados en web | Hoy, Compañeros y Ajustes conectados al estado real. Foco, pausa, completar, galería y formularios conservan contexto. 14 E2E, teclado y Axe en las tres vistas. |
+| Ampliaciones del circuito diario | Pendientes | Tareas manuales, historial de sesiones/minutos y controles de tranquilidad adicionales. El resumen actual cuenta entregas reales del calendario. |
+
+La [evidencia de Fase 2](PHASE_2_HOY.md) distingue la integración del panel de las
+funciones adicionales que sólo existen en el prototipo. La validación de las
+interacciones de escritorio sigue pendiente.
+
+## Roadmap técnico con criterios de aceptación
 
 | Fase | Estado | Trabajo y criterio de cierre |
 | --- | --- | --- |

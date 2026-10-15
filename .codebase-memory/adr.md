@@ -40,6 +40,23 @@ HTTP(S) links open only on explicit user action; native code validates the URL
 and runs a fixed OS launcher off the UI thread. Task completion is local to MySkin,
 not a submission to the LMS.
 
+## Controller views
+
+Hoy, Companeros and Ajustes are local tab views. Roving keyboard focus supports
+arrows/Home/End. Tabs remain usable when the owner is offline; only data-command
+controls are disabled. Hidden panels retain DOM drafts and validation; the first owner snapshot also
+preserves drafts entered offline. Tab changes
+never restart owner services. Hoy uses actual pending/completed/due-today calendar
+counts, not fabricated focus history. The hero previews the confirmed owner skin
+and pet state; the gallery lazily caches previews of all ten skins.
+
+GitHub repository configuration is validated in both controller and owner. The
+owner persists it through GitHubMonitorService, clears queued activity for the
+old repository and restarts polling. No token entry or credential persistence was
+added. Skin loading state is published so the gallery marks the confirmed skin
+while a replacement loads or fails. The controller has its own stylesheet;
+the sprite overlay styling stays unchanged.
+
 ## GitHub and credentials
 
 PR monitoring uses updated-order pagination, a per-repository persisted cursor,
@@ -49,7 +66,7 @@ current process. OS credential storage and real provider validation remain pendi
 
 ## Validation and limits
 
-34 unit tests and 11 Chromium multi-window tests passed on 2026-10-15, along with
+34 unit tests and 14 Chromium multi-window tests passed on 2026-10-15, along with
 TypeScript/Vite build and frozen pnpm installation. Network tests use controlled
 fixtures. Native compilation is checked by GitHub Actions; interactive macOS/Windows UI
 tests, installer signing/notarization,

@@ -4,6 +4,8 @@
 
 **Actualización:** [ver las siete correcciones implementadas y sus capturas](CORRECCIONES.md).
 
+**Fase 2:** [ver Hoy, Compañeros y Ajustes implementados](../../PHASE_2_HOY.md).
+
 ## Abrir el contenido
 
 - **[Leer el informe completo aquí en GitHub](INFORME.md)**
