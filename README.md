@@ -10,9 +10,10 @@ Elige un personaje, inicia una sesión de concentración y consulta lo próximo 
 tienes que entregar. MySkin reúne ese flujo en un controlador y lo acompaña con
 un personaje flotante, animaciones y audio retro.
 
-La estabilización actual se encuentra en la rama
-[`feat/estabilizacion-myskin`](https://github.com/luisrodriguez-rgb/My-Skin/tree/feat/estabilizacion-myskin),
-con revisión en el [PR #1](https://github.com/luisrodriguez-rgb/My-Skin/pull/1).
+La Fase 2 integra el diseño del prototipo en las vistas **Hoy, Compañeros y
+Ajustes**. Se desarrolla en la rama
+[`feat/circuito-diario-hoy`](https://github.com/luisrodriguez-rgb/My-Skin/tree/feat/circuito-diario-hoy),
+sobre la estabilización ya integrada en `main`.
 
 [Empezar](#empezar-en-modo-web) · [Pruebas](#validación) ·
 [Roadmap](docs/AUDIT_AND_ROADMAP.md) ·
@@ -22,7 +23,7 @@ con revisión en el [PR #1](https://github.com/luisrodriguez-rgb/My-Skin/pull/1)
 
 | Función | Comportamiento actual |
 | --- | --- |
-| **Elegir compañero** | Diez skins con vista previa, seis estados de animación y selección persistente. |
+| **Elegir compañero** | Galería de diez skins con vista previa, selección confirmada y persistencia entre aperturas. |
 | **Concentrarte** | Pomodoro de 25 minutos de foco y 5 de descanso, con pausa, reanudación y reinicio. Cerrar el controlador conserva la sesión. |
 | **Consultar entregas** | Importar un calendario `.ics` o `webcal://` y ver curso, título, fecha y tiempo restante. |
 | **Actuar sobre una tarea** | Marcarla como completada en MySkin o abrir su enlace HTTP(S) en el navegador. Las completadas se conservan al resincronizar. |
@@ -45,9 +46,22 @@ modifica el estado de entrega en Canvas, Moodle u otro LMS.
 </p>
 
 Captura de la aplicación en simulación web, con entregas de ejemplo y zona horaria
-de Bogotá. La [demostración animada del personaje](docs/images/demo.webp) y el
+de Bogotá. También puedes ver la [galería de compañeros](docs/images/companions-current.png),
+los [ajustes](docs/images/settings-current.png) y la [vista a 390 px](docs/images/today-390.png).
+La [demostración animada del personaje](docs/images/demo.webp) y el
 [registro de las siete correcciones](docs/audits/2026-10-15/CORRECCIONES.md)
 complementan esta vista.
+
+### Tres vistas para el día a día
+
+| Pestaña | Qué reúne |
+| --- | --- |
+| **Hoy** | Próxima entrega, compañero protagonista, Pomodoro, lista de tareas, resumen del calendario y avisos. |
+| **Compañeros** | Galería de los diez personajes, personalidad breve, vista previa y selección activa. |
+| **Ajustes** | Sonido, modo fijo/patrulla, calendario, repositorio de GitHub y pruebas avanzadas. |
+
+Cambiar de pestaña conserva el reloj y los borradores de conexión. Puedes navegar
+con flechas izquierda/derecha y `Inicio`/`Fin` cuando una pestaña tiene el foco.
 
 ## Empezar en modo web
 
@@ -55,7 +69,7 @@ Necesitas **Node.js 24.19.0** y **pnpm 11.25.0**, declarados en
 [`.node-version`](.node-version) y [`package.json`](package.json).
 
 ```bash
-git clone --branch feat/estabilizacion-myskin https://github.com/luisrodriguez-rgb/My-Skin.git
+git clone --branch feat/circuito-diario-hoy https://github.com/luisrodriguez-rgb/My-Skin.git
 cd My-Skin
 pnpm install --frozen-lockfile
 pnpm run dev
@@ -64,8 +78,8 @@ pnpm run dev
 1. Abre `http://localhost:5173/` para ver al personaje.
 2. Haz doble clic sobre él para abrir el controlador, o abre
    `http://localhost:5173/controller.html` en otra pestaña.
-3. Elige un compañero y pulsa **Concentrarme** para iniciar el Pomodoro.
-4. Pega la URL de suscripción de tu calendario y pulsa **Sincronizar** para cargar
+3. Elige un personaje en **Compañeros** y vuelve a **Hoy** para pulsar **Concentrarme**.
+4. En **Ajustes**, pega la URL de suscripción y pulsa **Sincronizar calendario** para cargar
    las entregas. Una instalación nueva comienza sin tareas de ejemplo.
 
 Mantén **una sola pestaña del personaje por origen**. Esa ventana ejecuta los
@@ -74,10 +88,10 @@ La simulación web permite probar el flujo de producto. La transparencia, el
 arrastre de ventanas, la patrulla del escritorio y el menú del sistema se ejecutan
 en Tauri.
 
-El monitor de GitHub utiliza por defecto `luisrodriguez-rgb/My-Skin`. Cambiar el
-repositorio o configurar un token se realiza mediante la API del servicio en
-[`src/githubMonitor.ts`](src/githubMonitor.ts); todavía no hay un formulario de
-conexión en el controlador.
+El monitor de GitHub utiliza por defecto `luisrodriguez-rgb/My-Skin`. En
+**Ajustes → GitHub** puedes elegir un repositorio público con el formato
+`propietario/repositorio`. La configuración de tokens para recursos privados
+sigue disponible mediante la API de [`src/githubMonitor.ts`](src/githubMonitor.ts).
 
 ## Ejecutar en escritorio
 
@@ -124,18 +138,19 @@ espacio descartan el aviso visible o abren el controlador.
 ## Validación
 
 Resultados registrados el **15 de octubre de 2026** para el código de la
-estabilización en `756598a`:
+Fase 2 en `b517497`:
 
 | Comprobación | Resultado |
 | --- | --- |
 | Servicios, calendarios, prioridades y enlaces | **34 pruebas unitarias aprobadas**. |
-| Flujos de personaje y controlador en Chromium | **11 pruebas E2E aprobadas**. |
+| Flujos de personaje y controlador en Chromium | **14 pruebas E2E aprobadas**. |
 | Tipos y empaquetado de las dos entradas | **TypeScript y Vite aprobados**. |
-| Accesibilidad automatizada del panel | Sin infracciones de Axe en los estados examinados, con controles avanzados cerrados y abiertos. |
+| Accesibilidad automatizada del panel | Sin infracciones de Axe en las tres pestañas examinadas, incluyendo validación de formularios y controles avanzados. |
 | Adaptación a ventanas estrechas | Sin desbordamiento horizontal a 280, 390 y 560 px; controles principales de al menos 40 px de alto. |
-| CI remoto | **Web y `cargo check` aprobados en macOS ARM, macOS Intel y Windows**. |
+| CI remoto | La base de estabilización pasó web y `cargo check` en macOS ARM/Intel y Windows. Consultar la ejecución de esta fase en GitHub Actions. |
 
-[Ver la ejecución de CI](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38790669286).
+[CI de esta rama](https://github.com/luisrodriguez-rgb/My-Skin/actions?query=branch%3Afeat%2Fcircuito-diario-hoy) ·
+[CI aprobada de la base](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38790669286).
 El análisis automático de accesibilidad cubre los estados probados; no constituye
 una certificación completa. Las pruebas de red usan respuestas controladas y no
 acreditan conexión con cuentas universitarias o repositorios privados.
@@ -166,7 +181,9 @@ pestañas del mismo origen en web.
 | Ruta | Responsabilidad |
 | --- | --- |
 | [`src/main.ts`](src/main.ts) | Canvas, animación, interacción y coordinación del estado. |
-| [`src/controller.ts`](src/controller.ts) | Entregas, formularios, avisos y controles del panel. |
+| [`src/controller.ts`](src/controller.ts) | Entregas, formularios, galería, avisos y controles del panel. |
+| [`src/controllerTabs.ts`](src/controllerTabs.ts) y [`src/controller.css`](src/controller.css) | Navegación accesible y diseño de las tres vistas. |
+| [`src/skinCatalog.ts`](src/skinCatalog.ts) | Catálogo y caché de vistas previas. |
 | [`src/notifications.ts`](src/notifications.ts) | Prioridades y duración de los avisos. |
 | [`src/pomodoro.ts`](src/pomodoro.ts) | Reloj basado en tiempo real y fases de concentración/descanso. |
 | [`src/calendar.ts`](src/calendar.ts) y [`src/syncService.ts`](src/syncService.ts) | Análisis con `ical.js`, sincronización, urgencia y persistencia de entregas. |
@@ -200,14 +217,16 @@ visual forman parte de la evolución prevista.
   memoria y energía, firma y notarización requieren validación adicional.
 
 El siguiente paso es completar la matriz de escritorio y probar calendarios reales.
-La navegación **Hoy / Compañeros / Ajustes** está documentada como propuesta de
-una próxima iteración.
+La navegación **Hoy / Compañeros / Ajustes** ya está integrada. La creación manual
+de tareas, el historial de sesiones/minutos y los controles adicionales de
+tranquilidad del prototipo quedan para próximas iteraciones.
 
 ## Documentación del proyecto
 
 - [Auditoría técnica y roadmap con criterios de aceptación](docs/AUDIT_AND_ROADMAP.md).
 - [Auditoría de producto y propuesta visual](docs/audits/2026-10-15/README.md).
 - [Siete correcciones implementadas y evidencia](docs/audits/2026-10-15/CORRECCIONES.md).
+- [Fase 2: navegación, decisiones y capturas](docs/PHASE_2_HOY.md).
 - [Matriz de validación nativa](docs/NATIVE_VALIDATION.md).
 - [Codebase Memory: instalación y uso](docs/CODEBASE_MEMORY.md).
 - [Decisiones de arquitectura](.codebase-memory/adr.md).
