@@ -1,6 +1,6 @@
 # Correcciones de los siete hallazgos
 
-15 de octubre de 2026. Implementación web validada en `0d4d50a` sobre
+15 de octubre de 2026. Implementación web validada en `cc3da32` sobre
 `feat/estabilizacion-myskin`. Se conserva la auditoría original como registro del
 estado anterior. Las pestañas Hoy / Compañeros / Ajustes del prototipo quedan
 para una iteración posterior, según el alcance elegido.
@@ -26,8 +26,13 @@ para una iteración posterior, según el alcance elegido.
   2.1 AA y 2.2 AA en los dos estados examinados. Esto no sustituye una revisión
   manual completa ni certifica toda la aplicación.
 - [CI de la implementación](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38789745833):
-  web y `cargo check` para macOS ARM, macOS Intel y Windows. Consultar el resultado
-  de esa ejecución para la compilación nativa; la nube local no dispone de Rust.
+  **web y cargo check aprobados** para macOS ARM, macOS Intel y Windows.
+  Esa ejecución valida el mismo backend Rust de esta entrega; la nube local no
+  dispone de Rust. El ajuste posterior del texto de Pomodoro se validó de nuevo
+  con las 34 pruebas unitarias, build y 11 E2E indicados arriba.
+
+La prueba de prioridades también retrasa el aviso de fin de sesión hasta que
+ya terminó el descanso; su texto sigue describiendo un hecho real.
 
 Los feeds, enlaces y eventos de GitHub de las pruebas son controlados. No se
 utilizan cuentas ni entregas personales. La apertura de enlaces en el navegador

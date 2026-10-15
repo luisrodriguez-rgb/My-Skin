@@ -86,7 +86,7 @@ concentración. Preferencias y entregas siguen persistidas en localStorage.
 | Accesibilidad automatizada del panel poblado | Sin infracciones en los estados examinados; sin desbordamiento a 280/390/560 px |
 | Compilación TypeScript y Vite | Aprobada |
 | Descarga y checksum del instalador de Codebase Memory | Verificados |
-| Ejecución de GitHub Actions | [CI de la implementación](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38789745833); consultar resultado remoto |
+| Ejecución de GitHub Actions | [Aprobada: web, macOS ARM/Intel y Windows](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38789745833) |
 | Interacciones reales de Tauri en macOS/Windows | Pendientes de validación en escritorio |
 | Consumo nativo de RAM, CPU y energía | Sin medición |
 | Firma, notarización y pruebas de instaladores | Pendientes |
@@ -121,7 +121,7 @@ no la integración del menú con el sistema operativo.
 
 | Fase | Estado | Trabajo y criterio de cierre |
 | --- | --- | --- |
-| 1. Base reproducible | Implementada y validada localmente | Instalación congelada, build y pruebas de web. CI remoto configurado y ejecutado; consultar la ejecución enlazada. |
+| 1. Base reproducible | Implementada y validada localmente | Instalación congelada, build y pruebas de web. CI remoto aprobado para web y cargo check en los tres targets. |
 | 2. Estado consistente | Validada en simulación web | Una autoridad; reabrir controlador conserva reloj, skin y preferencias. Repetir matriz en Tauri nativo. |
 | 3. Integraciones fiables | Correcciones principales implementadas | Casos de calendario y GitHub pasan con fixtures. Prioridades implementadas y probadas. Probar proveedores reales, CORS, límites y recuperación; decidir persistencia de avisos entre reinicios. |
 | 4. Escritorio y rendimiento | Pendiente de ejecución nativa | Completar `NATIVE_VALIDATION.md` en macOS ARM, macOS Intel y Windows; adjuntar resultados y mediciones de reposo, animación y controlador. |
@@ -135,8 +135,8 @@ pruebas web.
 
 ## Próximo trabajo concreto
 
-1. Comprobar el pipeline enlazado y resolver cualquier diferencia de compilación
-   en los tres targets nativos. La siguiente validación de escritorio es interactiva.
+1. Ejecutar pruebas interactivas de escritorio en los tres targets. La
+   compilación nativa ya pasó en el pipeline enlazado.
 2. Probar el controlador real: eventos, permisos, menú, Escape, cierre y reapertura.
 3. Probar feeds reales de Canvas/Moodle y definir transporte nativo si CORS impide
    el acceso. No guardar URLs privadas en fixtures ni en logs.
