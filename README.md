@@ -1,8 +1,10 @@
 <div align="center">
-  <img src="public/logo.jpg" alt="MySkin Logo" width="220" style="border-radius: 14px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
+  <img src="public/logo.jpg" alt="MySkin Logo" width="180" style="border-radius: 14px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
   <h1>MySkin</h1>
   <p><strong>Desktop Companion en Pixel Art con ventana transparente, click-through nativo a nivel de sistema operativo y arquitectura de skins modulares.</strong></p>
   <p>Desarrollado con Tauri v2, Rust, TypeScript y HTML5 Canvas.</p>
+  <br />
+  <img src="docs/images/demo.webp" alt="Demostración animada de MySkin en vivo" width="700" style="border-radius: 10px; border: 1px solid #3A4558; box-shadow: 0 12px 32px rgba(0,0,0,0.5);" />
 </div>
 
 ---
@@ -298,17 +300,36 @@ El panel de control adopta un lenguaje visual utilitario y oscuro, pensado para 
 - **Rust Toolchain:** `rustc` y `cargo` v1.75+ (verificado con Rust 1.99.0 en arquitectura Apple Silicon aarch64).
 - **macOS:** 12.0 o superior para compatibilidad con `macOSPrivateApi` de transparencia.
 
-### Instalacion
+### Instalación Rápida para Usuarios (Sin compilar código)
+
+Descarga directamente el ejecutable precompilado desde la sección de [Releases de GitHub](https://github.com/luisrodriguez-rgb/My-Skin/releases):
+- **macOS (Apple Silicon M1/M2/M3/M4):** `MySkin_aarch64.dmg`
+- **macOS (Intel x86_64):** `MySkin_x64.dmg`
+- **Windows:** `MySkin_x64_en-US.msi`
+
+#### Nota para Usuarios de macOS (Apple Gatekeeper)
+Al ser software de código abierto distribuido fuera de la App Store sin certificado de pago de Apple Developer ($99 USD/año), macOS Gatekeeper puede mostrar el aviso *"MySkin está dañado y no se puede abrir"* o *"Desarrollador no verificado"*.
+
+Para autorizar la ejecución en tu Mac, ejecuta este comando en tu Terminal tras arrastrar la aplicación a `/Applications`:
+
+```bash
+xattr -cr /Applications/MySkin.app
+```
+O haz clic derecho sobre `MySkin.app` en Finder, selecciona **Abrir** manteniendo pulsada la tecla `Control` y confirma en **Abrir**.
+
+---
+
+### Instalación para Desarrolladores (Compilación desde Fuentes)
 
 Clonar el repositorio e instalar las dependencias de Node:
 
 ```bash
 git clone https://github.com/luisrodriguez-rgb/My-Skin.git
-cd MySkin
+cd My-Skin
 npm install
 ```
 
-Verificar la compilacion del backend de Rust:
+Verificar la compilación del backend nativo de Rust:
 
 ```bash
 source "$HOME/.cargo/env"
