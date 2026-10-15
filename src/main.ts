@@ -21,6 +21,9 @@ import { audioEngine } from "./audio";
 import { pomodoroEngine, PomodoroPhase } from "./pomodoro";
 import { academicSyncService } from "./syncService";
 import { githubMonitor } from "./githubMonitor";
+import { NotificationQueue, contextualPetState } from "./notifications";
+import type { AppNotification } from "./notifications";
+import { safeTaskUrl } from "./webLinks";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
 interface StateConfig {
@@ -66,7 +69,11 @@ ctx.imageSmoothingEnabled = false;
 // --- VARIABLES GLOBALES DE ESTADO Y HIT-TEST ---
 let isCurrentlyIgnoring = true;
 let cursorInsideWindow = false;
-let academicNotificationId: string | null = null;
+const notifications = new NotificationQueue();
+let ambientState: PetStateName = "IDLE";
+let visibleNotificationId: string | null = null;
+let skinError: string | undefined;
+let actionError: string | undefined;
 let currentFrameImageData: Uint8ClampedArray | null = null;
 const ALPHA_THRESHOLD = 20;
 
@@ -103,6 +110,7 @@ let activeNotification: { title: string; subtitle: string; urgent: boolean } | n
  */
 export async function loadSkin(skinFolder: string) {
   const sequence = ++loadSequence;
+  skinError = undefined;
   try {
     if (!/^[a-z0-9-]+$/.test(skinFolder)) throw new Error("Identificador de skin inválido.");
     const res = await fetch(`/skins/${skinFolder}/manifest.json`);
@@ -119,8 +127,8 @@ export async function loadSkin(skinFolder: string) {
     spriteImage = img;
     currentFrameIndex = 0;
     lastFrameTimestamp = performance.now();
-    drawCurrentStateToCanvas();
-    publishState();
+    skinError = undefined;
+    refreshPresentation(true);
 
     try {
       if (typeof localStorage !== "undefined") {
@@ -129,8 +137,10 @@ export async function loadSkin(skinFolder: string) {
     } catch (_) {}
 
     console.log(`[MySkin] Skin "${activeManifest.name}" cargado exitosamente.`);
-  } catch (err) {
-    console.error(`Error al cargar el skin "${skinFolder}":`, err);
+  } catch {
+    if (sequence !== loadSequence) return;
+    skinError = "No se pudo cargar el personaje. Se conserva el anterior; vuelve a intentarlo.";
+    publishState();
   }
 }
 
@@ -141,43 +151,60 @@ export function setPetState(
   newState: PetStateName,
   notification?: { title: string; subtitle: string; urgent?: boolean }
 ) {
-  if (!activeManifest || !activeManifest.states[newState]) return;
+  if (!["IDLE", "WALK", "ALERT_SEMESTRE", "VICTORY_GITHUB", "FOCUS", "SLEEP"].includes(newState)) return;
+  if (activeManifest && !activeManifest.states[newState]) return;
 
-  // Si ya estamos en el mismo estado y no hay notificación nueva, evitar reiniciar fotograma
-  if (currentState === newState && !notification) {
-    return;
+  if (!notification && newState === "FOCUS") {
+    if (pomodoroEngine.getPhase() !== "focus") pomodoroEngine.startFocus();
+    else if (!pomodoroEngine.isRunning()) pomodoroEngine.resume();
+  } else if (notification) {
+    if (!["VICTORY_GITHUB", "ALERT_SEMESTRE", "FOCUS"].includes(newState)) ambientState = newState;
+    notifications.push({
+      id: `visual:${crypto.randomUUID()}`, kind: ["IDLE", "SLEEP"].includes(newState) ? "ambient" : "demo", state: newState,
+      title: notification.title, subtitle: notification.subtitle,
+      urgent: notification.urgent, durationMs: 4000,
+    });
+  } else ambientState = newState;
+  refreshPresentation();
+}
+
+function displayNotification(item: AppNotification): AppNotification {
+  return item.kind === "academic" && item.dueAt !== undefined
+    ? { ...item, title: `ENTREGA: ${academicSyncService.formatRemainingTime(item.dueAt).toUpperCase()}` }
+    : item;
+}
+
+function refreshPresentation(force = false) {
+  const item = notifications.current();
+  const notification = item ? displayNotification(item) : null;
+  const newState = notification?.state ?? contextualPetState(pomodoroEngine.snapshot(), ambientState);
+  const changed = currentState !== newState || visibleNotificationId !== (notification?.id ?? null);
+  const contentChanged = activeNotification?.title !== notification?.title || activeNotification?.subtitle !== notification?.subtitle;
+  if (changed) {
+    if (newState === "ALERT_SEMESTRE") audioEngine.playAlert();
+    else if (newState === "VICTORY_GITHUB") audioEngine.playVictory();
+    else if (newState === "FOCUS") audioEngine.playFocus();
+    else if (newState === "SLEEP") audioEngine.playSleep();
+    currentFrameIndex = 0;
+    lastFrameTimestamp = performance.now();
   }
-
-  // Desencadenar efectos sonoros retro según el estado
-  if (newState === "ALERT_SEMESTRE") {
-    audioEngine.playAlert();
-  } else if (newState === "VICTORY_GITHUB") {
-    audioEngine.playVictory();
-  } else if (newState === "FOCUS") {
-    audioEngine.playFocus();
-  } else if (newState === "SLEEP") {
-    audioEngine.playSleep();
-  }
-
-  academicNotificationId = null;
   currentState = newState;
-  currentFrameIndex = 0;
-  lastFrameTimestamp = performance.now();
-
-  if (notification) {
-    setRoamingAlertState(true);
-    activeNotification = {
-      title: notification.title,
-      subtitle: notification.subtitle,
-      urgent: notification.urgent ?? false,
-    };
-  } else if (newState === "IDLE") {
-    setRoamingAlertState(false);
-    activeNotification = null;
+  if (visibleNotificationId !== (notification?.id ?? null)) {
+    const announcement = document.getElementById("pet-announcement");
+    if (announcement) announcement.textContent = notification ? `${notification.title}. ${notification.subtitle}` : "";
   }
-
-  drawCurrentStateToCanvas();
+  visibleNotificationId = notification?.id ?? null;
+  activeNotification = notification ? { title: notification.title, subtitle: notification.subtitle, urgent: notification.urgent ?? false } : null;
+  setRoamingAlertState(!!notification || (pomodoroEngine.isRunning() && pomodoroEngine.getPhase() === "focus"));
+  canvas.dataset.state = currentState;
+  canvas.setAttribute("aria-label", notification ? `${notification.title}. ${notification.subtitle}. Pulsa Enter para descartar.` : `Compañero MySkin. Estado ${currentState}. Pulsa Enter para abrir el controlador.`);
+  if (changed || contentChanged || force) drawCurrentStateToCanvas();
   publishState();
+}
+
+function dismissNotification(id: string) {
+  notifications.dismiss(id);
+  refreshPresentation();
 }
 
 /**
@@ -310,8 +337,8 @@ function animationLoop(timestamp: number) {
         if (stateCfg.loop) {
           currentFrameIndex = 0;
         } else {
-          // Si no es loop (ej. celebración de GitHub), transiciona al estado siguiente
-          setPetState(stateCfg.nextState || "IDLE");
+          if (notifications.current()) currentFrameIndex = stateCfg.frames - 1;
+          else setPetState(stateCfg.nextState || "IDLE");
         }
       }
 
@@ -444,9 +471,7 @@ canvas.addEventListener("pointerdown", async (e) => {
 
   // 1. Si hizo clic en la parte superior (donde está el globo de alerta), descartamos la alerta
   if (activeNotification && clickY < 84) {
-    setRoamingAlertState(false);
-    setPetState("IDLE");
-    drawCurrentStateToCanvas();
+    if (visibleNotificationId) dismissNotification(visibleNotificationId);
     return;
   }
 
@@ -557,31 +582,25 @@ if (isTauri) {
 }
 
 // React to service events in the sprite window.
-academicSyncService.subscribe((deadline, timeRemaining) => {
-  const customAlert = activeManifest?.dialogues?.alert || `${deadline.course}: ${deadline.title}`;
-  setPetState("ALERT_SEMESTRE", {
-    title: `ENTREGA: ${timeRemaining.toUpperCase()}`,
-    subtitle: customAlert.slice(0, 36),
-    urgent: deadline.urgent,
+academicSyncService.subscribe((deadline) => {
+  notifications.push({
+    id: `deadline:${deadline.id}:${deadline.dueAt}`, kind: "academic", state: "ALERT_SEMESTRE",
+    title: "ENTREGA", subtitle: `${deadline.course}: ${deadline.title}`,
+    urgent: true, deadlineId: deadline.id, dueAt: deadline.dueAt,
   });
-  academicNotificationId = deadline.id;
+  refreshPresentation();
 });
 
 githubMonitor.subscribe({
   onMerge: (event) => {
-    const customVic = activeManifest?.dialogues?.victory || `PR #${event.prNumber} mergeada con exito`;
-    setPetState("VICTORY_GITHUB", {
-      title: `GITHUB: PR #${event.prNumber} MERGED`,
-      subtitle: customVic.slice(0, 36),
-      urgent: false,
-    });
+    notifications.push({ id: `merge:${event.prNumber}:${event.mergedAt}`, kind: "github", state: "VICTORY_GITHUB",
+      title: `GITHUB: PR #${event.prNumber} MERGED`, subtitle: event.title, durationMs: 4000 });
+    refreshPresentation();
   },
   onCommit: (commit) => {
-    setPetState("IDLE", {
-      title: `COMMIT: ${commit.sha}`,
-      subtitle: commit.message.slice(0, 36),
-      urgent: false,
-    });
+    notifications.push({ id: `commit:${commit.sha}`, kind: "github", state: "IDLE",
+      title: `COMMIT: ${commit.sha}`, subtitle: commit.message, durationMs: 4000 });
+    refreshPresentation();
   },
 });
 
@@ -608,6 +627,12 @@ async function registerCommands() {
       publishState();
     }),
     listen("pomo-toggle", () => pomodoroEngine.toggle()),
+    listen<string>("deadline-complete", ({ payload }) => {
+      academicSyncService.markCompleted(payload);
+      refreshPresentation();
+    }),
+    listen<string>("deadline-open", ({ payload }) => { void openDeadline(payload); }),
+    listen<string>("notification-dismiss", ({ payload }) => dismissNotification(payload)),
     listen("pomo-reset", () => pomodoroEngine.reset()),
     listen<string>("calendar-sync", ({ payload }) => { void syncCalendar(payload); }),
     listen("state-request", () => publishState()),
@@ -636,9 +661,14 @@ function publishState() {
     pinned: getIsPinned(),
     audio: audioEngine.isEnabled(),
     pomodoro: pomodoroEngine.snapshot(),
+    notifications: notifications.snapshot().map(displayNotification),
+    activeNotificationId: visibleNotificationId,
+    skinError,
+    actionError,
     calendar: {
       url: academicSyncService.getCalendarUrl(),
       count: academicSyncService.getDeadlines().length,
+      deadlines: academicSyncService.getDeadlines(),
       lastSync: academicSyncService.getLastSyncFormatted(),
       syncing: calendarSyncing,
       error: calendarError,
@@ -648,25 +678,12 @@ function publishState() {
 }
 
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
-(window as any).testAlert = () => {
-  const next = academicSyncService.getNextUrgentDeadline();
-  const timeStr = next ? academicSyncService.formatRemainingTime(next.dueAt) : "1h 45m";
-  const customMsg = activeManifest?.dialogues?.alert || (next ? `${next.course} - ${next.title}` : "Lab. Física - Circuitos RC");
-  setPetState("ALERT_SEMESTRE", {
-    title: `DEMO: ENTREGA ${timeStr.toUpperCase()}`,
-    subtitle: customMsg.slice(0, 36),
-    urgent: true,
-  });
-};
-
-(window as any).testVictory = () => {
-  const customMsg = activeManifest?.dialogues?.victory || "PR #12 mergeada en main con honor";
-  setPetState("VICTORY_GITHUB", {
-    title: "DEMO: GITHUB PR #12",
-    subtitle: customMsg.slice(0, 36),
-    urgent: false,
-  });
-};
+(window as any).testAlert = () => setPetState("ALERT_SEMESTRE", {
+  title: "DEMO: ENTREGA ACADÉMICA", subtitle: "Esta es una notificación de prueba.", urgent: true,
+});
+(window as any).testVictory = () => setPetState("VICTORY_GITHUB", {
+  title: "DEMO: GITHUB MERGE", subtitle: "Esta es una celebración de prueba.",
+});
 
 (window as any).setPetState = setPetState;
 (window as any).loadSkin = loadSkin;
@@ -712,26 +729,53 @@ canvas.addEventListener("contextmenu", async (event) => {
 });
 
 pomodoroEngine.subscribe({
-  onTick: () => publishState(),
+  onTick: () => {
+    if (!pomodoroEngine.isRunning()) notifications.removeWhere((item) => item.kind === "pomodoro");
+    refreshPresentation();
+  },
   onPhaseChange: (phase: PomodoroPhase) => {
-    if (phase === "focus") setPetState("FOCUS", {
-      title: "POMODORO: FOCO", subtitle: activeManifest?.dialogues?.focus?.slice(0, 36) || "25 minutos de concentración",
+    ambientState = "IDLE";
+    if (phase === "break") notifications.push({
+      id: `pomodoro:${Date.now()}`, kind: "pomodoro", state: "WALK",
+      title: "SESIÓN COMPLETADA", subtitle: "Tienes 5 minutos de descanso.", durationMs: 8000,
     });
-    else if (phase === "break") setPetState("WALK", {
-      title: "POMODORO: DESCANSO", subtitle: activeManifest?.dialogues?.break?.slice(0, 36) || "5 minutos de descanso",
-    });
-    else setPetState("IDLE");
+    if (phase === "idle") notifications.removeWhere((item) => item.kind === "pomodoro");
+    refreshPresentation();
   },
 });
 academicSyncService.onChange(() => {
-  if (academicNotificationId && !academicSyncService.getPendingDeadlines().some((deadline) => deadline.id === academicNotificationId && deadline.urgent)) {
-    setPetState("IDLE");
-  } else publishState();
+  const valid = new Map(academicSyncService.getPendingDeadlines().map((deadline) => [deadline.id, deadline]));
+  notifications.removeWhere((item) => item.kind === "academic" &&
+    (!item.deadlineId || !valid.get(item.deadlineId)?.urgent || valid.get(item.deadlineId)?.dueAt !== item.dueAt));
+  for (const item of notifications.snapshot()) {
+    const deadline = item.deadlineId ? valid.get(item.deadlineId) : undefined;
+    if (item.kind === "academic" && deadline) {
+      notifications.push({ ...item, subtitle: `${deadline.course}: ${deadline.title}` });
+    }
+  }
+  refreshPresentation();
+});
+const notificationTimer = window.setInterval(refreshPresentation, 1000);
+canvas.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  if (visibleNotificationId) dismissNotification(visibleNotificationId);
+  else void setControllerVisibility();
 });
 void registerCommands().catch((error) => console.error("No se pudieron iniciar los servicios", error));
 window.addEventListener("pagehide", () => {
   if (cursorPollTimer !== undefined) clearTimeout(cursorPollTimer);
+  clearInterval(notificationTimer);
   academicSyncService.stopPeriodicCheck();
   githubMonitor.stopPolling();
   pomodoroEngine.pause();
 });
+
+async function openDeadline(id: string) {
+  const link = safeTaskUrl(academicSyncService.getDeadlines().find((deadline) => deadline.id === id)?.link);
+  if (!link || !isTauri) return;
+  actionError = undefined;
+  try { await invoke("open_external_url", { url: link }); }
+  catch { actionError = "No se pudo abrir la entrega en el navegador. Vuelve a intentarlo."; }
+  publishState();
+}
