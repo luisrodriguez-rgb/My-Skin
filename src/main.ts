@@ -586,7 +586,10 @@ githubMonitor.subscribe({
 // --- ACCIONES DESDE EL SYSTEM TRAY NATIVO (MAC MENU BAR) ---
 listen<string>("tray-action", async (event) => {
   const action = event.payload;
-  if (action === "toggle_controller") {
+  if (action.startsWith("skin_")) {
+    const skinId = action.replace("skin_", "");
+    await loadSkin(skinId);
+  } else if (action === "toggle_controller") {
     const isHidden = debugPanel?.classList.contains("hidden") ?? true;
     await setControllerVisibility(isHidden);
   } else if (action === "toggle_roam") {

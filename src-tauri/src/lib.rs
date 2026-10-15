@@ -1,5 +1,5 @@
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder},
+    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
     tray::TrayIconBuilder,
     Emitter, Manager, WebviewWindow,
 };
@@ -62,6 +62,33 @@ pub fn run() {
             let item_ctrl = MenuItemBuilder::new("Abrir / Cerrar Controlador")
                 .id("toggle_controller")
                 .build(app)?;
+
+            let skin_spartan = MenuItemBuilder::new("01. Leónidas (Espartano)").id("skin_spartan").build(app)?;
+            let skin_spiderman = MenuItemBuilder::new("02. Spider-Hero (Trepamuros)").id("skin_spiderman").build(app)?;
+            let skin_dev_avatar = MenuItemBuilder::new("03. Mi Avatar Pixelado").id("skin_dev-avatar").build(app)?;
+            let skin_ghost_dev = MenuItemBuilder::new("04. El Dev Fantasma").id("skin_ghost-dev").build(app)?;
+            let skin_football_10 = MenuItemBuilder::new("05. El Futbolista 10").id("skin_football-10").build(app)?;
+            let skin_capybara = MenuItemBuilder::new("06. Capibara Chill").id("skin_capybara").build(app)?;
+            let skin_cyber_ninja = MenuItemBuilder::new("07. Cyber Ninja").id("skin_cyber-ninja").build(app)?;
+            let skin_fantasy_wizard = MenuItemBuilder::new("08. Mago de Fantasía").id("skin_fantasy-wizard").build(app)?;
+            let skin_game_slime = MenuItemBuilder::new("09. Slime de Videojuego").id("skin_game-slime").build(app)?;
+            let skin_astro_lost = MenuItemBuilder::new("10. Astronauta Perdido").id("skin_astro-lost").build(app)?;
+
+            let skins_submenu = SubmenuBuilder::new(app, "Personajes")
+                .item(&skin_spartan)
+                .item(&skin_spiderman)
+                .item(&skin_dev_avatar)
+                .item(&skin_ghost_dev)
+                .separator()
+                .item(&skin_football_10)
+                .item(&skin_capybara)
+                .item(&skin_cyber_ninja)
+                .separator()
+                .item(&skin_fantasy_wizard)
+                .item(&skin_game_slime)
+                .item(&skin_astro_lost)
+                .build()?;
+
             let item_roam = MenuItemBuilder::new("Alternar Modo Fijo / Libre")
                 .id("toggle_roam")
                 .build(app)?;
@@ -77,6 +104,8 @@ pub fn run() {
 
             let tray_menu = MenuBuilder::new(app)
                 .item(&item_ctrl)
+                .item(&skins_submenu)
+                .separator()
                 .item(&item_roam)
                 .item(&item_pomodoro)
                 .item(&item_audio)
