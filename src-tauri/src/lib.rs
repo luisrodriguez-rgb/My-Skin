@@ -43,9 +43,31 @@ fn get_cursor_rel_pos(window: WebviewWindow) -> Result<CursorRelPos, String> {
     })
 }
 
+// 3. Comando para abrir o cerrar la ventana independiente del controlador
+#[tauri::command]
+fn toggle_controller_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(ctrl_win) = app.get_webview_window("controller") {
+        if ctrl_win.is_visible().unwrap_or(false) {
+            let _ = ctrl_win.hide();
+        } else {
+            let _ = ctrl_win.show();
+            let _ = ctrl_win.set_focus();
+        }
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "controller" {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .setup(|app| {
             if let Some(main_window) = app.get_webview_window("main") {
                 // 1. Iniciamos la app dejando pasar todos los clics por defecto
@@ -120,6 +142,15 @@ pub fn run() {
                     let id = event.id().as_ref();
                     if id == "quit" {
                         app.exit(0);
+                    } else if id == "toggle_controller" {
+                        if let Some(ctrl_win) = app.get_webview_window("controller") {
+                            if ctrl_win.is_visible().unwrap_or(false) {
+                                let _ = ctrl_win.hide();
+                            } else {
+                                let _ = ctrl_win.show();
+                                let _ = ctrl_win.set_focus();
+                            }
+                        }
                     } else {
                         let _ = app.emit("tray-action", id);
                     }
@@ -135,7 +166,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_ignore_cursor,
-            get_cursor_rel_pos
+            get_cursor_rel_pos,
+            toggle_controller_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

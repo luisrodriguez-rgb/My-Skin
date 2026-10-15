@@ -21,7 +21,22 @@
         "decorations": false,
         "alwaysOnTop": true,
         "shadow": false,
+        "resizable": false,
+        "skipTaskbar": false,
+        "acceptFirstMouse": true
+      },
+      {
+        "label": "controller",
+        "title": "MySkin Controller",
+        "url": "controller.html",
+        "width": 560,
+        "height": 620,
+        "transparent": false,
+        "decorations": true,
+        "alwaysOnTop": true,
+        "shadow": true,
         "resizable": true,
+        "visible": false,
         "skipTaskbar": false,
         "acceptFirstMouse": true
       }

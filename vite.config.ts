@@ -1,3 +1,4 @@
+import { resolve } from "path";
 import { defineConfig } from "vite";
 
 // @ts-expect-error process is a nodejs global
@@ -18,6 +19,14 @@ export default defineConfig({
       : undefined,
     watch: {
       ignored: ["**/src-tauri/**"],
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        controller: resolve(__dirname, "controller.html"),
+      },
     },
   },
 });

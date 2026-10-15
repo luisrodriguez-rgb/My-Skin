@@ -57,6 +57,22 @@ class PomodoroEngine {
     this.stopTimer();
   }
 
+  public isRunning(): boolean {
+    return this.timerId !== null;
+  }
+
+  public toggle() {
+    if (this.isRunning()) {
+      this.pause();
+    } else {
+      if (this.phase === "idle") {
+        this.startFocus();
+      } else {
+        this.resume();
+      }
+    }
+  }
+
   public resume() {
     if (this.phase !== "idle" && !this.timerId) {
       this.runTimer();

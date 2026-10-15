@@ -14,8 +14,6 @@ import {
   clampWindowPosition,
   updateWindowCoordinates,
   getWindowPosition,
-  shiftWindowUpForController,
-  restoreWindowAfterController,
 } from "./roaming";
 import { audioEngine } from "./audio";
 import { pomodoroEngine, PomodoroPhase } from "./pomodoro";
@@ -626,6 +624,48 @@ listen<string>("tray-action", async (event) => {
   }
 });
 
+// --- COMUNICACIÓN IPC MULTI-VENTANA CON EL CONTROLADOR ---
+listen<string>("skin-changed", async (event) => {
+  await loadSkin(event.payload);
+});
+
+listen<{ state: PetStateName; notification?: { title: string; subtitle: string; urgent?: boolean } }>(
+  "set-pet-state",
+  (event) => {
+    setPetState(event.payload.state, event.payload.notification);
+  }
+);
+
+listen<boolean>("toggle-audio", (event) => {
+  if (audioEngine.isEnabled() !== event.payload) {
+    audioEngine.toggle();
+  }
+});
+
+listen<boolean>("toggle-pin", (event) => {
+  if (getIsPinned() !== event.payload) {
+    togglePinMode();
+  }
+});
+
+listen("pomo-toggle", () => {
+  pomodoroEngine.toggle();
+});
+
+listen("pomo-reset", () => {
+  pomodoroEngine.reset();
+});
+
+listen<{ count: number }>("calendar-synced", (event) => {
+  const next = academicSyncService.getNextUrgentDeadline();
+  const timeStr = next ? academicSyncService.formatRemainingTime(next.dueAt) : "";
+  setPetState("ALERT_SEMESTRE", {
+    title: `CALENDARIO: ${event.payload.count} ENTREGAS`,
+    subtitle: next ? `${next.course}: ${timeStr}` : "Calendario sincronizado con éxito",
+    urgent: next?.urgent ?? false,
+  });
+});
+
 // --- PRUEBA RÁPIDA EN CONSOLA Y MÉTODOS GLOBALES ---
 (window as any).testAlert = () => {
   const next = academicSyncService.getNextUrgentDeadline();
@@ -738,28 +778,11 @@ function syncActionButtons(state: PetStateName) {
   }
 }
 
-async function setControllerVisibility(visible: boolean) {
-  if (!debugPanel) return;
-  if (visible) {
-    debugPanel.classList.remove("hidden");
-    // Subir la ventana automáticamente si está cerca del borde inferior para que NUNCA se corte
-    await shiftWindowUpForController(340, 620);
-    if (mainAppWindow) {
-      try {
-        await mainAppWindow.setFocus();
-      } catch (err) {
-        console.debug("setFocus error:", err);
-      }
-    }
-
-    // Asegurar inmediatamente que los clics no se ignoren sobre el panel
-    isCurrentlyIgnoring = false;
-    try {
-      await invoke("set_ignore_cursor", { ignore: false });
-    } catch (_) {}
-  } else {
-    debugPanel.classList.add("hidden");
-    await restoreWindowAfterController(300, 240);
+async function setControllerVisibility(_visible?: boolean) {
+  try {
+    await invoke("toggle_controller_window");
+  } catch (err) {
+    console.debug("[Main] Error alternando ventana de controlador:", err);
   }
 }
 

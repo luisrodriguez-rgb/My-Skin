@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MySkin Controller</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      html, body {
+        background-color: var(--bg-dark) !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100vh;
+        user-select: text;
+        -webkit-user-select: text;
+        padding: 16px;
+      }
+      .controller-window-container {
+        max-width: 520px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .window-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .window-title-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .window-title {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        color: var(--accent-primary);
+      }
+      .window-subtitle {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .input-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .text-input {
+        width: 100%;
+        padding: 8px 10px;
+        background: var(--surface-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 6px;
+        color: var(--text-main);
+        font-size: 12px;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .text-input:focus {
+        border-color: var(--accent-primary);
+      }
+      .btn-sync-action {
+        padding: 8px 12px;
+        background: var(--accent-primary);
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 11px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-sync-action:hover {
+        background: var(--accent-hover);
+      }
+      .sync-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .sync-status-text {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="controller-window-container">
+      <!-- Window Header -->
+      <header class="window-header">
+        <div class="window-title-box">
+          <span class="pixel-badge">v1.0</span>
+          <div>
+            <h1 class="window-title">MySkin COMPANION</h1>
+            <span class="window-subtitle">Panel de Control y Ajustes</span>
+          </div>
+        </div>
+        <div class="header-controls">
+          <button id="btn-sound-toggle" class="btn-sound-toggle" title="Alternar Sonido Retro">AUDIO: ON</button>
+          <button id="btn-pin-toggle" class="btn-sound-toggle" title="Alternar Modo Fijo o Patrulla">MODO: FIJO</button>
+        </div>
+      </header>
+
+      <!-- Active Character Card -->
+      <section class="card-character">
+        <div class="char-thumb-wrapper">
+          <canvas id="thumb-canvas" width="48" height="48"></canvas>
+          <span class="badge-status">Activo</span>
+        </div>
+        <div class="char-info">
+          <div class="char-meta">
+            <h2 id="char-name" class="char-title">Leónidas (El Espartano de 300)</h2>
+            <span id="char-spec" class="char-subtitle">Skin pixel · 64 × 64</span>
+          </div>
+          <div class="char-select-wrapper">
+            <select id="select-skin" class="skin-select" aria-label="Cambiar personaje">
+              <optgroup label="Ola 1: Fundacionales">
+                <option value="spartan">01. Leónidas (El Espartano de 300)</option>
+                <option value="spiderman">02. Spider-Hero (El Trepamuros)</option>
+                <option value="dev-avatar">03. Mi Avatar Pixelado (Tú Mismo)</option>
+                <option value="ghost-dev">04. El Dev Fantasma (Especial Código)</option>
+              </optgroup>
+              <optgroup label="Ola 2: Entretenimiento y Memes">
+                <option value="football-10">05. El Futbolista 10 (La Pulga)</option>
+                <option value="capybara">06. Capibara Chill (Mascota Internet)</option>
+                <option value="cyber-ninja">07. Cyber Ninja (Acción y Sigilo)</option>
+              </optgroup>
+              <optgroup label="Ola 3: Nostalgia y Fantasía">
+                <option value="fantasy-wizard">08. Mago de Fantasía (El Hechicero)</option>
+                <option value="game-slime">09. Slime de Videojuego (Mascota)</option>
+                <option value="astro-lost">10. Astronauta Perdido (Explorador)</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Animation / FSM Section -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">ANIMACIÓN Y FSM</span>
+          <span class="group-caption">Vista previa</span>
+        </div>
+        <div class="btn-grid-actions">
+          <button class="btn-chip btn-action active" data-action="IDLE">
+            <span class="chip-code">00</span>
+            <span class="chip-label">IDLE</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="WALK">
+            <span class="chip-code">01</span>
+            <span class="chip-label">WALK</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="ALERT_SEMESTRE">
+            <span class="chip-code">02</span>
+            <span class="chip-label">ALERT</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="VICTORY_GITHUB">
+            <span class="chip-code">03</span>
+            <span class="chip-label">WIN</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="FOCUS">
+            <span class="chip-code">04</span>
+            <span class="chip-label">FOCUS</span>
+          </button>
+          <button class="btn-chip btn-action" data-action="SLEEP">
+            <span class="chip-code">05</span>
+            <span class="chip-label">SLEEP</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Pomodoro Concentration System -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">POMODORO ESTUDIO</span>
+          <span id="pomo-status" class="group-caption">En reposo</span>
+        </div>
+        <div class="pomodoro-card">
+          <span id="pomo-clock" class="pomodoro-clock">25:00</span>
+          <div class="pomodoro-actions">
+            <button id="btn-pomo-toggle" class="btn-pomo-toggle">INICIAR FOCO</button>
+            <button id="btn-pomo-reset" class="btn-pomo-reset">RESET</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Academic Calendar (.ics / Canvas LMS) Integration -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">CALENDARIO ACADÉMICO</span>
+          <span id="sync-status-label" class="group-caption">Canvas / Moodle / iCal</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="input-calendar-url">URL de suscripción (.ics / webcal://)</label>
+          <div class="sync-row">
+            <input
+              id="input-calendar-url"
+              type="url"
+              class="text-input"
+              placeholder="https://canvas.instructure.com/feeds/calendars/user_...ics"
+            />
+            <button id="btn-sync-calendar" class="btn-sync-action">SINCRONIZAR</button>
+          </div>
+          <span id="sync-feedback" class="sync-status-text">Sin sincronizar</span>
+        </div>
+      </section>
+
+      <!-- Notification Simulator -->
+      <section class="panel-group">
+        <div class="group-header">
+          <span class="group-title">PROBAR EVENTOS</span>
+          <span class="group-caption">Diálogos</span>
+        </div>
+        <div class="btn-grid-events">
+          <button id="btn-event-semester" class="btn-event btn-event-semester">
+            <span class="event-code">SEM</span>
+            <span class="event-label">Entrega Semestre</span>
+          </button>
+          <button id="btn-event-github" class="btn-event btn-event-github">
+            <span class="event-code">GIT</span>
+            <span class="event-label">GitHub Merge</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Footer Status -->
+      <footer class="controller-footer">
+        <div class="footer-state">
+          <span class="state-dot"></span>
+          <span id="status-fsm-text">Estado: IDLE</span>
+        </div>
+        <span class="shortcut-tip">Ventana auxiliar independiente</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/controller.ts"></script>
+  </body>
+</html>
