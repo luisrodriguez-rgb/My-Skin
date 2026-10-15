@@ -1,4 +1,5 @@
 import { parseIcsEvents } from "./calendar";
+import { calendarFeedUrl } from "./webLinks";
 
 /**
  * MySkin - Servicio de Sincronizacion Academica del Semestre (Fase 2)
@@ -47,7 +48,7 @@ export class AcademicSyncService {
         const parsed: unknown = JSON.parse(data);
         this.deadlines = Array.isArray(parsed) ? parsed.filter((d): d is AcademicDeadline =>
           d && typeof d.id === "string" && typeof d.course === "string" &&
-          typeof d.title === "string" && Number.isFinite(d.dueAt) && typeof d.completed === "boolean"
+          typeof d.title === "string" && Number.isFinite(d.dueAt) && Math.abs(d.dueAt) <= 8640000000000000 && typeof d.completed === "boolean"
         ) : [];
       }
     } catch (_) {
@@ -87,15 +88,13 @@ export class AcademicSyncService {
    * Sincroniza las entregas descargando y parseando el feed iCal (.ics) en vivo
    */
   public async syncFromIcs(overrideUrl?: string): Promise<{ success: boolean; count: number; error?: string }> {
-    let feedUrl = overrideUrl || this.getCalendarUrl();
-    if (!feedUrl) {
+    const configuredUrl = overrideUrl || this.getCalendarUrl();
+    const feedUrl = calendarFeedUrl(configuredUrl);
+    if (!configuredUrl) {
       return { success: false, count: 0, error: "No se ha configurado ninguna URL de calendario." };
     }
 
-    // Convertir esquema webcal:// a https://
-    if (feedUrl.startsWith("webcal://")) {
-      feedUrl = "https://" + feedUrl.slice(9);
-    }
+    if (!feedUrl) return { success: false, count: 0, error: "Usa una URL HTTP, HTTPS o webcal válida." };
 
     if (this.syncInFlight) return { success: false, count: 0, error: "Ya hay una sincronización en curso." };
     this.syncInFlight = true;
@@ -177,7 +176,7 @@ export class AcademicSyncService {
     const diffMs = dueAt - Date.now();
     if (diffMs <= 0) return "Plazo vencido";
 
-    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const totalMinutes = Math.ceil(diffMs / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
 

@@ -5,6 +5,15 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-15T00:
 it("starts empty rather than creating fictitious assignments", () => {
   expect(new AcademicSyncService().getDeadlines()).toEqual([]);
 });
+it("keeps partial minutes consistent with the controller and rejects unrenderable stored dates", () => {
+  localStorage.setItem("myskin_academic_deadlines", JSON.stringify([
+    { id: "bad", course: "Curso", title: "Fecha inválida", dueAt: 1e20, completed: false },
+  ]));
+  const service = new AcademicSyncService();
+  expect(service.getDeadlines()).toEqual([]);
+  expect(service.formatRemainingTime(Date.now() + 899000)).toBe("15m");
+  expect(service.formatRemainingTime(Date.now() + 1000)).toBe("1m");
+});
 it("only alerts for pending future deadlines inside two hours", () => {
   const service = new AcademicSyncService();
   service.addDeadline("Curso", "Vencida", -1);

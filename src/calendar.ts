@@ -1,5 +1,6 @@
 import ICAL from "ical.js";
 import type { AcademicDeadline } from "./syncService";
+import { safeTaskUrl } from "./webLinks";
 
 const DAY = 86400000;
 const MAX_OCCURRENCES = 10000;
@@ -44,7 +45,7 @@ export function parseIcsEvents(raw: string, now = Date.now()): AcademicDeadline[
       dueAt,
       urgent: dueAt - now <= 2 * 3600000,
       completed: false,
-      link: /^https?:\/\//.test(event.description ?? "") ? event.description : undefined,
+      link: safeTaskUrl(event.component.getFirstPropertyValue("url")) ?? safeTaskUrl(event.description),
     });
   }
   for (const item of components.filter((entry) => !entry.hasProperty("recurrence-id"))) {

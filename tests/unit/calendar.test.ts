@@ -37,3 +37,9 @@ it("accepts an empty calendar and rejects non-calendar responses", () => {
   expect(parseIcsEvents(calendar(""), now)).toEqual([]);
   expect(() => parseIcsEvents("<html>login required</html>", now)).toThrow();
 });
+it("uses the event URL and rejects unsafe task links", () => {
+  const raw = calendar(event("DTSTART:20261015T010000Z\r\nURL:https://campus.example.org/tasks/1\r\nDESCRIPTION:Detalles de la tarea"));
+  expect(parseIcsEvents(raw, now)[0].link).toBe("https://campus.example.org/tasks/1");
+  const invalid = calendar(event("DTSTART:20261015T010000Z\r\nURL:javascript:alert(1)"));
+  expect(parseIcsEvents(invalid, now)[0].link).toBeUndefined();
+});
