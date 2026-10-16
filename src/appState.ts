@@ -1,6 +1,7 @@
 import type { PomodoroSnapshot } from "./pomodoro";
 import type { AcademicDeadline } from "./syncService";
 import type { AppNotification } from "./notifications";
+import type { MiSemestreClass } from "./miSemestreProvider";
 
 export type PetStateName = "IDLE" | "WALK" | "ALERT_SEMESTRE" | "VICTORY_GITHUB" | "FOCUS" | "SLEEP";
 export interface Notification {
@@ -30,4 +31,18 @@ export interface AppState {
     syncing: boolean;
     error?: string;
   };
+  misemestre?: {
+    enabled: boolean;
+    connected: boolean;
+    url: string;
+    semester?: string;
+    student?: string;
+    todayClasses: MiSemestreClass[];
+    currentClass?: MiSemestreClass | null;
+    nextClass?: MiSemestreClass | null;
+    lastSync?: string;
+    syncing: boolean;
+    error?: string;
+  };
 }
+

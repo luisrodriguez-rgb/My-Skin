@@ -1,10 +1,12 @@
 import { parseIcsEvents } from "./calendar";
 import { calendarFeedUrl } from "./webLinks";
+import type { MiSemestreFeed } from "./miSemestreProvider";
 
 /**
  * MySkin - Servicio de Sincronizacion Academica del Semestre (Fase 2)
  * Administra entregas pendientes, parciales, talleres y eventos universitarios.
- * Soporta suscripciones directas a feeds iCalendar (.ics / webcal://) de Canvas LMS, Moodle y Google Calendar.
+ * Soporta suscripciones directas a feeds iCalendar (.ics / webcal://) de Canvas LMS, Moodle y Google Calendar,
+ * asi como integracion bidireccional en vivo con MiSemestre (Horario).
  */
 
 export interface AcademicDeadline {
@@ -23,6 +25,7 @@ export type DeadlineListener = (deadline: AcademicDeadline, timeRemainingFormatt
 export class AcademicSyncService {
   private deadlines: AcademicDeadline[] = [];
   private listeners: DeadlineListener[] = [];
+
   private checkIntervalId: number | null = null;
   private storageKey = "myskin_academic_deadlines";
   private calendarUrlKey = "myskin_calendar_ics_url";
@@ -133,6 +136,49 @@ export class AcademicSyncService {
     } finally {
       this.syncInFlight = false;
     }
+  }
+
+  /**
+   * Integra y sincroniza las entregas y parciales recibidos de MiSemestre
+   */
+  public syncFromMiSemestre(feed: MiSemestreFeed): { count: number } {
+    const completedIds = new Set(this.deadlines.filter((d) => d.completed).map((d) => d.id));
+    const otherDeadlines = this.deadlines.filter((d) => !d.id.startsWith("misemestre:"));
+    const newMiSemestreDeadlines: AcademicDeadline[] = [];
+
+    for (const asg of feed.assignments) {
+      const id = `misemestre:asg:${asg.id}`;
+      newMiSemestreDeadlines.push({
+        id,
+        sourceId: asg.id,
+        course: asg.course,
+        title: asg.title,
+        dueAt: asg.dueAt,
+        urgent: asg.urgent,
+        completed: asg.completed || completedIds.has(id),
+      });
+    }
+
+    for (const exam of feed.exams) {
+      const id = `misemestre:exam:${exam.id}`;
+      const diffHours = (exam.timestamp - Date.now()) / (1000 * 3600);
+      newMiSemestreDeadlines.push({
+        id,
+        sourceId: exam.id,
+        course: exam.course,
+        title: `[PARCIAL] ${exam.title}`,
+        dueAt: exam.timestamp,
+        urgent: diffHours > 0 && diffHours <= 48,
+        completed: completedIds.has(id),
+      });
+    }
+
+    this.deadlines = [...otherDeadlines, ...newMiSemestreDeadlines];
+    this.saveToStorage();
+    this.checkDeadlines();
+    this.changeListeners.forEach((listener) => listener());
+
+    return { count: newMiSemestreDeadlines.length };
   }
 
   public getDeadlines(): AcademicDeadline[] {
