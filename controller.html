@@ -46,6 +46,18 @@
         <button id="btn-pomo-reset" class="reset-button" data-command aria-label="Reiniciar" title="Reiniciar sesión">↺</button>
       </div>
     </article>
+    <section id="schedule-section" class="panel-group" aria-labelledby="schedule-heading">
+      <div class="section-head">
+        <h2 id="schedule-heading" tabindex="-1">Clases de hoy</h2>
+        <span id="schedule-badge" class="count-badge">MiSemestre</span>
+      </div>
+      <p id="schedule-caption" class="group-caption">Horario sincronizado con tu campus universitario.</p>
+      <div id="schedule-empty" class="empty-state" hidden>
+        <p>No tienes clases programadas para hoy.</p>
+        <p class="group-caption">Aprovecha el tiempo libre para concentrarte en tus entregas o proyectos.</p>
+      </div>
+      <ul id="schedule-list" class="item-list"></ul>
+    </section>
     <section class="panel-group" aria-labelledby="deadlines-heading">
       <div class="section-head"><h2 id="deadlines-heading" tabindex="-1">Lo próximo</h2><button class="text-button" data-calendar-shortcut>Gestionar calendario</button></div>
       <p id="deadline-count" class="group-caption"></p>
@@ -79,6 +91,19 @@
       <h2 id="preferences-heading">Sonido y movimiento</h2>
       <div class="setting"><div><h3>Efectos retro</h3><p class="group-caption">Sonidos breves para tus avisos y sesiones.</p></div><button id="btn-sound-toggle" class="secondary-button" aria-pressed="true" data-command>Sonido activado</button></div>
       <div class="setting"><div><h3>Posición del compañero</h3><p class="group-caption">Fijo donde lo dejes o de paseo por el escritorio.</p></div><button id="btn-pin-toggle" class="secondary-button" aria-pressed="true" data-command>Modo fijo</button></div>
+    </section>
+    <section class="settings-card" aria-labelledby="misemestre-heading">
+      <h2 id="misemestre-heading">MiSemestre (Horario universitario)</h2>
+      <p id="misemestre-help" class="group-caption">Conecta tu horario universitario local para sincronizar clases del día, materias en curso y registrar sesiones Pomodoro.</p>
+      <form id="misemestre-form" novalidate>
+        <label for="input-misemestre-url">URL del servidor local de MiSemestre</label>
+        <input id="input-misemestre-url" type="url" class="text-input" aria-describedby="misemestre-help misemestre-feedback" placeholder="http://127.0.0.1:3000" autocomplete="off" spellcheck="false" />
+        <div class="setting-actions">
+          <button id="btn-sync-misemestre" class="primary-button" data-command>Conectar MiSemestre</button>
+          <button id="btn-toggle-misemestre" type="button" class="secondary-button" data-command>Desactivar</button>
+        </div>
+        <p id="misemestre-feedback" class="sync-status-text" aria-live="polite">Sin conectar</p>
+      </form>
     </section>
     <section class="settings-card" aria-labelledby="calendar-heading">
       <h2 id="calendar-heading">Calendario académico</h2>

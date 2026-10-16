@@ -100,8 +100,16 @@ h3 { font-size: 14px; font-weight: 650; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 24px 0 10px; }
 .panel-group > .group-caption { margin-bottom: 10px; }
 .item-list { padding: 0; list-style: none; margin: 0; display: flex; flex-direction: column; gap: 9px; }
-.deadline-item, .notification-item { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); background: var(--card); border-radius: 13px; }
+.deadline-item, .notification-item, .schedule-item { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); background: var(--card); border-radius: 13px; }
 .deadline-item.urgent, .notification-item.current { border-color: #a5bd8d; }
+.schedule-item { position: relative; border-left: 4px solid var(--class-color, var(--line)); }
+.schedule-item.current { border-color: var(--green); border-left-width: 5px; background: #1c2b22; }
+.schedule-item.upcoming { border-color: #556c5e; }
+.schedule-item.past { opacity: .6; }
+.schedule-tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; display: inline-block; width: fit-content; }
+.schedule-tag.current { background: #35443c; color: var(--green); border: 1px solid var(--green); }
+.schedule-tag.upcoming { background: #26343b; color: var(--peach); border: 1px solid #74877b; }
+.schedule-tag.past { background: transparent; color: var(--muted); border: 1px solid var(--line); }
 .item-info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
 .item-info h3 { color: var(--text); }
 .item-info p { font-size: 13px; color: var(--muted); }
@@ -110,6 +118,8 @@ h3 { font-size: 14px; font-weight: 650; }
 .deadline-item.completed h3 { text-decoration: line-through; color: var(--muted); }
 .item-actions { display: flex; flex-direction: column; gap: 6px; }
 .item-actions .secondary-button { padding: 8px 12px; font-size: 12px; }
+.setting-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.setting-actions button { flex: 1; min-width: 140px; }
 .summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; background: #1a252c; border: 1px solid var(--line); border-radius: 13px; padding: 15px; margin-top: 20px; }
 .summary strong { font-size: 23px; font-variant-numeric: tabular-nums; }
 .summary span { display: block; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }

@@ -23,11 +23,20 @@ const actionFeedback = document.getElementById("action-error")!;
 const githubRepo = document.querySelector<HTMLInputElement>("#input-github-repo")!;
 const githubFeedback = document.getElementById("github-feedback")!;
 const petGrid = document.getElementById("pet-grid")!;
+const scheduleSection = document.getElementById("schedule-section")!;
+const scheduleList = document.getElementById("schedule-list")!;
+const scheduleEmpty = document.getElementById("schedule-empty")!;
+const scheduleCaption = document.getElementById("schedule-caption")!;
+const misemestreUrl = document.querySelector<HTMLInputElement>("#input-misemestre-url")!;
+const misemestreToggle = document.querySelector<HTMLButtonElement>("#btn-toggle-misemestre")!;
+const misemestreFeedback = document.getElementById("misemestre-feedback")!;
 let state: AppState | null = null;
 let lastCalendarUrl: string | null = null;
 let lastRepository: string | null = null;
+let lastMisemestreUrl: string | null = null;
 let calendarDraftChanged = false;
 let repositoryDraftChanged = false;
+let misemestreDraftChanged = false;
 let metadataSequence = 0;
 let heroKey = "";
 let lastStateAt = 0;
@@ -36,6 +45,7 @@ let githubValidationError = "";
 let metadataError = "";
 let commandError = "";
 let taskSignature = "";
+let scheduleSignature = "";
 let notificationSignature = "";
 let previousCompleted = new Set<string>();
 let connected = false;
@@ -140,6 +150,104 @@ function renderFeedback() {
   githubFeedback.classList.toggle("feedback-error", !!githubError);
   const githubText = githubError || (state ? `Repositorio elegido: ${state.github.repository}` : "Esperando al personaje.");
   if (githubFeedback.textContent !== githubText) githubFeedback.textContent = githubText;
+
+  if (misemestreFeedback && state?.misemestre) {
+    const m = state.misemestre;
+    misemestreFeedback.classList.toggle("feedback-error", !!m.error);
+    const mText = m.syncing
+      ? "Conectando con MiSemestre…"
+      : m.error
+      ? `Error: ${m.error}`
+      : m.connected
+      ? `Conectado a MiSemestre · ${m.todayClasses.length} clases hoy · ${m.lastSync || "Sincronizado"}`
+      : m.enabled
+      ? "Intentando conectar con MiSemestre…"
+      : "Integración desactivada.";
+    if (misemestreFeedback.textContent !== mText) misemestreFeedback.textContent = mText;
+  }
+}
+
+function renderSchedule(snapshot: AppState) {
+  const misemestre = snapshot.misemestre;
+  if (!misemestre || !misemestre.enabled) {
+    scheduleSection.hidden = true;
+    return;
+  }
+  scheduleSection.hidden = false;
+
+  const classes = misemestre.todayClasses || [];
+  const signature = JSON.stringify(classes.map((c) => ({ id: c.id, s: c.startTime, e: c.endTime, c: c.isCurrent, u: c.isUpcoming })));
+
+  if (signature !== scheduleSignature) {
+    scheduleList.replaceChildren();
+
+    if (classes.length === 0) {
+      scheduleEmpty.hidden = false;
+      scheduleCaption.textContent = "Sin clases programadas para hoy.";
+    } else {
+      scheduleEmpty.hidden = true;
+      scheduleCaption.textContent = misemestre.semester ? `${misemestre.semester} · ${classes.length} ${classes.length === 1 ? "clase hoy" : "clases hoy"}` : `${classes.length} clases hoy`;
+
+      for (const item of classes) {
+        const li = document.createElement("li");
+        const statusClass = item.isCurrent ? "current" : item.isUpcoming ? "upcoming" : "past";
+        li.className = `schedule-item ${statusClass}`;
+        if (item.color) li.style.setProperty("--class-color", item.color);
+
+        const info = document.createElement("div");
+        info.className = "item-info";
+
+        const topRow = document.createElement("div");
+        topRow.style.display = "flex";
+        topRow.style.gap = "8px";
+        topRow.style.alignItems = "center";
+
+        const tag = document.createElement("span");
+        tag.className = `schedule-tag ${statusClass}`;
+        tag.textContent = item.isCurrent
+          ? "En curso"
+          : item.isUpcoming
+          ? item.startsInMinutes <= 60
+            ? `En ${item.startsInMinutes} min`
+            : "Próxima"
+          : "Terminada";
+
+        const code = document.createElement("span");
+        code.className = "group-caption";
+        code.textContent = item.subjectCode ? `[${item.subjectCode}]` : "";
+
+        topRow.append(tag, code);
+
+        const title = document.createElement("h3");
+        title.textContent = item.subjectName;
+
+        const details = document.createElement("p");
+        details.textContent = `${item.startTime} - ${item.endTime} · ${item.location}`;
+
+        info.append(topRow, title, details);
+
+        const actions = document.createElement("div");
+        actions.className = "item-actions";
+
+        if (item.isCurrent || item.isUpcoming) {
+          const focusBtn = document.createElement("button");
+          focusBtn.className = "secondary-button";
+          focusBtn.textContent = "Foco";
+          focusBtn.setAttribute("aria-label", `Foco para ${item.subjectName}`);
+          focusBtn.dataset.command = "";
+          focusBtn.disabled = !connected;
+          focusBtn.addEventListener("click", () => {
+            command("pomo-start-task", item.subjectName);
+          });
+          actions.append(focusBtn);
+        }
+
+        li.append(info, actions);
+        scheduleList.append(li);
+      }
+    }
+    scheduleSignature = signature;
+  }
 }
 
 function taskTime(dueAt: number, completed: boolean): string {
@@ -262,8 +370,16 @@ function render(snapshot: AppState) {
   pomoToggle.textContent = running ? "Pausar" : phase === "idle" ? "Concentrarme" : "Continuar";
   const pending = snapshot.calendar.deadlines.filter((deadline) => !deadline.completed);
   const next = pending.find((deadline) => deadline.dueAt > Date.now());
-  document.getElementById("focus-task")!.textContent = next?.title || "Haz espacio para concentrarte.";
-  document.getElementById("focus-course")!.textContent = next?.course || "Un paso pequeño también cuenta.";
+  if (snapshot.misemestre?.currentClass) {
+    document.getElementById("focus-task")!.textContent = `En clase: ${snapshot.misemestre.currentClass.subjectName}`;
+    document.getElementById("focus-course")!.textContent = `${snapshot.misemestre.currentClass.location} (${snapshot.misemestre.currentClass.startTime} - ${snapshot.misemestre.currentClass.endTime})`;
+  } else if (snapshot.misemestre?.nextClass && snapshot.misemestre.nextClass.startsInMinutes <= 60 && snapshot.misemestre.nextClass.startsInMinutes > 0) {
+    document.getElementById("focus-task")!.textContent = `Próxima clase: ${snapshot.misemestre.nextClass.subjectName}`;
+    document.getElementById("focus-course")!.textContent = `${snapshot.misemestre.nextClass.location} (en ${snapshot.misemestre.nextClass.startsInMinutes} min)`;
+  } else {
+    document.getElementById("focus-task")!.textContent = next?.title || "Haz espacio para concentrarte.";
+    document.getElementById("focus-course")!.textContent = next?.course || "Un paso pequeño también cuenta.";
+  }
   document.getElementById("summary-pending")!.textContent = String(pending.length);
   document.getElementById("summary-completed")!.textContent = String(snapshot.calendar.deadlines.length - pending.length);
   const today = new Date().toDateString();
@@ -280,8 +396,19 @@ function render(snapshot: AppState) {
     }
     lastRepository = snapshot.github.repository;
   }
+  if (snapshot.misemestre) {
+    if (lastMisemestreUrl !== snapshot.misemestre.url) {
+      if (!misemestreDraftChanged || misemestreUrl.value.trim() === snapshot.misemestre.url) {
+        misemestreUrl.value = snapshot.misemestre.url;
+        misemestreDraftChanged = false;
+      }
+      lastMisemestreUrl = snapshot.misemestre.url;
+    }
+    misemestreToggle.textContent = snapshot.misemestre.enabled ? "Desactivar" : "Activar";
+    misemestreToggle.setAttribute("aria-pressed", String(snapshot.misemestre.enabled));
+  }
   syncButton.disabled = snapshot.calendar.syncing;
-  renderFeedback(); renderTasks(snapshot); renderNotifications(snapshot);
+  renderFeedback(); renderSchedule(snapshot); renderTasks(snapshot); renderNotifications(snapshot);
   showError(skinFeedback, snapshot.skinError || metadataError);
   showError(actionFeedback, commandError || snapshot.actionError);
 }
@@ -300,6 +427,17 @@ document.querySelectorAll<HTMLButtonElement>(".btn-action").forEach((button) => 
 });
 pomoToggle.addEventListener("click", () => command("pomo-toggle"));
 document.getElementById("btn-pomo-reset")!.addEventListener("click", () => command("pomo-reset"));
+misemestreUrl.addEventListener("input", () => { misemestreDraftChanged = true; });
+document.getElementById("misemestre-form")!.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const url = misemestreUrl.value.trim();
+  command("misemestre-sync", url);
+});
+misemestreToggle.addEventListener("click", () => {
+  if (state?.misemestre) {
+    command("misemestre-toggle", !state.misemestre.enabled);
+  }
+});
 calendarUrl.addEventListener("input", () => { calendarDraftChanged = true; validationError = ""; renderFeedback(); });
 document.getElementById("calendar-form")!.addEventListener("submit", (event) => {
   event.preventDefault();
