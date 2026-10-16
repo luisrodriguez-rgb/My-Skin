@@ -24,6 +24,13 @@ import { githubMonitor } from "./githubMonitor";
 import { NotificationQueue, contextualPetState } from "./notifications";
 import type { AppNotification } from "./notifications";
 import { safeTaskUrl } from "./webLinks";
+import {
+  fetchMiSemestreFeed,
+  sendMiSemestreFocusSession,
+  getMiSemestreConfig,
+  saveMiSemestreConfig,
+  type MiSemestreFeed,
+} from "./miSemestreProvider";
 
 // --- TIPOS DEL SISTEMA DE SKINS ---
 interface StateConfig {
@@ -640,6 +647,20 @@ async function registerCommands() {
     listen<string>("deadline-open", ({ payload }) => { void openDeadline(payload); }),
     listen<string>("notification-dismiss", ({ payload }) => dismissNotification(payload)),
     listen("pomo-reset", () => pomodoroEngine.reset()),
+    listen<string>("pomo-start-task", ({ payload }) => {
+      focusTaskTitle = payload;
+      if (pomodoroEngine.getPhase() !== "focus") pomodoroEngine.startFocus();
+      else if (!pomodoroEngine.isRunning()) pomodoroEngine.resume();
+    }),
+    listen<string>("misemestre-sync", ({ payload }) => { void syncMiSemestre(payload); }),
+    listen<boolean>("misemestre-toggle", ({ payload }) => {
+      saveMiSemestreConfig({ enabled: payload });
+      if (payload) void syncMiSemestre();
+      else {
+        misemestreFeed = null;
+        publishState();
+      }
+    }),
     listen<string>("calendar-sync", ({ payload }) => { void syncCalendar(payload); }),
     listen<string>("github-repository", ({ payload }) => {
       try {
@@ -659,7 +680,71 @@ async function registerCommands() {
   await initialSkin;
   academicSyncService.startPeriodicCheck(60);
   githubMonitor.startPolling(180);
+  void syncMiSemestre();
+  window.setInterval(() => {
+    if (getMiSemestreConfig().enabled) void syncMiSemestre();
+  }, 60000);
   publishState();
+}
+
+let focusTaskTitle: string | undefined = undefined;
+let misemestreFeed: MiSemestreFeed | null = null;
+let misemestreSyncing = false;
+let misemestreError: string | undefined = undefined;
+let misemestreLastSyncTime: number | null = null;
+const alertedClassStarts = new Set<string>();
+
+function formatSyncTime(timestamp: number): string {
+  const diffMin = Math.floor((Date.now() - timestamp) / 60000);
+  if (diffMin < 1) return "Sincronizado ahora";
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  return `Hace ${Math.floor(diffMin / 60)} h`;
+}
+
+async function syncMiSemestre(urlOverride?: string) {
+  const config = getMiSemestreConfig();
+  if (!config.enabled && !urlOverride) return;
+  if (misemestreSyncing) return;
+
+  misemestreSyncing = true;
+  misemestreError = undefined;
+  publishState();
+
+  if (urlOverride) {
+    saveMiSemestreConfig({ url: urlOverride, enabled: true });
+  }
+
+  const result = await fetchMiSemestreFeed(urlOverride || config.url);
+  misemestreSyncing = false;
+
+  if (result.success && result.feed) {
+    misemestreFeed = result.feed;
+    misemestreLastSyncTime = Date.now();
+    misemestreError = undefined;
+
+    academicSyncService.syncFromMiSemestre(result.feed);
+
+    const next = result.feed.today.nextClass;
+    if (next && next.startsInMinutes <= 15 && next.startsInMinutes > 0) {
+      const key = `${next.id}:${next.startTime}`;
+      if (!alertedClassStarts.has(key)) {
+        alertedClassStarts.add(key);
+        notifications.push({
+          id: `class:${key}`,
+          kind: "academic",
+          state: "ALERT_SEMESTRE",
+          title: "CLASE PRÓXIMA",
+          subtitle: `${next.subjectName} en ${next.location} (${next.startsInMinutes} min)`,
+          urgent: true,
+          durationMs: 12000,
+        });
+      }
+    }
+  } else {
+    misemestreError = result.error;
+  }
+
+  refreshPresentation();
 }
 
 async function syncCalendar(url: string) {
@@ -674,6 +759,7 @@ async function syncCalendar(url: string) {
 }
 
 function publishState() {
+  const misemestreConfig = getMiSemestreConfig();
   const state: AppState = {
     skin: activeManifest?.id || "spartan",
     petState: currentState,
@@ -693,6 +779,19 @@ function publishState() {
       lastSync: academicSyncService.getLastSyncFormatted(),
       syncing: calendarSyncing,
       error: calendarError,
+    },
+    misemestre: {
+      enabled: misemestreConfig.enabled,
+      connected: !!misemestreFeed?.connected,
+      url: misemestreConfig.url,
+      semester: misemestreFeed?.semester,
+      student: misemestreFeed?.student,
+      todayClasses: misemestreFeed?.today?.classes || [],
+      currentClass: misemestreFeed?.today?.currentClass || null,
+      nextClass: misemestreFeed?.today?.nextClass || null,
+      lastSync: misemestreLastSyncTime ? formatSyncTime(misemestreLastSyncTime) : "Sin sincronizar",
+      syncing: misemestreSyncing,
+      error: misemestreError,
     },
   };
   void emit("state-changed", state).catch((error) => console.error("No se pudo compartir el estado", error));
@@ -756,11 +855,27 @@ pomodoroEngine.subscribe({
   },
   onPhaseChange: (phase: PomodoroPhase) => {
     ambientState = "IDLE";
-    if (phase === "break") notifications.push({
-      id: `pomodoro:${Date.now()}`, kind: "pomodoro", state: "WALK",
-      title: "SESIÓN COMPLETADA", subtitle: "Completaste tu sesión de concentración.", durationMs: 8000,
-    });
-    if (phase === "idle") notifications.removeWhere((item) => item.kind === "pomodoro");
+    if (phase === "break") {
+      notifications.push({
+        id: `pomodoro:${Date.now()}`, kind: "pomodoro", state: "WALK",
+        title: "SESIÓN COMPLETADA", subtitle: "Completaste tu sesión de concentración.", durationMs: 8000,
+      });
+
+      const config = getMiSemestreConfig();
+      if (config.enabled && config.autoLogSessions) {
+        const activeClass = misemestreFeed?.today?.currentClass || misemestreFeed?.today?.nextClass;
+        const taskTitle = focusTaskTitle || (activeClass ? `Estudio: ${activeClass.subjectName}` : "Sesión de foco MySkin");
+        void sendMiSemestreFocusSession({
+          durationMinutes: 25,
+          title: taskTitle,
+          subjectId: activeClass?.subjectId,
+        }, config.url).catch(() => {});
+      }
+    }
+    if (phase === "idle") {
+      focusTaskTitle = undefined;
+      notifications.removeWhere((item) => item.kind === "pomodoro");
+    }
     refreshPresentation();
   },
 });
