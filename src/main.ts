@@ -114,6 +114,21 @@ function recordUserActivity() {
 // Estado del globo de notificación (Web del semestre / GitHub)
 let activeNotification: { title: string; subtitle: string; urgent: boolean } | null = null;
 
+// Estado de integración con MiSemestre
+let focusTaskTitle: string | undefined = undefined;
+let misemestreFeed: MiSemestreFeed | null = null;
+let misemestreSyncing = false;
+let misemestreError: string | undefined = undefined;
+let misemestreLastSyncTime: number | null = null;
+const alertedClassStarts = new Set<string>();
+
+function formatSyncTime(timestamp: number): string {
+  const diffMin = Math.floor((Date.now() - timestamp) / 60000);
+  if (diffMin < 1) return "Sincronizado ahora";
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  return `Hace ${Math.floor(diffMin / 60)} h`;
+}
+
 /**
  * 1. Cargador dinámico de Skins (lee el manifest.json y la textura PNG)
  */
@@ -685,20 +700,6 @@ async function registerCommands() {
     if (getMiSemestreConfig().enabled) void syncMiSemestre();
   }, 60000);
   publishState();
-}
-
-let focusTaskTitle: string | undefined = undefined;
-let misemestreFeed: MiSemestreFeed | null = null;
-let misemestreSyncing = false;
-let misemestreError: string | undefined = undefined;
-let misemestreLastSyncTime: number | null = null;
-const alertedClassStarts = new Set<string>();
-
-function formatSyncTime(timestamp: number): string {
-  const diffMin = Math.floor((Date.now() - timestamp) / 60000);
-  if (diffMin < 1) return "Sincronizado ahora";
-  if (diffMin < 60) return `Hace ${diffMin} min`;
-  return `Hace ${Math.floor(diffMin / 60)} h`;
 }
 
 async function syncMiSemestre(urlOverride?: string) {
