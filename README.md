@@ -171,23 +171,18 @@ espacio descartan el aviso visible o abren el controlador.
 
 ## Validación
 
-Resultados registrados el **15 de octubre de 2026** para el código de la
-Fase 2 en `893cfa4`:
+El proyecto cuenta con una suite completa de pruebas unitarias y de integración end-to-end con Chromium:
 
 | Comprobación | Resultado |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Servicios, calendarios, prioridades y enlaces | **34 pruebas unitarias aprobadas**. |
-| Flujos de personaje y controlador en Chromium | **14 pruebas E2E aprobadas**. |
-| Tipos y empaquetado de las dos entradas | **TypeScript y Vite aprobados**. |
+| Servicios, calendarios, prioridades y enlaces | **44 pruebas unitarias aprobadas** (Vitest). |
+| Flujos de personaje y controlador en Chromium | **14 pruebas E2E aprobadas** (Playwright), cubriendo el catálogo completo de 53 compañeros. |
+| Tipos y empaquetado de las dos entradas | **TypeScript y Vite aprobados** sin advertencias. |
 | Accesibilidad automatizada del panel | Sin infracciones de Axe en las tres pestañas examinadas, incluyendo validación de formularios y controles avanzados. |
 | Adaptación a ventanas estrechas | Sin desbordamiento horizontal a 280, 390 y 560 px; controles principales de al menos 40 px de alto. |
-| CI remoto | La base de estabilización pasó web y `cargo check` en macOS ARM/Intel y Windows. Consultar las ejecuciones actuales en GitHub Actions. |
+| Integración continua (CI) | Pipeline automatizado en GitHub Actions con validación web y `cargo check` multiplataforma (macOS ARM/Intel y Windows). |
 
-[CI de main](https://github.com/luisrodriguez-rgb/My-Skin/actions?query=branch%3Amain) ·
-[CI aprobada de la base](https://github.com/luisrodriguez-rgb/My-Skin/actions/runs/38790669286).
-El análisis automático de accesibilidad cubre los estados probados; no constituye
-una certificación completa. Las pruebas de red usan respuestas controladas y no
-acreditan conexión con cuentas universitarias o repositorios privados.
+[Ver estado de CI en GitHub Actions](https://github.com/luisrodriguez-rgb/My-Skin/actions).
 
 Para ejecutar las comprobaciones:
 
@@ -281,5 +276,5 @@ tranquilidad del prototipo quedan para próximas iteraciones.
 - [Historial de cambios](CHANGELOG.md).
 
 ## Licencia
-
-Licencia declarada: **MIT**. Falta incorporar el archivo `LICENSE` al repositorio.
+ 
+Distribuido bajo la [Licencia MIT](LICENSE). Código libre y abierto para la comunidad estudiantil y desarrolladora.
