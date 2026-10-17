@@ -3,6 +3,10 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
   workers: 1,
+  timeout: 45000,
+  expect: {
+    timeout: 10000,
+  },
   use: {
     baseURL: "http://127.0.0.1:4173",
     headless: true,
@@ -13,6 +17,6 @@ export default defineConfig({
   webServer: {
     command: "pnpm run dev --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
   },
 });

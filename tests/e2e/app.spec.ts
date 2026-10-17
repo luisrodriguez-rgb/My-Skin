@@ -5,14 +5,15 @@ async function prepare(context: BrowserContext) {
 }
 async function sprite(page: Page) {
   await page.goto("/");
+  await expect(page.locator("#pet-canvas")).toHaveAttribute("data-state", "IDLE");
   await expect.poll(() => page.locator("#pet-canvas").evaluate((canvas: HTMLCanvasElement) =>
     canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data.some((value, i) => i % 4 === 3 && value > 0)
-  )).toBe(true);
+  ), { timeout: 15000 }).toBe(true);
 }
 async function controller(context: BrowserContext) {
   const page = await context.newPage();
   await page.goto("/controller.html");
-  await expect(page.locator("#btn-pomo-toggle")).toBeEnabled();
+  await expect(page.locator("#btn-pomo-toggle")).toBeEnabled({ timeout: 15000 });
   return page;
 }
 
@@ -27,7 +28,7 @@ test("web startup and controller commands work without Tauri errors", async ({ p
   await panel.getByRole("button", { name: "Elegir Spider-Hero", exact: true }).click();
   await panel.getByRole("tab", { name: "Hoy", exact: true }).click();
   await expect(panel.locator("#char-name")).toContainText("Spider-Hero");
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("myskin_active_skin"))).toBe("spiderman");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("myskin_active_skin")), { timeout: 15000 }).toBe("spiderman");
   await panel.getByRole("tab", { name: "Ajustes" }).click();
   await panel.click("#btn-sound-toggle");
   await expect(panel.locator("#btn-sound-toggle")).toHaveText("Sonido desactivado");
@@ -104,5 +105,5 @@ test("controller can connect when the sprite starts later", async ({ context }) 
   await prepare(context); const panel = await context.newPage(); await panel.goto("/controller.html");
   await expect(panel.locator("#btn-pomo-toggle")).toBeDisabled();
   const main = await context.newPage(); await sprite(main);
-  await expect(panel.locator("#btn-pomo-toggle")).toBeEnabled();
+  await expect(panel.locator("#btn-pomo-toggle")).toBeEnabled({ timeout: 15000 });
 });

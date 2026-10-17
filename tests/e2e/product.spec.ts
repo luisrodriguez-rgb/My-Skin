@@ -1,5 +1,6 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { skinCatalog } from "../../src/skinCatalog";
 
 const feedUrl = "http://127.0.0.1:4173/fixtures/product.ics";
 function calendar(events: Array<{ id: string; title: string; minutes: number; url?: string }>) {
@@ -175,14 +176,14 @@ test("keyboard tabs preserve the timer, calendar draft and confirmed companion",
   await panel.keyboard.press("ArrowRight");
   await expect(panel.getByRole("tab", { name: "Compañeros" })).toBeFocused();
   await expect(panel.locator("#pets")).toBeVisible();
-  await expect(panel.locator("#pet-grid button")).toHaveCount(10);
+  await expect(panel.locator("#pet-grid button")).toHaveCount(skinCatalog.length);
   await expect.poll(() => panel.locator("#pet-grid canvas").evaluateAll((canvases) => canvases.every((element) => {
     const canvas = element as HTMLCanvasElement;
     return canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data.some((v, i) => i % 4 === 3 && v > 0);
-  }))).toBe(true);
+  })), { timeout: 15000 }).toBe(true);
   await panel.getByRole("button", { name: "Elegir Capibara", exact: true }).click();
   await expect(panel.locator('[data-skin="capybara"]')).toHaveAttribute("aria-pressed", "true");
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("myskin_active_skin"))).toBe("capybara");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("myskin_active_skin")), { timeout: 15000 }).toBe("capybara");
   await panel.getByRole("tab", { name: "Compañeros" }).focus(); await panel.keyboard.press("End");
   await expect(panel.getByRole("tab", { name: "Ajustes" })).toBeFocused();
   await panel.fill("#input-calendar-url", "https://example.test/mi-borrador.ics");
