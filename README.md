@@ -22,7 +22,7 @@ pasos, foco y crecimiento.
 
 | Función | Comportamiento actual |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Elegir compañero** | Galería de diez skins con vista previa, selección confirmada y persistencia entre aperturas. |
+| **Elegir compañero** | Catálogo expandido de 53 skins clasificadas en 7 categorías (Mascotas, Superhéroes, Cine, Anime, Videojuegos, Cartoons, Deportes) con buscador en tiempo real y barra de filtros accesible. |
 | **Concentrarte** | Pomodoro de 25 minutos de foco y 5 de descanso, con pausa, reanudación y reinicio. Cerrar el controlador conserva la sesión. |
 | **Consultar entregas** | Importar un calendario `.ics` o `webcal://` y ver curso, título, fecha y tiempo restante. |
 | **Actuar sobre una tarea** | Marcarla como completada en MySkin o abrir su enlace HTTP(S) en el navegador. Las completadas se conservan al resincronizar. |
@@ -41,10 +41,14 @@ modifica el estado de entrega en Canvas, Moodle u otro LMS.
 ## Así se ve
 
 <p align="center">
+  <img src="docs/images/myskin-instagram-showcase.png" alt="MySkin: Universo de 53 compañeros en pixel art, Pomodoro y seguimiento de entregas" width="600" />
+</p>
+
+<p align="center">
   <img src="docs/images/controller-current.png" alt="Controlador actual: Capibara, Pomodoro activo, próximas entregas y aviso académico" width="560" />
 </p>
 
-Captura de la aplicación en simulación web, con entregas de ejemplo y zona horaria
+Captura de la aplicación en simulación web y escritorio, con entregas de ejemplo y zona horaria
 de Bogotá. También puedes ver la [galería de compañeros](docs/images/companions-current.png),
 los [ajustes](docs/images/settings-current.png) y la [vista a 390 px](docs/images/today-390.png).
 La [demostración animada del personaje](docs/images/demo.webp) y el
@@ -56,7 +60,7 @@ complementan esta vista.
 | Pestaña | Qué reúne |
 | --------------------- | ------------------------------------------------------------------------------------------------------ |
 | **Hoy** | Próxima entrega, compañero protagonista, Pomodoro, lista de tareas, resumen del calendario y avisos. |
-| **Compañeros** | Galería de los diez personajes, personalidad breve, vista previa y selección activa. |
+| **Compañeros** | Galería de los 53 personajes con buscador en vivo, chips de categorías, vista previa y selección activa. |
 | **Ajustes** | Sonido, modo fijo/patrulla, calendario, repositorio de GitHub y pruebas avanzadas. |
 
 Cambiar de pestaña conserva el reloj y los borradores de conexión. Puedes navegar
@@ -220,18 +224,31 @@ pestañas del mismo origen en web.
 | [`src/githubMonitor.ts`](src/githubMonitor.ts)                                                 | Consultas, cursores y deduplicación de actividad GitHub.                        |
 | [`src/platform.ts`](src/platform.ts)                                                           | Adaptación del transporte entre escritorio y web.                               |
 | [`src-tauri/`](src-tauri/)                                                                     | Ventanas nativas, comandos y menú del sistema.                                  |
-| [`public/skins/`](public/skins/)                                                               | Manifiestos y texturas de los diez personajes.                                   |
+| [`public/skins/`](public/skins/)                                                               | Manifiestos y texturas de los 53 personajes organizados por categorías.          |
 
-El catálogo incluye **Leónidas, Spider-Hero, Mi Avatar Pixelado, El Dev Fantasma,
-El Futbolista 10, Capibara Chill, Cyber Ninja, Mago de Fantasía, Slime de Videojuego
-y Astronauta Perdido**. Cada carpeta contiene `manifest.json` y `spritesheet.png`.
-El [manifiesto de Leónidas](public/skins/spartan/manifest.json) muestra el formato
-actual: tamaño de cuadro, escala y configuración de los seis estados `IDLE`,
-`WALK`, `ALERT_SEMESTRE`, `VICTORY_GITHUB`, `FOCUS` y `SLEEP`.
+### Catálogo de compañeros (53 skins)
 
-La animación respeta los FPS de cada estado y se coordina mediante
-`requestAnimationFrame`. La importación de skins desde la interfaz y el editor
-visual forman parte de la evolución prevista.
+El catálogo de MySkin reúne **53 personajes icónicos en pixel art** organizados en siete categorías temáticas:
+
+| Categoría | Personajes incluidos |
+| :--- | :--- |
+| **Mascotas y Vida** (7) | Capibara Chill (`capybara`), Labrador Retriever (`labrador-retriever`), Lily Estudiante (`little-girl`), Gato Negro (`cat-mystic`), Shiba Inu (`shiba-inu`), Panda Zen (`panda-zen`), Pingüino Antártico (`arctic-penguin`). |
+| **Superhéroes** (6) | Spider-Hero (`spiderman`), Capitán América (`captain-america`), Iron Man (`iron-man`), Thor Odinson (`thor-odinson`), Batman (`batman-detective`), Superman (`superman-man-of-steel`). |
+| **Cine y Fantasía** (8) | Harry Potter (`harry-potter`), Lord Voldemort (`lord-voldemort`), Mago de Fantasía (`fantasy-wizard`), Leónidas (`spartan`), Astronauta Perdido (`astro-lost`), Darth Vader (`darth-vader`), Maestro Yoda (`master-yoda`), Gandalf el Gris (`gandalf-grey`). |
+| **Anime y Manga** (11) | Cyber Ninja (`cyber-ninja`), Son Goku (`son-goku`), Príncipe Vegeta (`vegeta-prince`), Naruto Uzumaki (`naruto-uzumaki`), Monkey D. Luffy (`monkey-d-luffy`), Roronoa Zoro (`roronoa-zoro`), Satoru Gojo (`satoru-gojo`), Tanjiro Kamado (`tanjiro-kamado`), Nezuko Kamado (`nezuko-kamado`), Saitama (`saitama-hero`), Capitán Levi (`levi-ackerman`). |
+| **Videojuegos** (13) | Tu Avatar (`dev-avatar`), Dev Fantasma (`ghost-dev`), Slime (`game-slime`), Super Mario (`super-mario`), Link - Héroe del Tiempo (`link-hero`), Pikachu (`pikachu-electric`), Sonic the Hedgehog (`sonic-hedgehog`), Kirby (`kirby-dream`), Mega Man (`mega-man-blue`), Master Chief (`master-chief-117`), Kratos (`kratos-war`), Sans el Esqueleto (`sans-undertale`), Steve (`steve-craft`). |
+| **Cartoons y Series** (3) | Bugs Bunny (`bugs-bunny`), Bob Esponja (`spongebob-square`), Rick Sanchez (`rick-sanchez`). |
+| **Deportes y Leyendas** (5) | El Futbolista 10 (`football-10`), Neymar Jr. (`neymar-jr`), Lionel Messi (`lionel-messi`), Cristiano Ronaldo (`cristiano-cr7`), Michael Jordan (`michael-jordan-23`). |
+
+Cada carpeta en `public/skins/[id]/` contiene su `manifest.json` y `spritesheet.png` de 384x384 px (grilla 64x64 de 6 filas y 6 columnas). Cada skin implementa los seis estados de animación estándar:
+- `IDLE`: Parpadeo y respiración de reposo (4 frames, 6 fps).
+- `WALK`: Desplazamiento lateral (6 frames, 10 fps).
+- `ALERT_SEMESTRE`: Reacción ante entregas próximas a vencer (4 frames, 8 fps).
+- `VICTORY_GITHUB`: Celebración al completar tareas o recibir merges (6 frames, 12 fps).
+- `FOCUS`: Concentración activa durante el Pomodoro (4 frames, 6 fps).
+- `SLEEP`: Reposo y siesta (4 frames, 4 fps).
+
+La animación respeta los FPS de cada estado y se coordina mediante `requestAnimationFrame`. La galería del panel de control incluye buscador por texto en tiempo real y selector toolbar de categorías.
 
 ## Límites actuales y próximos pasos
 
