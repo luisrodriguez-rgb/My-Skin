@@ -46,6 +46,16 @@ export const skinCatalog: readonly SkinItem[] = [
   { id: "dev-avatar", name: "Tu avatar", detail: "Tu siguiente gran idea.", color: "#9bd3d2", category: "gaming" },
   { id: "ghost-dev", name: "Dev fantasma", detail: "Código con compañía.", color: "#bbcee8", category: "gaming" },
   { id: "game-slime", name: "Slime", detail: "Pequeños pasos suman.", color: "#b7dc94", category: "gaming" },
+  { id: "super-mario", name: "Super Mario", detail: "Here we go! Al siguiente nivel.", color: "#ef4444", category: "gaming" },
+  { id: "link-hero", name: "Link (Héroe del Tiempo)", detail: "Espada Maestra y concentración.", color: "#22c55e", category: "gaming" },
+  { id: "pikachu-electric", name: "Pikachu", detail: "Energía eléctrica para tu jornada.", color: "#facc15", category: "gaming" },
+  { id: "sonic-hedgehog", name: "Sonic the Hedgehog", detail: "Resolución a la velocidad del sonido.", color: "#3b82f6", category: "gaming" },
+  { id: "kirby-dream", name: "Kirby", detail: "Inhala distracciones, exhala foco.", color: "#f472b6", category: "gaming" },
+  { id: "mega-man-blue", name: "Mega Man", detail: "Precisión de Buster y disciplina robótica.", color: "#06b6d4", category: "gaming" },
+  { id: "master-chief-117", name: "Master Chief", detail: "Misión prioritaria, foco inquebrantable.", color: "#4d7c0f", category: "gaming" },
+  { id: "kratos-war", name: "Kratos", detail: "Hacha en mano, cero excusas.", color: "#b91c1c", category: "gaming" },
+  { id: "sans-undertale", name: "Sans el Esqueleto", detail: "Sonrisa relajada y foco inesperado.", color: "#60a5fa", category: "gaming" },
+  { id: "steve-craft", name: "Steve", detail: "Bloque a bloque, construyendo logros.", color: "#0ea5e9", category: "gaming" },
 
   // Cartoons
   { id: "bugs-bunny", name: "Bugs Bunny", detail: "¿Qué hay de nuevo, viejo?", color: "#a3b1c6", category: "cartoons" },

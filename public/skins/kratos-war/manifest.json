@@ -1,0 +1,56 @@
+{
+  "id": "kratos-war",
+  "name": "Kratos",
+  "category": "gaming",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Imponente, feroz con los errores, implacable para cumplir objetivos.",
+  "dialogues": {
+    "alert": "¡Muchacho! Una tarea requiere tu atención inmediata. No flaquees.",
+    "victory": "El trabajo está hecho. Que los dioses tomen nota de tu temple.",
+    "focus": "Afilando el hacha y templando la mente contra la distracción.",
+    "break": "Descanso breve. La debilidad no es una opción.",
+    "sleep": "Cierro los ojos, pero mi guardia permanece alerta."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "pikachu-electric",
+  "name": "Pikachu",
+  "category": "gaming",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Energético, leal, chispeante de ideas y apoyo incondicional.",
+  "dialogues": {
+    "alert": "¡Pika-pika! Alerta de clase o entrega acercándose.",
+    "victory": "¡Pikachu! ¡Impactrueno de celebración por esa tarea terminada!",
+    "focus": "Cargando baterías y manteniendo la energía al 100%.",
+    "break": "Comiendo una baya para recuperar vitalidad.",
+    "sleep": "Pika... zzz... chispitas suaves de descanso."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}
