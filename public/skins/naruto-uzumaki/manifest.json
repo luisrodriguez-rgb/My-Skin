@@ -1,0 +1,56 @@
+{
+  "id": "naruto-uzumaki",
+  "name": "Naruto Uzumaki",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Enérgico, leal a su palabra, nunca se rinde ante un bug o un examen difícil.",
+  "dialogues": {
+    "alert": "¡Deberas! Hay una misión urgente en tu pergamino de tareas.",
+    "victory": "¡Ese es mi camino ninja! Merge exitoso sin dudar jamás.",
+    "focus": "Entrenando el control de chakra para mantener el foco en la tarea.",
+    "break": "¡Hora de un tazón de ramen para reponer fuerzas!",
+    "sleep": "Cerrando los ojos... soñando con ser Hokage."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

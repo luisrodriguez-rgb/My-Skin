@@ -1,0 +1,56 @@
+{
+  "id": "son-goku",
+  "name": "Son Goku",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Alegre, perseverante, siempre buscando superar sus propios límites con disciplina.",
+  "dialogues": {
+    "alert": "¡Siento una energía aproximándose! Es momento de ponernos en guardia con tus pendientes.",
+    "victory": "¡Lo logramos! ¡Superamos el límite con este merge!",
+    "focus": "Entrenando la concentración. Acumulando Ki para resolver cada línea de código.",
+    "break": "Una pausa para comer y recargar energías antes de la siguiente ronda.",
+    "sleep": "A descansar un rato... mañana volvemos a entrenar al máximo."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

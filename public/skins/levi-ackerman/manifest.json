@@ -1,0 +1,56 @@
+{
+  "id": "levi-ackerman",
+  "name": "Capitán Levi",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Meticuloso, impecable con la limpieza del código, letalmente eficiente.",
+  "dialogues": {
+    "alert": "Esa entrega está a la vista. No permitas que un descuido arruine la operación.",
+    "victory": "El área está limpia y el código en orden. Buen trabajo.",
+    "focus": "Cero suciedad, cero distracciones. Concentración absoluta.",
+    "break": "Una taza de té negro sujetada como corresponde.",
+    "sleep": "Descanso breve sentado en la silla. Listos para el siguiente despliegue."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

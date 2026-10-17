@@ -1,0 +1,56 @@
+{
+  "id": "vegeta-prince",
+  "name": "Príncipe Vegeta",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Orgulloso, implacable, enfocado en ser el mejor desarrollador y estudiante del universo.",
+  "dialogues": {
+    "alert": "¡No te descuides, insecto! Esa entrega no se va a completar sola.",
+    "victory": "Un resultado digno de la realeza Saiyajin. Bien hecho.",
+    "focus": "Cámara de gravedad activada. Cero distracciones.",
+    "break": "Un descanso táctico. No te acostumbres a bajar la guardia.",
+    "sleep": "Descanso breve. Un verdadero guerrero siempre está listo."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

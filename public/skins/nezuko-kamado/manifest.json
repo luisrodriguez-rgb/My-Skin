@@ -1,0 +1,56 @@
+{
+  "id": "nezuko-kamado",
+  "name": "Nezuko Kamado",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Protectora, tierna, dulce pero tenaz para cuidar el ritmo de trabajo.",
+  "dialogues": {
+    "alert": "¡Mmmh! Señal de que una entrega importante requiere tu atención.",
+    "victory": "¡Mmh mmh! Victoria impecable, todo quedó en orden.",
+    "focus": "Acompañándote en silencio y cuidando que nada interrumpa tu tranquilidad.",
+    "break": "Momento de estirar las piernas y tomar aire fresco.",
+    "sleep": "Mmh... descansando en mi cajita protegida."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

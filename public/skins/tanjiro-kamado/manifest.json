@@ -1,0 +1,56 @@
+{
+  "id": "tanjiro-kamado",
+  "name": "Tanjiro Kamado",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Empático, perseverante, guiado por la respiración y el olfato certero para resolver tareas.",
+  "dialogues": {
+    "alert": "Puedo oler la fecha límite acercándose. Mantengamos la calma y el paso firme.",
+    "victory": "¡Respiración del Agua, forma final! Trabajo completado con honor.",
+    "focus": "Inhalar hondo, exhalar con calma. Respiración de concentración total.",
+    "break": "Un té caliente para calmar el cuerpo y seguir adelante.",
+    "sleep": "Un sueño tranquilo para recuperar todas las fuerzas."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "monkey-d-luffy",
+  "name": "Monkey D. Luffy",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Aventurero, optimista, convencido de que llegará a ser el Rey de los Desarrolladores.",
+  "dialogues": {
+    "alert": "¡Tierra a la vista! Prepárate, tenemos una entrega importante navegando hacia acá.",
+    "victory": "¡Sugoiii! ¡Un commit legendario digno del Grand Line!",
+    "focus": "Concentrándome al máximo... ¡para después celebrar con un gran banquete!",
+    "break": "¡Carne! Necesito un refrigerio antes de seguir navegando.",
+    "sleep": "Zzz... roncando feliz con el sombrero bien puesto."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

@@ -31,6 +31,16 @@ export const skinCatalog: readonly SkinItem[] = [
 
   // Anime
   { id: "cyber-ninja", name: "Cyber Ninja", detail: "Entra en tu zona.", color: "#beaee8", category: "anime" },
+  { id: "son-goku", name: "Son Goku", detail: "Supera cada límite.", color: "#f97316", category: "anime" },
+  { id: "vegeta-prince", name: "Príncipe Vegeta", detail: "Orgullo y disciplina Saiyajin.", color: "#1d4ed8", category: "anime" },
+  { id: "naruto-uzumaki", name: "Naruto Uzumaki", detail: "Camino ninja sin rendirse.", color: "#f59e0b", category: "anime" },
+  { id: "monkey-d-luffy", name: "Monkey D. Luffy", detail: "Rumbo al Rey de los Desarrolladores.", color: "#dc2626", category: "anime" },
+  { id: "roronoa-zoro", name: "Roronoa Zoro", detail: "Corte certero a cada tarea.", color: "#10b981", category: "anime" },
+  { id: "satoru-gojo", name: "Satoru Gojo", detail: "Vacío Infinito contra distracciones.", color: "#38bdf8", category: "anime" },
+  { id: "tanjiro-kamado", name: "Tanjiro Kamado", detail: "Respiración de concentración total.", color: "#059669", category: "anime" },
+  { id: "nezuko-kamado", name: "Nezuko Kamado", detail: "Compañera leal y protectora.", color: "#ec4899", category: "anime" },
+  { id: "saitama-hero", name: "Saitama", detail: "Resuelve de un solo golpe.", color: "#eab308", category: "anime" },
+  { id: "levi-ackerman", name: "Capitán Levi", detail: "Cero suciedad, precisión letal.", color: "#475569", category: "anime" },
 
   // Videojuegos
   { id: "dev-avatar", name: "Tu avatar", detail: "Tu siguiente gran idea.", color: "#9bd3d2", category: "gaming" },

@@ -1,0 +1,56 @@
+{
+  "id": "satoru-gojo",
+  "name": "Satoru Gojo",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Confiado, carismático, el hechicero más fuerte que manipula el espacio y el tiempo.",
+  "dialogues": {
+    "alert": "Tranquilo, yo me encargo de vigilar el tiempo. Tienes una entrega pronto.",
+    "victory": "Demasiado fácil. Nuestro trabajo es impecable, después de todo soy el más fuerte.",
+    "focus": "Activando Vacío Infinito: toda distracción se detiene antes de alcanzarnos.",
+    "break": "Vamos por unos dulces para endulzar la jornada.",
+    "sleep": "Descanso total. El infinito mantendrá todo a salvo."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

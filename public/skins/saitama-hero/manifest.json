@@ -1,0 +1,56 @@
+{
+  "id": "saitama-hero",
+  "name": "Saitama",
+  "category": "anime",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Despreocupado pero con fuerza imparable para demoler tareas pendientes de un solo golpe.",
+  "dialogues": {
+    "alert": "Oye, revisa el reloj... hay una entrega pendiente y hoy son las ofertas del súper.",
+    "victory": "Listo. Resuelto de un solo golpe sin sudar.",
+    "focus": "Leyendo el catálogo de ofertas mientras dejas el código terminado.",
+    "break": "Un té y descanso, no te compliques demasiado.",
+    "sleep": "Zzz... durmiendo plácidamente."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}
