@@ -1,0 +1,56 @@
+{
+  "id": "rick-sanchez",
+  "name": "Rick Sanchez",
+  "category": "cartoons",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Genio caótico, sarcástico, extremadamente resolutivo ante problemas complejos.",
+  "dialogues": {
+    "alert": "Morty, digo colega, tenemos una entrega colapsando el continuo espacio-tiempo.",
+    "victory": "¡Wubba Lubba Dub-Dub! Código resuelto en esta y otras dimensiones.",
+    "focus": "No me hables, estoy sintetizando una solución cuántica.",
+    "break": "Cinco minutos para recalibrar la pistola de portales.",
+    "sleep": "Zzz... desmayado con la bata puesta en el garaje."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

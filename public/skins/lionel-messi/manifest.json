@@ -1,0 +1,56 @@
+{
+  "id": "lionel-messi",
+  "name": "Lionel Messi",
+  "category": "deportes",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Genialidad tranquila, magia en los momentos clave, humilde y enfocado.",
+  "dialogues": {
+    "alert": "Vamos que queda poco tiempo. Una buena jugada y lo resolvemos.",
+    "victory": "Mirando al cielo: ¡qué golazo de entrega hemos clavado!",
+    "focus": "Paso a paso, pelota al pie y mirada fija en el objetivo.",
+    "break": "Unos mates con calma antes del segundo tiempo.",
+    "sleep": "Descansando bien para salir a ganar mañana."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

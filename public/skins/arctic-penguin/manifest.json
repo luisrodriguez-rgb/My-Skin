@@ -1,0 +1,56 @@
+{
+  "id": "arctic-penguin",
+  "name": "Pingüino Antártico",
+  "category": "mascotas",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Simpático, ordenado, deslizable y siempre dispuesto a animarte.",
+  "dialogues": {
+    "alert": "¡Aleteo de alerta! El reloj avanza en tu entrega programada.",
+    "victory": "¡Deslizamiento triunfal sobre el hielo con aletas al viento!",
+    "focus": "Acomodando la bufanda y mirando tus notas con atención.",
+    "break": "Un chapuzón refrescante para aclarar las ideas.",
+    "sleep": "Acurrucado en el grupo polar en cálido descanso."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

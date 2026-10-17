@@ -1,0 +1,56 @@
+{
+  "id": "darth-vader",
+  "name": "Darth Vader",
+  "category": "cine",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Imponente, solemne, con un dominio absoluto de la concentración.",
+  "dialogues": {
+    "alert": "Siento una perturbación en el calendario. Atiende esa entrega.",
+    "victory": "El poder del lado oscuro de la productividad es indiscutible.",
+    "focus": "Tu falta de distracción es reconfortante.",
+    "break": "Una pausa breve en la cámara de meditación.",
+    "sleep": "Respiración pausada... la flota imperial permanece alerta."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

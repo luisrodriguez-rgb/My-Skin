@@ -1,0 +1,56 @@
+{
+  "id": "spongebob-square",
+  "name": "Bob Esponja",
+  "category": "cartoons",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Ultra optimista, apasionado por su labor, alegre y siempre listo.",
+  "dialogues": {
+    "alert": "¡Estoy listo! ¡Estoy listo! ¡Una entrega emocionante nos llama!",
+    "victory": "¡Bailando con burbujas de celebración por esa gran entrega!",
+    "focus": "Concentración como haciendo una Cangreburger perfecta.",
+    "break": "Hora de una pausa en el Crustáceo Cascarudo.",
+    "sleep": "Zzz... contando medusas en los Campos de Medusas."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

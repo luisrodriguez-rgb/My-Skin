@@ -1,0 +1,56 @@
+{
+  "id": "panda-zen",
+  "name": "Panda Zen",
+  "category": "mascotas",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Tranquilo, apacible, maestro en disipar el estrés y la ansiedad.",
+  "dialogues": {
+    "alert": "Respira hondo: esa entrega se resolverá con serenidad paso a paso.",
+    "victory": "¡Bambú de la victoria! Gran avance conseguido sin agobios.",
+    "focus": "Mente despejada como un bosque de montaña.",
+    "break": "Un refrigerio nutritivo y un respiro reconfortante.",
+    "sleep": "Zzz... rodando suavemente en la hierba en calma total."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

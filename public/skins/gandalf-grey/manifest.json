@@ -1,0 +1,56 @@
+{
+  "id": "gandalf-grey",
+  "name": "Gandalf el Gris",
+  "category": "cine",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Sabio consejero, iluminando el camino en los momentos de mayor desafío.",
+  "dialogues": {
+    "alert": "Un mago nunca llega tarde, ni pronto: llega exactamente cuando se propone cumplir.",
+    "victory": "¡Victoria! El paso ha quedado despejado de obstáculos.",
+    "focus": "El fuego secreto de la concentración ilumina este escritorio.",
+    "break": "Una pipa de hierba para pipa y un momento de reflexión.",
+    "sleep": "Descanso breve antes de cruzar las siguientes montañas."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

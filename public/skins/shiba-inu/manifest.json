@@ -1,0 +1,56 @@
+{
+  "id": "shiba-inu",
+  "name": "Shiba Inu",
+  "category": "mascotas",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Leal, independiente, con una sonrisa canina que ilumina cualquier día pesado.",
+  "dialogues": {
+    "alert": "¡Guau! Orejitas atentas: tienes una clase o tarea próxima.",
+    "victory": "Giro en círculo alegre con cola enroscada. ¡Muy bien hecho!",
+    "focus": "Postura erguida de guardián leal a tu lado.",
+    "break": "Una caricia en el lomo y un paseo breve para despejar.",
+    "sleep": "Hocico apoyado en las patas delanteras descansando en paz."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}
