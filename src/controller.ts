@@ -2,7 +2,7 @@ import { emit, listen, isTauri } from "./platform";
 import { invoke } from "@tauri-apps/api/core";
 import { calendarFeedUrl, safeTaskUrl } from "./webLinks";
 import { setupTabs } from "./controllerTabs";
-import { skinCatalog, loadPreview, drawPreview } from "./skinCatalog";
+import { skinCatalog, loadPreview, drawPreview, type SkinCategory } from "./skinCatalog";
 import type { AppState, PetStateName } from "./appState";
 
 const charName = document.getElementById("char-name")!;
@@ -23,6 +23,9 @@ const actionFeedback = document.getElementById("action-error")!;
 const githubRepo = document.querySelector<HTMLInputElement>("#input-github-repo")!;
 const githubFeedback = document.getElementById("github-feedback")!;
 const petGrid = document.getElementById("pet-grid")!;
+const petSearch = document.querySelector<HTMLInputElement>("#input-pet-search");
+const categoryFilters = document.getElementById("pet-category-filters");
+const petGridEmpty = document.getElementById("pet-grid-empty");
 const scheduleSection = document.getElementById("schedule-section")!;
 const scheduleList = document.getElementById("schedule-list")!;
 const scheduleEmpty = document.getElementById("schedule-empty")!;
@@ -34,6 +37,8 @@ let state: AppState | null = null;
 let lastCalendarUrl: string | null = null;
 let lastRepository: string | null = null;
 let lastMisemestreUrl: string | null = null;
+let selectedCategory: SkinCategory = "all";
+let searchQuery = "";
 let calendarDraftChanged = false;
 let repositoryDraftChanged = false;
 let misemestreDraftChanged = false;
@@ -94,9 +99,54 @@ async function loadMetadata(snapshot: AppState) {
   showError(skinFeedback, state?.skinError || metadataError);
 }
 
+function applyGalleryFilters() {
+  const query = searchQuery.trim().toLowerCase();
+  let visibleCount = 0;
+
+  for (const button of petGrid.querySelectorAll<HTMLButtonElement>("[data-skin]")) {
+    const skinId = button.dataset.skin;
+    const skin = skinCatalog.find((item) => item.id === skinId);
+    if (!skin) continue;
+
+    const matchesCategory = selectedCategory === "all" || skin.category === selectedCategory;
+    const matchesSearch = !query ||
+      skin.name.toLowerCase().includes(query) ||
+      skin.detail.toLowerCase().includes(query) ||
+      skin.id.toLowerCase().includes(query);
+
+    const visible = matchesCategory && matchesSearch;
+    button.hidden = !visible;
+    if (visible) visibleCount++;
+  }
+
+  if (petGridEmpty) {
+    petGridEmpty.hidden = visibleCount > 0;
+  }
+}
+
 function initializeGallery() {
   if (galleryReady) return;
   galleryReady = true;
+
+  petSearch?.addEventListener("input", () => {
+    searchQuery = petSearch.value;
+    applyGalleryFilters();
+  });
+
+  categoryFilters?.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement).closest<HTMLButtonElement>(".filter-chip");
+    if (!target || !target.dataset.category) return;
+    selectedCategory = target.dataset.category as SkinCategory;
+
+    categoryFilters.querySelectorAll<HTMLButtonElement>(".filter-chip").forEach((chip) => {
+      const active = chip === target;
+      chip.classList.toggle("active", active);
+      chip.setAttribute("aria-selected", String(active));
+    });
+
+    applyGalleryFilters();
+  });
+
   for (const skin of skinCatalog) {
     const button = document.createElement("button");
     button.className = "pet-choice"; button.dataset.skin = skin.id; button.dataset.command = "";
@@ -112,6 +162,7 @@ function initializeGallery() {
     button.addEventListener("click", () => command("skin-changed", skin.id));
     void loadPreview(skin.id).then((asset) => drawPreview(canvas, asset)).catch(() => { detail.textContent = "Vista previa no disponible"; });
   }
+  applyGalleryFilters();
   if (state) renderGallery(state);
 }
 

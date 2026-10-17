@@ -127,7 +127,17 @@ h3 { font-size: 14px; font-weight: 650; }
 .empty-state { padding: 20px; border: 1px dashed #74877b; border-radius: 13px; background: var(--card); }
 .empty-state > p:first-child { font-size: 15px; font-weight: 650; }
 .empty-state .group-caption { margin: 6px 0 14px; font-size: 13px; }
-.pet-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.pet-search-bar { margin: 18px 0 10px; }
+.category-filters { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.category-filters::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex: none; min-height: 32px; padding: 6px 12px; border-radius: 100px;
+  background: #18232a; border: 1px solid var(--line); color: var(--muted);
+  font-size: 12px; font-weight: 650; cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.filter-chip:hover { border-color: #74877b; color: var(--text); }
+.filter-chip.active, .filter-chip[aria-selected="true"] { background: #35443c; color: var(--green); border-color: var(--green); }
+.pet-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .pet-choice { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--text); padding: 12px 8px; min-height: 190px; min-width: 0; }
 .pet-choice:hover { border-color: var(--pet-color, var(--green)); background: #26343b; }
 .pet-choice[aria-pressed="true"] { border: 2px solid var(--green); background: #293c30; }

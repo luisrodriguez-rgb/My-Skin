@@ -79,7 +79,27 @@
   <section id="pets" role="tabpanel" aria-labelledby="tab-pets" tabindex="0" hidden>
     <h1>Elige tu compañía.</h1>
     <p class="intro">Mismo objetivo. Una personalidad a tu manera.</p>
+
+    <div class="pet-search-bar">
+      <input id="input-pet-search" type="search" class="text-input" placeholder="Buscar compañero (ej. Harry, Iron Man, Labrador)..." aria-label="Buscar compañero" autocomplete="off" spellcheck="false" />
+    </div>
+
+    <div id="pet-category-filters" class="category-filters" role="tablist" aria-label="Filtrar por categoría">
+      <button class="filter-chip active" data-category="all" role="tab" aria-selected="true">Todos</button>
+      <button class="filter-chip" data-category="mascotas" role="tab" aria-selected="false">Mascotas</button>
+      <button class="filter-chip" data-category="heroes" role="tab" aria-selected="false">Héroes</button>
+      <button class="filter-chip" data-category="cine" role="tab" aria-selected="false">Cine y Magia</button>
+      <button class="filter-chip" data-category="anime" role="tab" aria-selected="false">Anime</button>
+      <button class="filter-chip" data-category="gaming" role="tab" aria-selected="false">Videojuegos</button>
+      <button class="filter-chip" data-category="cartoons" role="tab" aria-selected="false">Cartoons</button>
+      <button class="filter-chip" data-category="deportes" role="tab" aria-selected="false">Deportes</button>
+    </div>
+
     <div id="pet-grid" class="pet-grid" role="group" aria-label="Personajes disponibles"></div>
+    <div id="pet-grid-empty" class="empty-state" hidden>
+      <p>No se encontraron compañeros.</p>
+      <p class="group-caption">Prueba con otro término de búsqueda o selecciona otra categoría.</p>
+    </div>
     <p id="companion-feedback" class="selection-feedback" role="status"></p>
     <p class="group-caption gallery-note">Tu elección se guarda y se comparte con el personaje del escritorio.</p>
   </section>
