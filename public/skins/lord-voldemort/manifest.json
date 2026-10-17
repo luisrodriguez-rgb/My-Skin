@@ -1,0 +1,55 @@
+{
+  "id": "lord-voldemort",
+  "name": "Lord Voldemort",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Poderoso, calculador, solemne y exigente con la perfección.",
+  "dialogues": {
+    "alert": "El tiempo no perdona a los débiles. Completa esa tarea de inmediato.",
+    "victory": "La grandeza no se concede; se toma. Tu código ha prevalecido sin rival.",
+    "focus": "Silencio absoluto. Conjurando líneas de poder implacable.",
+    "break": "Una breve tregua. No te confíes, la excelencia exige vigilancia constante.",
+    "sleep": "Incluso la magia más oscura requiere que las sombras se recarguen."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

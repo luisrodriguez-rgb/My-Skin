@@ -1,0 +1,55 @@
+{
+  "id": "neymar-jr",
+  "name": "Neymar Jr.",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Mágico, alegre, regateador de problemas y enfocado en el objetivo.",
+  "dialogues": {
+    "alert": "¡Presión alta en la salida! Hay que resolver esta entrega antes del pitazo.",
+    "victory": "¡Golazo al ángulo! Baile de celebración para festejar este merge limpio.",
+    "focus": "Pelota dominada. Cabeza levantada y lectura de juego perfecta.",
+    "break": "Momento de hidratarse en la banca y planear la jugada del segundo tiempo.",
+    "sleep": "Descanso de campeón. Mañana volvemos a la cancha con todo el talento."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

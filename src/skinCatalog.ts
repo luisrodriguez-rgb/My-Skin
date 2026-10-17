@@ -1,23 +1,57 @@
 import type { PetStateName } from "./appState";
 
-export const skinCatalog = [
-  { id: "capybara", name: "Capibara", detail: "Un paso a la vez.", color: "#d8b381" },
-  { id: "spartan", name: "Leónidas", detail: "Disciplina para tu día.", color: "#f0ac95" },
-  { id: "spiderman", name: "Spider-Hero", detail: "Tu sentido del foco.", color: "#ee9d9b" },
-  { id: "dev-avatar", name: "Tu avatar", detail: "Tu siguiente gran idea.", color: "#9bd3d2" },
-  { id: "ghost-dev", name: "Dev fantasma", detail: "Código con compañía.", color: "#bbcee8" },
-  { id: "football-10", name: "Futbolista 10", detail: "Una tarea, un gol.", color: "#a9cce8" },
-  { id: "cyber-ninja", name: "Cyber Ninja", detail: "Entra en tu zona.", color: "#beaee8" },
-  { id: "fantasy-wizard", name: "Mago", detail: "Haz espacio a la magia.", color: "#ccb6e9" },
-  { id: "game-slime", name: "Slime", detail: "Pequeños pasos suman.", color: "#b7dc94" },
-  { id: "astro-lost", name: "Astronauta", detail: "Explora lo que sigue.", color: "#dfcc95" },
+export type SkinCategory = "all" | "mascotas" | "heroes" | "cine" | "anime" | "gaming" | "cartoons" | "deportes";
+
+export interface SkinItem {
+  id: string;
+  name: string;
+  detail: string;
+  color: string;
+  category: SkinCategory;
+}
+
+export const skinCatalog: readonly SkinItem[] = [
+  // Mascotas y Vida
+  { id: "capybara", name: "Capibara", detail: "Un paso a la vez.", color: "#d8b381", category: "mascotas" },
+  { id: "labrador-retriever", name: "Labrador", detail: "Compañero leal y alegre.", color: "#e4b370", category: "mascotas" },
+  { id: "little-girl", name: "Lily", detail: "Curiosa y aplicada.", color: "#f5a7b8", category: "mascotas" },
+
+  // Superhéroes
+  { id: "spiderman", name: "Spider-Hero", detail: "Tu sentido del foco.", color: "#ee9d9b", category: "heroes" },
+  { id: "captain-america", name: "Capitán América", detail: "Disciplina inquebrantable.", color: "#3b82f6", category: "heroes" },
+  { id: "iron-man", name: "Iron Man", detail: "Ingenio tecnológico al máximo.", color: "#e23e57", category: "heroes" },
+  { id: "thor-odinson", name: "Thor Odinson", detail: "El poder del trueno.", color: "#3a9691", category: "heroes" },
+
+  // Cine y Fantasía
+  { id: "harry-potter", name: "Harry Potter", detail: "Enfocado en la Snitch Dorada.", color: "#be3144", category: "cine" },
+  { id: "lord-voldemort", name: "Lord Voldemort", detail: "Determinación solemne.", color: "#687980", category: "cine" },
+  { id: "fantasy-wizard", name: "Mago", detail: "Haz espacio a la magia.", color: "#ccb6e9", category: "cine" },
+  { id: "spartan", name: "Leónidas", detail: "Disciplina para tu día.", color: "#f0ac95", category: "cine" },
+  { id: "astro-lost", name: "Astronauta", detail: "Explora lo que sigue.", color: "#dfcc95", category: "cine" },
+
+  // Anime
+  { id: "cyber-ninja", name: "Cyber Ninja", detail: "Entra en tu zona.", color: "#beaee8", category: "anime" },
+
+  // Videojuegos
+  { id: "dev-avatar", name: "Tu avatar", detail: "Tu siguiente gran idea.", color: "#9bd3d2", category: "gaming" },
+  { id: "ghost-dev", name: "Dev fantasma", detail: "Código con compañía.", color: "#bbcee8", category: "gaming" },
+  { id: "game-slime", name: "Slime", detail: "Pequeños pasos suman.", color: "#b7dc94", category: "gaming" },
+
+  // Cartoons
+  { id: "bugs-bunny", name: "Bugs Bunny", detail: "¿Qué hay de nuevo, viejo?", color: "#a3b1c6", category: "cartoons" },
+
+  // Deportes
+  { id: "football-10", name: "Futbolista 10", detail: "Una tarea, un gol.", color: "#a9cce8", category: "deportes" },
+  { id: "neymar-jr", name: "Neymar Jr.", detail: "Magia y foco en cada jugada.", color: "#fed136", category: "deportes" },
 ] as const;
 
 interface PreviewAsset {
   image: HTMLImageElement;
   manifest: { frameWidth: number; frameHeight: number; states: Record<PetStateName, { row: number }> };
 }
+
 const previews = new Map<string, Promise<PreviewAsset>>();
+
 export function loadPreview(skin: string): Promise<PreviewAsset> {
   const cached = previews.get(skin);
   if (cached) return cached;
@@ -35,6 +69,7 @@ export function loadPreview(skin: string): Promise<PreviewAsset> {
   void request.catch(() => previews.delete(skin));
   return request;
 }
+
 export function drawPreview(canvas: HTMLCanvasElement, asset: PreviewAsset, state: PetStateName = "IDLE") {
   const { frameWidth, frameHeight, states } = asset.manifest;
   const context = canvas.getContext("2d")!;

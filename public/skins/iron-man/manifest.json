@@ -1,0 +1,55 @@
+{
+  "id": "iron-man",
+  "name": "Iron Man",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Genio, visionario, sarcástico e impulsado por tecnología de punta.",
+  "dialogues": {
+    "alert": "JARVIS detectó una entrega en el radar. Hora de ponerse la armadura.",
+    "victory": "Soy Iron Man. Y este código funciona con un 3000% de eficiencia.",
+    "focus": "Reactor Arc al 100%. Calibrando algoritmos y quemando problemas.",
+    "break": "Tregua para una hamburguesa con queso mientras se enfrían los propulsores.",
+    "sleep": "Activando protocolo de recarga nocturna. No toques nada sin mí."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

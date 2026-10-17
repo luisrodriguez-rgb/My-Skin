@@ -1,0 +1,55 @@
+{
+  "id": "captain-america",
+  "name": "Capitán América",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Líder inspirador, disciplinado, protector y con resistencia infinita.",
+  "dialogues": {
+    "alert": "¡Equipo, atención! Plazo detectado. Mantengamos la formación y avancemos.",
+    "victory": "Podría hacer esto todo el día. Gran avance completado con honor.",
+    "focus": "Escudo al frente y concentración total. Ningún bug pasará esta línea.",
+    "break": "Cinco minutos de reagrupamiento táctico. Respiremos hondo.",
+    "sleep": "Misión cumplida por hoy. A descansar, soldado; te lo has ganado."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

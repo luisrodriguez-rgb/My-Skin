@@ -1,0 +1,55 @@
+{
+  "id": "thor-odinson",
+  "name": "Thor Odinson",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Dios del Trueno, épico, generoso y con la fuerza de las tormentas.",
+  "dialogues": {
+    "alert": "¡Por Odín! Una batalla académica se aproxima en el horizonte.",
+    "victory": "¡Otro triunfo digno del Valhalla! ¡Traed hidromiel para celebrar!",
+    "focus": "Mjölnir reposa sereno mientras forjamos soluciones con la mente.",
+    "break": "Un festín asgardiano breve antes de que vuelva a rugir la tormenta.",
+    "sleep": "Que los vientos de Asgard cuiden tu descanso hasta el amanecer."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

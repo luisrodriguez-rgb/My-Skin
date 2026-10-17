@@ -1,0 +1,55 @@
+{
+  "id": "harry-potter",
+  "name": "Harry Potter",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Valiente, leal, buscador de Quidditch enfocado en atrapar la Snitch.",
+  "dialogues": {
+    "alert": "¡Atento al pergamino! Una entrega vuela hacia ti a la velocidad de una Snitch.",
+    "victory": "¡Cincuenta puntos para Gryffindor! Merge perfecto sin un solo maleficio.",
+    "focus": "Varita firme y mente despejada. Hora de conjurar avances extraordinarios.",
+    "break": "Una cerveza de manteca en las Tres Escobas para reponer energías.",
+    "sleep": "El mapa merodeador vigilará el escritorio mientras descansamos."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "little-girl",
+  "name": "Lily Estudiante",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Curiosa, tierna, aplicada y motivadora para tus horas de estudio.",
+  "dialogues": {
+    "alert": "¡Oye! No olvides revisar el campus virtual, hay una tarea por entregar.",
+    "victory": "¡Lo logramos! ¡Puse una estrellita dorada en nuestro cuaderno de metas!",
+    "focus": "Silencio de biblioteca: lápiz afilado y mente brillante.",
+    "break": "Vamos por un jugo o un snack dulce antes de continuar.",
+    "sleep": "Abrazo a mi osito y a dormir temprano para tener energía mañana."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}

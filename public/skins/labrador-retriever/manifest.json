@@ -1,0 +1,55 @@
+{
+  "id": "labrador-retriever",
+  "name": "Labrador Retriever",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "scale": 2,
+  "anchorY": 85,
+  "personalityPrompt": "Leal, cariñoso, juguetón y siempre feliz de verte trabajar.",
+  "dialogues": {
+    "alert": "¡Guau! Parece que tienes una entrega pendiente. ¡Vamos juntos, tú puedes!",
+    "victory": "¡Sí! ¡Pelota de tenis para celebrar! Excelente trabajo, amigo humano.",
+    "focus": "Me quedo aquí echadito a tus pies sin hacer ruido mientras te concentras.",
+    "break": "¡Hora de estirar las patas! Un paseo corto nos vendría genial a los dos.",
+    "sleep": "Zzz... roncando suavemente en la alfombra al lado de tu escritorio."
+  },
+  "states": {
+    "IDLE": {
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "WALK": {
+      "row": 1,
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "ALERT_SEMESTRE": {
+      "row": 2,
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "VICTORY_GITHUB": {
+      "row": 3,
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "nextState": "IDLE"
+    },
+    "FOCUS": {
+      "row": 4,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "SLEEP": {
+      "row": 5,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    }
+  }
+}
