@@ -170,7 +170,7 @@ pub fn run() {
                 .item(&item_quit)
                 .build()?;
 
-            let mut tray_builder = TrayIconBuilder::new()
+            let tray_builder = TrayIconBuilder::new()
                 .menu(&tray_menu)
                 .show_menu_on_left_click(true)
                 .on_menu_event(|app, event| {
@@ -192,10 +192,10 @@ pub fn run() {
                 });
 
             if let Some(icon) = app.default_window_icon() {
-                tray_builder = tray_builder.icon(icon.clone());
+                if let Err(err) = tray_builder.icon(icon.clone()).build(app) {
+                    eprintln!("[MySkin] Aviso: no se pudo inicializar el system tray: {}", err);
+                }
             }
-
-            let _ = tray_builder.build(app)?;
 
             Ok(())
         })

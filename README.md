@@ -21,7 +21,7 @@ pasos, foco y crecimiento.
 ## Qué puedes hacer
 
 | Función | Comportamiento actual |
-| --- | --- |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Elegir compañero** | Galería de diez skins con vista previa, selección confirmada y persistencia entre aperturas. |
 | **Concentrarte** | Pomodoro de 25 minutos de foco y 5 de descanso, con pausa, reanudación y reinicio. Cerrar el controlador conserva la sesión. |
 | **Consultar entregas** | Importar un calendario `.ics` o `webcal://` y ver curso, título, fecha y tiempo restante. |
@@ -54,7 +54,7 @@ complementan esta vista.
 ### Tres vistas para el día a día
 
 | Pestaña | Qué reúne |
-| --- | --- |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
 | **Hoy** | Próxima entrega, compañero protagonista, Pomodoro, lista de tareas, resumen del calendario y avisos. |
 | **Compañeros** | Galería de los diez personajes, personalidad breve, vista previa y selección activa. |
 | **Ajustes** | Sonido, modo fijo/patrulla, calendario, repositorio de GitHub y pruebas avanzadas. |
@@ -97,44 +97,54 @@ sigue disponible mediante la API de [`src/githubMonitor.ts`](src/githubMonitor.t
 MySkin cuenta con soporte nativo de primera clase para macOS (Apple Silicon e Intel). Para ejecutar el compañero flotante con ventana transparente, arrastre nativo y controles de sistema:
 
 ### 1. Prerrequisitos en macOS
+
 - **Node.js** (v24+) y gestor de paquetes (`npm` o `pnpm`).
 - **Rust estable y Cargo**: instalados mediante `rustup` (`rustc --version` y `cargo --version`).
 - Herramientas de desarrollo de macOS: `xcode-select --install`.
 
 ### 2. Modo desarrollo nativo en Mac
+
 Compila el backend en Rust e inicia el compañero de escritorio junto con el controlador:
 
 ```bash
 npm run tauri dev
 ```
+
 *(o `pnpm tauri dev`)*
 
 Este comando:
+
 1. Ejecuta el servidor frontend local en `http://localhost:5173`.
 2. Compila el binario nativo de Rust con Tauri v2.
 3. Abre la ventana flotante transparente del personaje en tu pantalla y el menú del sistema.
 
 ### 3. Compilar el paquete de aplicación para macOS (.app y .dmg)
+
 Para generar el ejecutable nativo optimizado para macOS sin necesidad de servidores locales ni terminal:
 
 ```bash
 npm run tauri build
 ```
+
 *(o `pnpm tauri build`)*
 
 Los artefactos compilados se generan automáticamente en:
+
 - **Aplicación macOS**: `src-tauri/target/release/bundle/macos/MySkin.app`
 - **Instalador de disco**: `src-tauri/target/release/bundle/dmg/MySkin_0.1.0_aarch64.dmg` *(o x64)*
 
 ### 4. Abrir directamente la aplicación instalada en macOS
+
 Una vez compilada, puedes iniciarla inmediatamente desde la terminal con:
 
 ```bash
 open src-tauri/target/release/bundle/macos/MySkin.app
 ```
+
 O bien copiar `MySkin.app` a tu carpeta `/Applications`.
 
 ### 5. Verificación del backend Rust
+
 Para verificar la sintaxis y tipos de Rust sin levantar interfaz gráfica:
 
 ```bash
@@ -143,14 +153,14 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 ### Controles de escritorio
 
-| Acción | Control |
-| --- | --- |
-| Abrir u ocultar el controlador | Doble clic en el personaje o menú del sistema. |
-| Abrir u ocultar el controlador desde el personaje | `Cmd/Ctrl + Shift + D`. |
-| Ocultar el controlador | `Escape` o cierre de su ventana. |
-| Mover el personaje | Arrastrar sobre su zona visible o usar las flechas; `Shift` amplía el paso. |
-| Alternar fijo / patrulla | Clic derecho en el personaje, botón de modo o menú del sistema. |
-| Descartar un aviso | Clic en el globo o botón Descartar en el controlador. |
+| Acción                                           | Control                                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Abrir u ocultar el controlador                    | Doble clic en el personaje o menú del sistema.                                |
+| Abrir u ocultar el controlador desde el personaje | `Cmd/Ctrl + Shift + D`.                                                      |
+| Ocultar el controlador                            | `Escape` o cierre de su ventana.                                             |
+| Mover el personaje                                | Arrastrar sobre su zona visible o usar las flechas; `Shift` amplía el paso. |
+| Alternar fijo / patrulla                          | Clic derecho en el personaje, botón de modo o menú del sistema.              |
+| Descartar un aviso                                | Clic en el globo o botón Descartar en el controlador.                         |
 
 Los atajos actúan sobre la ventana enfocada. Con el canvas enfocado, `Enter` o
 espacio descartan el aviso visible o abren el controlador.
@@ -161,7 +171,7 @@ Resultados registrados el **15 de octubre de 2026** para el código de la
 Fase 2 en `893cfa4`:
 
 | Comprobación | Resultado |
-| --- | --- |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Servicios, calendarios, prioridades y enlaces | **34 pruebas unitarias aprobadas**. |
 | Flujos de personaje y controlador en Chromium | **14 pruebas E2E aprobadas**. |
 | Tipos y empaquetado de las dos entradas | **TypeScript y Vite aprobados**. |
@@ -198,19 +208,19 @@ de calendario y GitHub, la cola de avisos y las preferencias. La ventana
 El transporte utiliza eventos Tauri en escritorio y `BroadcastChannel` entre
 pestañas del mismo origen en web.
 
-| Ruta | Responsabilidad |
-| --- | --- |
-| [`src/main.ts`](src/main.ts) | Canvas, animación, interacción y coordinación del estado. |
-| [`src/controller.ts`](src/controller.ts) | Entregas, formularios, galería, avisos y controles del panel. |
-| [`src/controllerTabs.ts`](src/controllerTabs.ts) y [`src/controller.css`](src/controller.css) | Navegación accesible y diseño de las tres vistas. |
-| [`src/skinCatalog.ts`](src/skinCatalog.ts) | Catálogo y caché de vistas previas. |
-| [`src/notifications.ts`](src/notifications.ts) | Prioridades y duración de los avisos. |
-| [`src/pomodoro.ts`](src/pomodoro.ts) | Reloj basado en tiempo real y fases de concentración/descanso. |
-| [`src/calendar.ts`](src/calendar.ts) y [`src/syncService.ts`](src/syncService.ts) | Análisis con `ical.js`, sincronización, urgencia y persistencia de entregas. |
-| [`src/githubMonitor.ts`](src/githubMonitor.ts) | Consultas, cursores y deduplicación de actividad GitHub. |
-| [`src/platform.ts`](src/platform.ts) | Adaptación del transporte entre escritorio y web. |
-| [`src-tauri/`](src-tauri/) | Ventanas nativas, comandos y menú del sistema. |
-| [`public/skins/`](public/skins/) | Manifiestos y texturas de los diez personajes. |
+| Ruta                                                                                            | Responsabilidad                                                                  |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [`src/main.ts`](src/main.ts)                                                                   | Canvas, animación, interacción y coordinación del estado.                     |
+| [`src/controller.ts`](src/controller.ts)                                                       | Entregas, formularios, galería, avisos y controles del panel.                   |
+| [`src/controllerTabs.ts`](src/controllerTabs.ts) y [`src/controller.css`](src/controller.css) | Navegación accesible y diseño de las tres vistas.                              |
+| [`src/skinCatalog.ts`](src/skinCatalog.ts)                                                     | Catálogo y caché de vistas previas.                                            |
+| [`src/notifications.ts`](src/notifications.ts)                                                 | Prioridades y duración de los avisos.                                           |
+| [`src/pomodoro.ts`](src/pomodoro.ts)                                                           | Reloj basado en tiempo real y fases de concentración/descanso.                  |
+| [`src/calendar.ts`](src/calendar.ts) y [`src/syncService.ts`](src/syncService.ts)             | Análisis con `ical.js`, sincronización, urgencia y persistencia de entregas. |
+| [`src/githubMonitor.ts`](src/githubMonitor.ts)                                                 | Consultas, cursores y deduplicación de actividad GitHub.                        |
+| [`src/platform.ts`](src/platform.ts)                                                           | Adaptación del transporte entre escritorio y web.                               |
+| [`src-tauri/`](src-tauri/)                                                                     | Ventanas nativas, comandos y menú del sistema.                                  |
+| [`public/skins/`](public/skins/)                                                               | Manifiestos y texturas de los diez personajes.                                   |
 
 El catálogo incluye **Leónidas, Spider-Hero, Mi Avatar Pixelado, El Dev Fantasma,
 El Futbolista 10, Capibara Chill, Cyber Ninja, Mago de Fantasía, Slime de Videojuego
