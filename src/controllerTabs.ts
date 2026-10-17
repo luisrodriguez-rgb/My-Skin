@@ -1,6 +1,5 @@
-/** View navigation stays local; changing tabs never changes application state. */
 export function setupTabs(onActivate: (panel: string) => void) {
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('nav.tabs [role="tab"]')];
   function activate(id: string, focus = false) {
     const target = tabs.find((tab) => tab.getAttribute("aria-controls") === id);
     if (!target) return;
@@ -8,7 +7,11 @@ export function setupTabs(onActivate: (panel: string) => void) {
       const selected = tab === target;
       tab.setAttribute("aria-selected", String(selected));
       tab.tabIndex = selected ? 0 : -1;
-      document.getElementById(tab.getAttribute("aria-controls")!)!.hidden = !selected;
+      const panelId = tab.getAttribute("aria-controls");
+      if (panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) panel.hidden = !selected;
+      }
     }
     if (focus) target.focus();
     onActivate(id);

@@ -141,7 +141,7 @@ function initializeGallery() {
     categoryFilters.querySelectorAll<HTMLButtonElement>(".filter-chip").forEach((chip) => {
       const active = chip === target;
       chip.classList.toggle("active", active);
-      chip.setAttribute("aria-selected", String(active));
+      chip.setAttribute("aria-pressed", String(active));
     });
 
     applyGalleryFilters();

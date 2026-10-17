@@ -136,7 +136,7 @@ h3 { font-size: 14px; font-weight: 650; }
   font-size: 12px; font-weight: 650; cursor: pointer; transition: background .15s, border-color .15s, color .15s;
 }
 .filter-chip:hover { border-color: #74877b; color: var(--text); }
-.filter-chip.active, .filter-chip[aria-selected="true"] { background: #35443c; color: var(--green); border-color: var(--green); }
+.filter-chip.active, .filter-chip[aria-selected="true"], .filter-chip[aria-pressed="true"] { background: #35443c; color: var(--green); border-color: var(--green); }
 .pet-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .pet-choice { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--text); padding: 12px 8px; min-height: 190px; min-width: 0; }
 .pet-choice:hover { border-color: var(--pet-color, var(--green)); background: #26343b; }

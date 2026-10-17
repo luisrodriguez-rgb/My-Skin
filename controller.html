@@ -84,15 +84,15 @@
       <input id="input-pet-search" type="search" class="text-input" placeholder="Buscar compañero (ej. Harry, Iron Man, Labrador)..." aria-label="Buscar compañero" autocomplete="off" spellcheck="false" />
     </div>
 
-    <div id="pet-category-filters" class="category-filters" role="tablist" aria-label="Filtrar por categoría">
-      <button class="filter-chip active" data-category="all" role="tab" aria-selected="true">Todos</button>
-      <button class="filter-chip" data-category="mascotas" role="tab" aria-selected="false">Mascotas</button>
-      <button class="filter-chip" data-category="heroes" role="tab" aria-selected="false">Héroes</button>
-      <button class="filter-chip" data-category="cine" role="tab" aria-selected="false">Cine y Magia</button>
-      <button class="filter-chip" data-category="anime" role="tab" aria-selected="false">Anime</button>
-      <button class="filter-chip" data-category="gaming" role="tab" aria-selected="false">Videojuegos</button>
-      <button class="filter-chip" data-category="cartoons" role="tab" aria-selected="false">Cartoons</button>
-      <button class="filter-chip" data-category="deportes" role="tab" aria-selected="false">Deportes</button>
+    <div id="pet-category-filters" class="category-filters" role="toolbar" aria-label="Filtrar por categoría">
+      <button class="filter-chip active" data-category="all" type="button" aria-pressed="true">Todos</button>
+      <button class="filter-chip" data-category="mascotas" type="button" aria-pressed="false">Mascotas</button>
+      <button class="filter-chip" data-category="heroes" type="button" aria-pressed="false">Héroes</button>
+      <button class="filter-chip" data-category="cine" type="button" aria-pressed="false">Cine y Magia</button>
+      <button class="filter-chip" data-category="anime" type="button" aria-pressed="false">Anime</button>
+      <button class="filter-chip" data-category="gaming" type="button" aria-pressed="false">Videojuegos</button>
+      <button class="filter-chip" data-category="cartoons" type="button" aria-pressed="false">Cartoons</button>
+      <button class="filter-chip" data-category="deportes" type="button" aria-pressed="false">Deportes</button>
     </div>
 
     <div id="pet-grid" class="pet-grid" role="group" aria-label="Personajes disponibles"></div>
