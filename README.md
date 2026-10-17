@@ -92,33 +92,54 @@ El monitor de GitHub utiliza por defecto `luisrodriguez-rgb/My-Skin`. En
 `propietario/repositorio`. La configuración de tokens para recursos privados
 sigue disponible mediante la API de [`src/githubMonitor.ts`](src/githubMonitor.ts).
 
-## Ejecutar en escritorio
+## Ejecutar en escritorio (macOS)
 
-Además de Node y pnpm, instala Rust estable y los
-[prerrequisitos oficiales de Tauri para tu plataforma](https://v2.tauri.app/start/prerequisites/).
-Desde el checkout con las dependencias instaladas:
+MySkin cuenta con soporte nativo de primera clase para macOS (Apple Silicon e Intel). Para ejecutar el compañero flotante con ventana transparente, arrastre nativo y controles de sistema:
 
-```bash
-pnpm run build
-cargo check --locked --manifest-path src-tauri/Cargo.toml
-pnpm tauri dev
-```
+### 1. Prerrequisitos en macOS
+- **Node.js** (v24+) y gestor de paquetes (`npm` o `pnpm`).
+- **Rust estable y Cargo**: instalados mediante `rustup` (`rustc --version` y `cargo --version`).
+- Herramientas de desarrollo de macOS: `xcode-select --install`.
 
-Usa este modo como alternativa al servidor de simulación: ambos utilizan el
-puerto 5173. Para generar el paquete nativo de tu plataforma:
+### 2. Modo desarrollo nativo en Mac
+Compila el backend en Rust e inicia el compañero de escritorio junto con el controlador:
 
 ```bash
-pnpm tauri build
+npm run tauri dev
 ```
+*(o `pnpm tauri dev`)*
 
-Los targets de CI son **macOS Apple Silicon, macOS Intel y Windows x64**. La
-compilación está comprobada; las interacciones de escritorio siguen la
-[matriz de validación nativa](docs/NATIVE_VALIDATION.md).
+Este comando:
+1. Ejecuta el servidor frontend local en `http://localhost:5173`.
+2. Compila el binario nativo de Rust con Tauri v2.
+3. Abre la ventana flotante transparente del personaje en tu pantalla y el menú del sistema.
 
-A 15 de octubre de 2026 no hay releases publicadas. El
-[workflow de distribución](.github/workflows/release.yml) está preparado para
-compilar paquetes; la firma, notarización y validación de instaladores están
-pendientes.
+### 3. Compilar el paquete de aplicación para macOS (.app y .dmg)
+Para generar el ejecutable nativo optimizado para macOS sin necesidad de servidores locales ni terminal:
+
+```bash
+npm run tauri build
+```
+*(o `pnpm tauri build`)*
+
+Los artefactos compilados se generan automáticamente en:
+- **Aplicación macOS**: `src-tauri/target/release/bundle/macos/MySkin.app`
+- **Instalador de disco**: `src-tauri/target/release/bundle/dmg/MySkin_0.1.0_aarch64.dmg` *(o x64)*
+
+### 4. Abrir directamente la aplicación instalada en macOS
+Una vez compilada, puedes iniciarla inmediatamente desde la terminal con:
+
+```bash
+open src-tauri/target/release/bundle/macos/MySkin.app
+```
+O bien copiar `MySkin.app` a tu carpeta `/Applications`.
+
+### 5. Verificación del backend Rust
+Para verificar la sintaxis y tipos de Rust sin levantar interfaz gráfica:
+
+```bash
+cargo check --manifest-path src-tauri/Cargo.toml
+```
 
 ### Controles de escritorio
 
