@@ -79,12 +79,40 @@ export const skinCatalog: readonly SkinItem[] = [
   { id: "michael-jordan-23", name: "Michael Jordan", detail: "Vuelo legendario hacia la meta.", color: "#dc2626", category: "deportes" },
 ] as const;
 
-interface PreviewAsset {
+export interface PreviewAsset {
   image: HTMLImageElement;
-  manifest: { frameWidth: number; frameHeight: number; states: Record<PetStateName, { row: number }> };
+  manifest: {
+    id?: string;
+    name?: string;
+    frameWidth: number;
+    frameHeight: number;
+    dialogues?: {
+      alert?: string;
+      victory?: string;
+      focus?: string;
+      break?: string;
+      sleep?: string;
+    };
+    states: Record<PetStateName, { row: number; frames?: number; fps?: number; loop?: boolean }>;
+  };
 }
 
 const previews = new Map<string, Promise<PreviewAsset>>();
+const spritesheetDataUrls = new Map<string, string>();
+
+export function getSpritesheetDataUrl(skin: string, asset: PreviewAsset): string {
+  const cached = spritesheetDataUrls.get(skin);
+  if (cached) return cached;
+  const canvas = document.createElement("canvas");
+  canvas.width = asset.image.naturalWidth || 384;
+  canvas.height = asset.image.naturalHeight || 384;
+  const ctx = canvas.getContext("2d")!;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(asset.image, 0, 0);
+  const dataUrl = canvas.toDataURL("image/png");
+  spritesheetDataUrls.set(skin, dataUrl);
+  return dataUrl;
+}
 
 export function loadPreview(skin: string): Promise<PreviewAsset> {
   const cached = previews.get(skin);
