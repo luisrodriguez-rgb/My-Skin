@@ -237,3 +237,22 @@ test("navigation remains usable while the owner is offline and connects in place
   await expect(panel.locator("#input-calendar-url")).toHaveValue("https://example.test/borrador.ics");
   await expect(panel.locator("#input-github-repo")).toHaveValue("octocat/Hello-World");
 });
+
+test("Portafil and GitHub SVG studio previews animated companions and generates README snippets", async ({ page, context }) => {
+  const panel = await start(page, context);
+  await panel.getByRole("tab", { name: "Compañeros" }).click();
+  await panel.getByRole("button", { name: "Elegir Capibara", exact: true }).click();
+  await expect(panel.locator("#select-portafil-skin")).toHaveValue("capybara");
+  await expect(panel.locator("#portafil-preview-stage svg")).toContainText("Capibara");
+
+  await panel.selectOption("#select-portafil-variant", "divider");
+  await expect(panel.locator("#select-portafil-state")).toHaveValue("WALK");
+  await panel.selectOption("#select-portafil-theme", "cyberpunk");
+  await panel.fill("#input-portafil-message", "Custodiando el repo");
+  await expect(panel.locator("#portafil-preview-stage svg")).toContainText("Custodiando el repo");
+  await expect(panel.locator("#output-portafil-code")).toHaveValue(/theme=cyberpunk/);
+
+  await panel.click("#btn-portafil-copy-md");
+  await expect(panel.locator("#output-portafil-code")).toHaveValue(/myskin-capybara-divider-cyberpunk\.svg/);
+  await expect(panel.locator("#portafil-feedback")).toContainText("myskin-capybara-divider-cyberpunk.svg");
+});
