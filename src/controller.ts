@@ -2,7 +2,13 @@ import { emit, listen, isTauri } from "./platform";
 import { invoke } from "@tauri-apps/api/core";
 import { calendarFeedUrl, safeTaskUrl } from "./webLinks";
 import { setupTabs } from "./controllerTabs";
-import { skinCatalog, loadPreview, drawPreview, type SkinCategory } from "./skinCatalog";
+import { skinCatalog, loadPreview, drawPreview, getSpritesheetDataUrl, type SkinCategory } from "./skinCatalog";
+import {
+  generatePortafilCompanionSvg,
+  buildPortafilMarkdownSnippets,
+  type PortafilSvgVariant,
+  type PortafilThemeKey,
+} from "./portafilSvg";
 import type { AppState, PetStateName } from "./appState";
 
 const charName = document.getElementById("char-name")!;
@@ -33,7 +39,23 @@ const scheduleCaption = document.getElementById("schedule-caption")!;
 const misemestreUrl = document.querySelector<HTMLInputElement>("#input-misemestre-url")!;
 const misemestreToggle = document.querySelector<HTMLButtonElement>("#btn-toggle-misemestre")!;
 const misemestreFeedback = document.getElementById("misemestre-feedback")!;
+const portafilSkinSelect = document.querySelector<HTMLSelectElement>("#select-portafil-skin");
+const portafilVariantSelect = document.querySelector<HTMLSelectElement>("#select-portafil-variant");
+const portafilThemeSelect = document.querySelector<HTMLSelectElement>("#select-portafil-theme");
+const portafilStateSelect = document.querySelector<HTMLSelectElement>("#select-portafil-state");
+const portafilMessageInput = document.querySelector<HTMLInputElement>("#input-portafil-message");
+const portafilPreviewStage = document.getElementById("portafil-preview-stage");
+const portafilCodeOutput = document.querySelector<HTMLTextAreaElement>("#output-portafil-code");
+const portafilFeedback = document.getElementById("portafil-feedback");
+const portafilDownloadBtn = document.querySelector<HTMLButtonElement>("#btn-portafil-download");
+const portafilCopyMdBtn = document.querySelector<HTMLButtonElement>("#btn-portafil-copy-md");
+const portafilCopyUrlBtn = document.querySelector<HTMLButtonElement>("#btn-portafil-copy-portafil");
 let state: AppState | null = null;
+let portafilRenderSequence = 0;
+let lastPortafilSyncedSkin = "";
+let lastGeneratedSvg = "";
+let lastGeneratedFilename = "myskin-capybara-card-ink.svg";
+let lastPortafilSnippetMode: "local" | "portafil" = "portafil";
 let lastCalendarUrl: string | null = null;
 let lastRepository: string | null = null;
 let lastMisemestreUrl: string | null = null;
@@ -124,6 +146,155 @@ function applyGalleryFilters() {
   }
 }
 
+const FALLBACK_PIXEL_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+async function updatePortafilStudio() {
+  if (
+    !portafilSkinSelect ||
+    !portafilVariantSelect ||
+    !portafilThemeSelect ||
+    !portafilStateSelect ||
+    !portafilPreviewStage ||
+    !portafilCodeOutput
+  ) {
+    return;
+  }
+  const seq = ++portafilRenderSequence;
+  const skinId = portafilSkinSelect.value || state?.skin || "capybara";
+  const variant = (portafilVariantSelect.value || "card") as PortafilSvgVariant;
+  const theme = (portafilThemeSelect.value || "ink") as PortafilThemeKey;
+  const petState = (portafilStateSelect.value || "FOCUS") as PetStateName;
+  const customMessage = portafilMessageInput?.value ?? "";
+  const usernameOrRepo = state?.github.repository || "luisrodriguez-rgb/My-Skin";
+
+  const snippets = buildPortafilMarkdownSnippets({
+    skinId,
+    variant,
+    theme,
+    state: petState,
+    usernameOrRepo,
+    customMessage,
+  });
+  lastGeneratedFilename = snippets.filename;
+  portafilCodeOutput.value =
+    lastPortafilSnippetMode === "local" ? snippets.localMarkdown : snippets.portafilMarkdown;
+
+  let spritesheetDataUrl = FALLBACK_PIXEL_PNG;
+  let manifest: Parameters<typeof generatePortafilCompanionSvg>[0]["manifest"] | undefined;
+  try {
+    const asset = await loadPreview(skinId);
+    if (seq !== portafilRenderSequence) return;
+    spritesheetDataUrl = getSpritesheetDataUrl(skinId, asset);
+    manifest = asset.manifest;
+  } catch {
+    if (seq !== portafilRenderSequence) return;
+  }
+
+  const svg = generatePortafilCompanionSvg({
+    skinId,
+    variant,
+    theme,
+    state: petState,
+    spritesheetDataUrl,
+    manifest,
+    usernameOrRepo,
+    customMessage,
+  });
+  lastGeneratedSvg = svg;
+  portafilPreviewStage.innerHTML = svg;
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Fallback below
+  }
+  if (portafilCodeOutput) {
+    portafilCodeOutput.focus();
+    portafilCodeOutput.select();
+    return true;
+  }
+  return false;
+}
+
+function initializePortafilStudio() {
+  if (!portafilSkinSelect) return;
+  portafilSkinSelect.replaceChildren();
+  for (const skin of skinCatalog) {
+    const option = document.createElement("option");
+    option.value = skin.id;
+    option.textContent = `${skin.name} — ${skin.detail}`;
+    portafilSkinSelect.append(option);
+  }
+  const initialSkin = state?.skin || "capybara";
+  portafilSkinSelect.value = initialSkin;
+  lastPortafilSyncedSkin = initialSkin;
+
+  portafilSkinSelect.addEventListener("change", () => {
+    void updatePortafilStudio();
+  });
+  portafilVariantSelect?.addEventListener("change", () => {
+    if (portafilVariantSelect.value === "divider" && portafilStateSelect) {
+      portafilStateSelect.value = "WALK";
+    }
+    void updatePortafilStudio();
+  });
+  portafilThemeSelect?.addEventListener("change", () => {
+    void updatePortafilStudio();
+  });
+  portafilStateSelect?.addEventListener("change", () => {
+    void updatePortafilStudio();
+  });
+  portafilMessageInput?.addEventListener("input", () => {
+    void updatePortafilStudio();
+  });
+
+  portafilDownloadBtn?.addEventListener("click", () => {
+    if (!lastGeneratedSvg) return;
+    const blob = new Blob([lastGeneratedSvg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = lastGeneratedFilename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (portafilFeedback) {
+      portafilFeedback.textContent = `SVG descargado: ${lastGeneratedFilename}`;
+    }
+  });
+
+  portafilCopyMdBtn?.addEventListener("click", async () => {
+    lastPortafilSnippetMode = "local";
+    await updatePortafilStudio();
+    if (portafilCodeOutput) {
+      await copyTextToClipboard(portafilCodeOutput.value);
+    }
+    if (portafilFeedback) {
+      portafilFeedback.textContent = `Markdown copiado para usar con ${lastGeneratedFilename}.`;
+    }
+  });
+
+  portafilCopyUrlBtn?.addEventListener("click", async () => {
+    lastPortafilSnippetMode = "portafil";
+    await updatePortafilStudio();
+    if (portafilCodeOutput) {
+      await copyTextToClipboard(portafilCodeOutput.value);
+    }
+    if (portafilFeedback) {
+      portafilFeedback.textContent = "Código de Portafil copiado al portapapeles.";
+    }
+  });
+
+  void updatePortafilStudio();
+}
+
 function initializeGallery() {
   if (galleryReady) return;
   galleryReady = true;
@@ -163,6 +334,7 @@ function initializeGallery() {
     void loadPreview(skin.id).then((asset) => drawPreview(canvas, asset)).catch(() => { detail.textContent = "Vista previa no disponible"; });
   }
   applyGalleryFilters();
+  initializePortafilStudio();
   if (state) renderGallery(state);
 }
 
@@ -180,6 +352,11 @@ function renderGallery(snapshot: AppState) {
   const text = snapshot.skinLoading ? "Preparando tu compañero…" : `${name} te acompaña. Listo para seguir en Hoy.`;
   const feedback = document.getElementById("companion-feedback")!;
   if (feedback.textContent !== text) feedback.textContent = text;
+  if (galleryReady && portafilSkinSelect && snapshot.skin && snapshot.skin !== lastPortafilSyncedSkin) {
+    lastPortafilSyncedSkin = snapshot.skin;
+    portafilSkinSelect.value = snapshot.skin;
+    void updatePortafilStudio();
+  }
 }
 
 function showError(element: HTMLElement, message?: string) {

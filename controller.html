@@ -102,6 +102,73 @@
     </div>
     <p id="companion-feedback" class="selection-feedback" role="status"></p>
     <p class="group-caption gallery-note">Tu elección se guarda y se comparte con el personaje del escritorio.</p>
+
+    <section id="portafil-studio" class="settings-card portafil-studio" aria-labelledby="portafil-heading">
+      <div class="section-head portafil-head">
+        <h2 id="portafil-heading">Llevar a GitHub, Markdown y Portafil</h2>
+        <span class="count-badge">SVG animado</span>
+      </div>
+      <p class="group-caption">Genera tu compañero como SVG animado sin JavaScript para tu perfil de GitHub, como mascota de un repositorio o integrado con los 9 temas de Portafil.</p>
+
+      <div class="portafil-controls-grid">
+        <div class="portafil-field">
+          <label for="select-portafil-skin">Compañero</label>
+          <select id="select-portafil-skin" class="text-input"></select>
+        </div>
+        <div class="portafil-field">
+          <label for="select-portafil-variant">Formato de pieza</label>
+          <select id="select-portafil-variant" class="text-input">
+            <option value="card">Tarjeta de perfil (Portafil)</option>
+            <option value="divider">Separador en patrulla (README)</option>
+            <option value="badge">Mascota de repositorio (Badge)</option>
+          </select>
+        </div>
+        <div class="portafil-field">
+          <label for="select-portafil-theme">Tema visual (Portafil)</label>
+          <select id="select-portafil-theme" class="text-input">
+            <option value="ink">Tinta (ink · pareja con Papel)</option>
+            <option value="paper">Papel (paper · pareja con Tinta)</option>
+            <option value="dark">Fósforo (dark · pareja con GitHub claro)</option>
+            <option value="light">GitHub claro (light · pareja con Fósforo)</option>
+            <option value="sand">Arena (sand · pareja con Ámbar)</option>
+            <option value="cyberpunk">Cyberpunk (cyberpunk)</option>
+            <option value="neon_cyan">Cian (neon_cyan)</option>
+            <option value="amber_terminal">Ámbar (amber_terminal)</option>
+            <option value="ruby">Rubí (ruby)</option>
+          </select>
+        </div>
+        <div class="portafil-field">
+          <label for="select-portafil-state">Animación / Estado</label>
+          <select id="select-portafil-state" class="text-input">
+            <option value="FOCUS">Concentración (FOCUS)</option>
+            <option value="VICTORY_GITHUB">Celebrando commit (VICTORY)</option>
+            <option value="WALK">En patrulla (WALK)</option>
+            <option value="IDLE">En guardia (IDLE)</option>
+            <option value="ALERT_SEMESTRE">Entrega urgente (ALERT)</option>
+            <option value="SLEEP">Durmiendo (SLEEP)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="portafil-field portafil-message-field">
+        <label for="input-portafil-message">Frase o diálogo personalizado (opcional)</label>
+        <input id="input-portafil-message" type="text" class="text-input" maxlength="110" placeholder="Dejar vacío para usar el diálogo original del personaje…" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div id="portafil-preview-stage" class="portafil-preview-stage" role="region" aria-label="Vista previa del SVG animado"></div>
+
+      <div class="portafil-actions">
+        <button id="btn-portafil-download" type="button" class="primary-button">Descargar SVG animado</button>
+        <button id="btn-portafil-copy-md" type="button" class="secondary-button">Copiar Markdown (Repo)</button>
+        <button id="btn-portafil-copy-portafil" type="button" class="secondary-button">Copiar código Portafil</button>
+      </div>
+
+      <div class="portafil-field">
+        <label for="output-portafil-code">Código para tu README.md</label>
+        <textarea id="output-portafil-code" class="text-input portafil-code-box" rows="4" readonly spellcheck="false"></textarea>
+      </div>
+      <p id="portafil-feedback" class="sync-status-text" role="status" aria-live="polite">Listo para exportar a tu repositorio o perfil de GitHub.</p>
+    </section>
   </section>
 
   <section id="settings" role="tabpanel" aria-labelledby="tab-settings" tabindex="0" hidden>

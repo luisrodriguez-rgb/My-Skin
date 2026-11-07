@@ -45,10 +45,10 @@ html::-webkit-scrollbar-thumb:hover {
   background: #607755;
 }
 [hidden] { display: none !important; }
-button, input { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; opacity: .65; }
-button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible, canvas:focus-visible,
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, canvas:focus-visible,
 [tabindex="-1"]:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
 .controller-page { min-height: 100%; background: #0d1318; overflow-y: visible; }
 .controller-window-container {
@@ -148,6 +148,22 @@ h3 { font-size: 14px; font-weight: 650; }
 .pet-choice .pet-selection { color: var(--green); font-size: 11px; min-height: 18px; margin-top: 7px; }
 .selection-feedback { color: var(--green); font-size: 13px; margin-top: 16px; }
 .gallery-note { margin-top: 8px; }
+.portafil-studio { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; }
+.portafil-head { margin: 0; }
+.portafil-controls-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.portafil-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.portafil-preview-stage {
+  width: 100%; max-width: 100%; overflow: hidden; padding: 12px;
+  border-radius: 12px; border: 1px solid var(--line); background: #0d1318;
+  display: flex; align-items: center; justify-content: center; min-height: 112px;
+}
+.portafil-preview-stage svg { display: block; width: 100%; max-width: 100%; height: auto; }
+.portafil-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.portafil-actions button { flex: 1 1 150px; min-width: 0; }
+.portafil-code-box {
+  font: 500 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical; white-space: pre-wrap; word-break: break-all;
+}
 .settings-card { margin-top: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 18px; }
 .settings-card > .group-caption { margin-top: 8px; }
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; }
@@ -174,6 +190,8 @@ h3 { font-size: 14px; font-weight: 650; }
   .pet-box canvas { width: 96px; height: 96px; }
   .pet-floor { width: 72px; }
   .pet-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portafil-controls-grid { grid-template-columns: 1fr; }
+  .portafil-actions button { flex-basis: 100%; }
   .deadline-item, .notification-item { flex-wrap: wrap; padding: 12px; gap: 8px; }
   .item-info { flex-basis: 100%; }
   .item-actions { flex-direction: row; flex-wrap: wrap; }
