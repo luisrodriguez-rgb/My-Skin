@@ -28,6 +28,7 @@ pasos, foco y crecimiento.
 | **Actuar sobre una tarea** | Marcarla como completada en MySkin o abrir su enlace HTTP(S) en el navegador. Las completadas se conservan al resincronizar. |
 | **Recibir avisos** | Alertas para entregas pendientes que vencen dentro de dos horas, con datos reales y una lista de avisos que puedes descartar. |
 | **Seguir GitHub** | Detección de merges y del último commit observado, con deduplicación, cursor por repositorio y respeto de límites de consultas. |
+| **Llevar a GitHub, Markdown y Portafil** | Generador integrado de piezas SVG animadas (`< 6 KB`, sin JS) con los 9 temas de Portafil (`ink`, `paper`, `dark`, `light`, `sand`, `cyberpunk`, `neon_cyan`, `amber_terminal`, `ruby`) en 3 formatos: tarjeta de perfil, separador en patrulla y mascota de repositorio. |
 | **Ajustar el personaje** | Audio retro, modo fijo o patrulla y controles de demostración dentro de Pruebas avanzadas. |
 
 Las entregas urgentes tienen prioridad sobre los avisos de Pomodoro, GitHub y
@@ -60,11 +61,31 @@ complementan esta vista.
 | Pestaña | Qué reúne |
 | --------------------- | ------------------------------------------------------------------------------------------------------ |
 | **Hoy** | Próxima entrega, compañero protagonista, Pomodoro, lista de tareas, resumen del calendario y avisos. |
-| **Compañeros** | Galería de los 53 personajes con buscador en vivo, chips de categorías, vista previa y selección activa. |
+| **Compañeros** | Galería de los 53 personajes con buscador en vivo, chips de categorías, vista previa, selección activa y estudio para exportar SVGs animados a GitHub, Markdown y Portafil. |
 | **Ajustes** | Sonido, modo fijo/patrulla, calendario, repositorio de GitHub y pruebas avanzadas. |
 
 Cambiar de pestaña conserva el reloj y los borradores de conexión. Puedes navegar
 con flechas izquierda/derecha y `Inicio`/`Fin` cuando una pestaña tiene el foco.
+
+### Tus skins en perfiles de GitHub, repositorios, Markdown y Portafil
+
+Cada uno de los 53 personajes puede exportarse como un **SVG animado autónomo** (sin JavaScript, con `image-rendering: pixelated` y `@keyframes` CSS `steps()`) o servirse con el sistema de 9 temas de **Portafil**:
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/portafil/examples/capybara-card-ink.svg">
+    <img alt="Tarjeta de Capibara generada con MySkin × Portafil" src="public/portafil/examples/capybara-card-paper.svg" width="100%">
+  </picture>
+</p>
+
+<p align="center">
+  <img alt="Capibara patrullando el repositorio como separador animado" src="public/portafil/examples/capybara-divider-ink.svg" width="100%">
+</p>
+
+- **Tarjeta de perfil (`card`)**: con el tema elegido, estado animado (`FOCUS`, `VICTORY_GITHUB`, `WALK`, `IDLE`, `ALERT_SEMESTRE`, `SLEEP`) y el diálogo original del personaje o uno personalizado.
+- **Separador en patrulla (`divider`)**: tu compañero camina de lado a lado del `README.md` custodiando el repositorio.
+- **Mascota de repositorio (`badge`)**: insignia compacta (`320×84`) para cabeceras de proyectos, wikis o plantillas de PR.
+- **Bundle para Portafil (`pnpm run export:portafil`)**: empaqueta las 53 skins y sus hojas de sprites en Base64 para el endpoint `/api/companion/<usuario>.svg`. Consulta la [guía de integración con Portafil](docs/PORTAFIL_INTEGRATION.md).
 
 ## Empezar en modo web
 
